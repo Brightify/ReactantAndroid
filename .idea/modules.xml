@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Reactant.iml" filepath="$PROJECT_DIR$/.idea/modules/Reactant.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Reactant/Reactant-Reactant.iml" filepath="$PROJECT_DIR$/.idea/modules/Reactant/Reactant-Reactant.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Reactant.iml" filepath="$PROJECT_DIR$/Reactant.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Reactant/Reactant-Reactant.iml" filepath="$PROJECT_DIR$/Reactant/Reactant-Reactant.iml" />
     </modules>
   </component>
 </project>
