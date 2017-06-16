@@ -1,5 +1,6 @@
 package org.brightify.reactant.core.constraint
 
+import android.view.View
 import org.brightify.reactant.core.constraint.solver.Equation
 import org.brightify.reactant.core.constraint.solver.Solver
 import org.brightify.reactant.core.constraint.util.ComplexEquationsProvider
@@ -107,6 +108,10 @@ internal class ConstraintManager {
             }
         }
         managedEquations.remove(viewId)
+    }
+
+    fun removeConstraintCreatedFromView(view: View) {
+        managedConstraints.filter { it.view == view }.forEach { removeConstraint(it) }
     }
 
     private fun verifyViewIdsUsedByConstraint(constraint: Constraint): Boolean {

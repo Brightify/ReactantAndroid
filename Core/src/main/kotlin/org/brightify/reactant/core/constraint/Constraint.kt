@@ -5,15 +5,7 @@ import android.view.View
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
-class Constraint internal constructor(private val view: View, internal val constraintItems: List<ConstraintItem>) {
-
-    var operator: ConstraintOperator
-        get() = constraintItems.first().operator
-        set(value) {
-            updateConstraint {
-                constraintItems.forEach { it.operator = value }
-            }
-        }
+class Constraint internal constructor(internal val view: View, internal val constraintItems: List<ConstraintItem>) {
 
     var multiplier: Number
         get() = constraintItems.first().multiplier
@@ -63,11 +55,6 @@ class Constraint internal constructor(private val view: View, internal val const
 
     fun offset(value: Number): Constraint {
         this.offset = value
-        return this
-    }
-
-    fun operator(operator: ConstraintOperator): Constraint {
-        this.operator = operator
         return this
     }
 

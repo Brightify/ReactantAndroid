@@ -47,13 +47,10 @@ open class ConstraintDsl internal constructor(private val view: View) {
         createdConstraints.forEach { it.activate() }
     }
 
-//    fun remakeConstraints(closure: ConstraintMakerProvider.() -> Unit) {
-//        closure(ConstraintMakerProvider(view))
-//    }
-//
-//    fun updateConstraints(closure: ConstraintMakerProvider.() -> Unit) {
-//        closure(ConstraintMakerProvider(view))
-//    }
+    fun remakeConstraints(closure: ConstraintMakerProvider.() -> Unit) {
+        constraintManager.removeConstraintCreatedFromView(view)
+        makeConstraints(closure)
+    }
 
     fun debugValues(recursive: Boolean = false) {
         if (recursive && view is AutoLayout) {
