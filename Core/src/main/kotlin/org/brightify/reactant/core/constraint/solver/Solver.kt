@@ -65,10 +65,6 @@ internal class Solver {
         optimize(objective)
     }
 
-    fun hasEquation(equation: Equation): Boolean {
-        return tagForEquation.containsKey(equation)
-    }
-
     fun valueForVariable(variable: ConstraintVariable): Double {
         return variables[variable]?.let { rows[it]?.constant } ?: 0.0
     }

@@ -40,13 +40,13 @@ class ComponentDelegate<STATE, ACTION> {
     val action: Observable<ACTION>
         get() = actionSubject
 
-    var needsUpdate: Boolean by Delegates.observable(false) { property, oldValue, newValue ->
+    var needsUpdate: Boolean by Delegates.observable(false) { _, _, _ ->
         if (needsUpdate && canUpdate) {
             update()
         }
     }
 
-    var canUpdate: Boolean by Delegates.observable(false) { property, oldValue, newValue ->
+    var canUpdate: Boolean by Delegates.observable(false) { _, _, _ ->
         if (needsUpdate && canUpdate) {
             update()
         }
@@ -59,7 +59,7 @@ class ComponentDelegate<STATE, ACTION> {
         }
     }
 
-    var actions: List<Observable<ACTION>> by Delegates.observable(emptyList()) { property, oldValue, newValue ->
+    var actions: List<Observable<ACTION>> by Delegates.observable(emptyList()) { _, _, _ ->
         actionsDisposeBag.clear()
         Observable.merge(actions).subscribe(this::perform).addTo(actionsDisposeBag)
     }

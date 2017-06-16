@@ -1,17 +1,17 @@
 package org.brightify.reactant.core
 
 import android.content.Context
-import android.support.constraint.ConstraintLayout
 import android.view.View
 import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
 import org.brightify.reactant.core.component.ComponentDelegate
 import org.brightify.reactant.core.component.ComponentWithDelegate
+import org.brightify.reactant.core.constraint.AutoLayout
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
-open class ViewBase<STATE, ACTION>(context: Context): ConstraintLayout(context), ComponentWithDelegate<STATE, ACTION> {
+open class ViewBase<STATE, ACTION>(context: Context): AutoLayout(context), ComponentWithDelegate<STATE, ACTION> {
 
     override val lifecycleDisposeBag = CompositeDisposable()
 
@@ -48,9 +48,9 @@ open class ViewBase<STATE, ACTION>(context: Context): ConstraintLayout(context),
     }
 
     protected fun <T: View> make(factory: (Context) -> T): T {
-        val made = factory(context)
-        (made as? ViewBase<*, *>)?.init()
-        return made
+        val view = factory(context)
+        (view as? ViewBase<*, *>)?.init()
+        return view
     }
 
     protected fun <P1, T: View> make(factory: (P1, Context) -> T, p1: P1): T {
