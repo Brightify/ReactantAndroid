@@ -46,7 +46,7 @@ internal class Row(var constant: Double = 0.0) {
     }
 
     fun solveFor(symbol: Symbol) {
-        val coefficient = -1 / (symbolMap[symbol] ?: 1.0)
+        val coefficient = -1.0 / (symbolMap[symbol] ?: 1.0)
         symbolMap.remove(symbol)
         constant *= coefficient
 
@@ -63,8 +63,9 @@ internal class Row(var constant: Double = 0.0) {
     }
 
     fun substitute(symbol: Symbol, row: Row) {
-        val coefficient = symbolMap[symbol] ?: 0.0
-        symbolMap.remove(symbol)
-        insert(row, coefficient)
+        symbolMap[symbol]?.let {
+            symbolMap.remove(symbol)
+            insert(row, it)
+        }
     }
 }

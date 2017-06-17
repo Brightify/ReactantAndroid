@@ -18,12 +18,15 @@ internal class ConstraintManager {
     private val managedConstraints = HashMap<View, HashSet<Constraint>>()
     private val managedViews = HashSet<View>()
 
+    val isDelegated: Boolean
+        get() = delegatedTo != null
+
     fun addConstraint(constraint: Constraint) {
         if (managedConstraints[constraint.view]?.contains(constraint) == true) {
             return
         }
 
-        if (delegatedTo != null) {
+        if (isDelegated) {
             delegatedTo?.addConstraint(constraint)
         } else {
             if (verifyViewIdsUsedByConstraint(constraint)) {
@@ -45,7 +48,7 @@ internal class ConstraintManager {
             return
         }
 
-        if (delegatedTo != null) {
+        if (isDelegated) {
             delegatedTo?.removeConstraint(constraint)
         } else {
             constraint.constraintItems.map { it.equation }.forEach { ownSolver.removeEquation(it) }
@@ -68,7 +71,7 @@ internal class ConstraintManager {
     }
 
     fun stopDelegation() {
-        if (delegatedTo == null) {
+        if (!isDelegated) {
             return
         }
 
@@ -88,7 +91,7 @@ internal class ConstraintManager {
         managedViews.add(view)
         val equations = DefaultEquationsProvider(view).equations
         managedEquations[view] = equations
-        if (delegatedTo != null) {
+        if (isDelegated) {
             delegatedTo?.addManagedView(view)
         } else {
             equations.forEach { ownSolver.addEquation(it) }
@@ -102,7 +105,7 @@ internal class ConstraintManager {
 
         managedViews.remove(view)
 
-        if (delegatedTo != null) {
+        if (isDelegated) {
             delegatedTo?.removeManagedView(view)
         } else {
             managedEquations[view]?.forEach { ownSolver.removeEquation(it) }
@@ -126,7 +129,9 @@ internal class ConstraintManager {
 
     // TODO Rewrite
     fun getValueConstraint(variable: ConstraintVariable): Constraint {
-        val constraint = managedConstraints[variable.view]?.firstOrNull { it.view == variable.view && it.constraintItems.map { it.leftVariable }.contains(variable) }
+        val constraint = managedConstraints[variable.view]?.firstOrNull {
+            it.view == variable.view && it.constraintItems.map { it.leftVariable }.contains(variable)
+        }
         if (constraint != null) {
             return constraint
         } else {
@@ -138,12 +143,40 @@ internal class ConstraintManager {
         }
     }
 
+    fun updateIntrinsicSizes(density: Float) {
+        managedViews.forEach { view ->
+            var width = managedConstraints[view]?.firstOrNull {
+                it.view == view && it.constraintItems.map { it.leftVariable.type }.contains(
+                        ConstraintType.intrinsicWidth)
+            }
+            var height = managedConstraints[view]?.firstOrNull {
+                it.view == view && it.constraintItems.map { it.leftVariable.type }.contains(
+                        ConstraintType.intrinsicHeight)
+            }
+
+            if (width == null) {
+                width = Constraint(view, listOf(
+                        ConstraintItem(ConstraintVariable(view, ConstraintType.intrinsicWidth), ConstraintOperator.equal, offset = 0)
+                ))
+                addConstraint(width)
+            }
+            if (height == null) {
+                height = Constraint(view, listOf(
+                        ConstraintItem(ConstraintVariable(view, ConstraintType.intrinsicHeight), ConstraintOperator.equal, offset = 0)
+                ))
+                addConstraint(height)
+            }
+            width.offset = view.measuredWidth / density
+            height.offset = view.measuredHeight / density
+        }
+    }
+
     private fun verifyViewIdsUsedByConstraint(constraint: Constraint): Boolean {
         return constraint.constraintItems.flatMap { it.equation.terms.map { it.variable.view } }.all { managedViews.contains(it) }
     }
 
     private fun removeDelegate() {
-        if (delegatedTo == null) {
+        if (!isDelegated) {
             return
         }
 

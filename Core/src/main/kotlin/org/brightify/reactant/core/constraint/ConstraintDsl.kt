@@ -94,7 +94,8 @@ open class ConstraintDsl internal constructor(private val view: View) {
 
     fun debugValues(description: String = view.javaClass.simpleName) {
         listOf(top, left, bottom, right, width, height, centerX, centerY, topMargin, leftMargin, bottomMargin, rightMargin,
-                centerXWithMargins, centerYWithMargins).forEach {
+                centerXWithMargins, centerYWithMargins, ConstraintVariable(ConstraintType.intrinsicWidth),
+                ConstraintVariable(ConstraintType.intrinsicHeight)).forEach {
             Log.d("debugValues(view=$description)",
                     it.type.toString().padEnd(18) + " = " + constraintManager.valueForVariable(it).toString()
             )

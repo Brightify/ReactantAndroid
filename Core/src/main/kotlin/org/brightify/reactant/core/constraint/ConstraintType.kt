@@ -29,6 +29,8 @@ class ConstraintType private constructor(private val description: String) {
         internal val topMarginSize = ConstraintType("topMarginSize")
         internal val rightMarginSize = ConstraintType("rightMarginSize")
         internal val bottomMarginSize = ConstraintType("bottomMarginSize")
+        internal val intrinsicWidth = ConstraintType("intrinsicWidth")
+        internal val intrinsicHeight = ConstraintType("intrinsicHeight")
     }
 
     override fun toString(): String = description

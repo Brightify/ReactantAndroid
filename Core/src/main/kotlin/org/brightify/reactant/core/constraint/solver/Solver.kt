@@ -16,6 +16,7 @@ internal class Solver {
     private val rows = LinkedHashMap<Symbol, Row>()
     private val variables = LinkedHashMap<ConstraintVariable, Symbol>()
     private val objective = Row()
+    private var artificalRow: Row? = null
 
     fun addEquation(equation: Equation) {
         if (tagForEquation.containsKey(equation)) {
@@ -185,9 +186,10 @@ internal class Solver {
     private fun addWithArtificialVariable(row: Row): Boolean {
         val artificialVariable = Symbol(Symbol.Type.slack)
         rows[artificialVariable] = row
-        val rowCopy = Row(row)
-        optimize(rowCopy)
-        val success = rowCopy.constant.isAlmostZero
+        artificalRow = Row(row)
+        artificalRow?.let { optimize(it) }
+        val success = artificalRow?.constant?.isAlmostZero == true
+        artificalRow = null
 
         val artificialRow = rows[artificialVariable]
         if (artificialRow != null) {
@@ -209,21 +211,21 @@ internal class Solver {
     private fun optimize(objective: Row) {
         while (true) {
             val entering = getEnteringSymbol(objective) ?: return
+            val leaving = getLeavingSymbol(entering) ?: return // TODO throw RuntimeException()
 
-            getLeavingSymbol(entering)?.let { leaving ->
-                rows[leaving]?.let { row ->
-                    rows.remove(leaving)
-                    row.solveFor(leaving, entering)
-                    substitute(entering, row)
-                    rows[entering] = row
-                }
+            rows[leaving]?.let { row ->
+                rows.remove(leaving)
+                row.solveFor(leaving, entering)
+                substitute(entering, row)
+                rows[entering] = row
             }
         }
     }
 
     private fun substitute(symbol: Symbol, row: Row) {
-        rows.values.forEach { value -> value.substitute(symbol, row) }
+        rows.values.forEach { it.substitute(symbol, row) }
         objective.substitute(symbol, row)
+        artificalRow?.substitute(symbol, row)
     }
 
     private fun getEnteringSymbol(objective: Row): Symbol? {
@@ -231,23 +233,20 @@ internal class Solver {
     }
 
     private fun anyPivotableSymbol(row: Row): Symbol? {
-        return row.symbols.map { it.key }.firstOrNull { it.type == Symbol.Type.slack || it.type == Symbol.Type.error }
+        return row.symbols.keys.firstOrNull { it.type == Symbol.Type.slack || it.type == Symbol.Type.error }
     }
 
     private fun getLeavingSymbol(entering: Symbol): Symbol? {
         var ratio = Double.MAX_VALUE
         var symbol: Symbol? = null
 
-        rows.keys.filter { it.type != Symbol.Type.external }.forEach {
-            val testedRow = rows[it]
-            if (testedRow != null) {
-                val temp = testedRow.coefficientFor(entering)
-                if (temp < 0) {
-                    val temp_ratio = -testedRow.constant / temp
-                    if (temp_ratio < ratio) {
-                        ratio = temp_ratio
-                        symbol = it
-                    }
+        rows.filter { it.key.type != Symbol.Type.external }.forEach {
+            val temp = it.value.coefficientFor(entering)
+            if (temp < 0) {
+                val temp_ratio = -it.value.constant / temp
+                if (temp_ratio < ratio) {
+                    ratio = temp_ratio
+                    symbol = it.key
                 }
             }
         }

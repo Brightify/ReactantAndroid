@@ -80,6 +80,12 @@ class Constraint internal constructor(internal val view: View, internal val cons
                 ConstraintType.right -> it.offset = -right.toDouble()
                 ConstraintType.centerX -> it.offset = left
                 ConstraintType.centerY -> it.offset = top
+                ConstraintType.topMargin -> it.offset = top
+                ConstraintType.leftMargin -> it.offset = left
+                ConstraintType.bottomMargin -> it.offset = -bottom.toDouble()
+                ConstraintType.rightMargin -> it.offset = -right.toDouble()
+                ConstraintType.centerXWithMargins -> it.offset = left
+                ConstraintType.centerYWithMargins -> it.offset = top
                 // TODO Exception else ->
             }
         }
@@ -94,7 +100,7 @@ class Constraint internal constructor(internal val view: View, internal val cons
         isActive = false
     }
 
-    private inline fun updateConstraint(closure: () -> Unit) {
+    private fun updateConstraint(closure: () -> Unit) {
         if (isActive) {
             deactivate()
             closure()
