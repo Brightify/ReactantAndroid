@@ -30,11 +30,7 @@ open class AutoLayout : ViewGroup {
     }
 
     private fun init() {
-        if (id == View.NO_ID) {
-            id = View.generateViewId()
-        }
-
-        constraintSolver.addManagedView(id)
+        constraintSolver.addManagedView(this)
     }
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
@@ -63,11 +59,7 @@ open class AutoLayout : ViewGroup {
     override fun addView(child: View?, index: Int, params: LayoutParams?) {
         super.addView(child, index, params)
 
-        if (child?.id == View.NO_ID) {
-            child.id = View.generateViewId()
-        }
-
-        child?.id?.let { constraintSolver.addManagedView(it) }
+        child?.let { constraintSolver.addManagedView(it) }
     }
 
     fun children(vararg children: View): AutoLayout {

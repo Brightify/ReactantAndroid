@@ -3,7 +3,7 @@ package org.brightify.reactant.core.constraint
 import android.view.View
 import org.brightify.reactant.core.constraint.solver.Equation
 import org.brightify.reactant.core.constraint.solver.Solver
-import org.brightify.reactant.core.constraint.util.ComplexEquationsProvider
+import org.brightify.reactant.core.constraint.util.DefaultEquationsProvider
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
@@ -14,12 +14,12 @@ internal class ConstraintManager {
 
     private var delegatedTo: ConstraintManager? = null
 
-    private val managedEquations = HashMap<Int, List<Equation>>()
-    private val managedConstraints = HashSet<Constraint>()
-    private val managedViews = HashSet<Int>()
+    private val managedEquations = HashMap<View, List<Equation>>()
+    private val managedConstraints = HashMap<View, HashSet<Constraint>>()
+    private val managedViews = HashSet<View>()
 
     fun addConstraint(constraint: Constraint) {
-        if (managedConstraints.contains(constraint)) {
+        if (managedConstraints[constraint.view]?.contains(constraint) == true) {
             return
         }
 
@@ -33,11 +33,15 @@ internal class ConstraintManager {
                 // TODO Exception unknown id
             }
         }
-        managedConstraints.add(constraint)
+
+        if (managedConstraints[constraint.view] == null) {
+            managedConstraints[constraint.view] = HashSet()
+        }
+        managedConstraints[constraint.view]?.add(constraint)
     }
 
     fun removeConstraint(constraint: Constraint) {
-        if (!managedConstraints.contains(constraint)) {
+        if (managedConstraints[constraint.view]?.contains(constraint) != true) {
             return
         }
 
@@ -47,7 +51,8 @@ internal class ConstraintManager {
             constraint.constraintItems.map { it.equation }.forEach { ownSolver.removeEquation(it) }
             constraint.isManaged = false
         }
-        managedConstraints.remove(constraint)
+
+        managedConstraints[constraint.view]?.remove(constraint)
     }
 
     fun valueForVariable(variable: ConstraintVariable): Double {
@@ -59,7 +64,7 @@ internal class ConstraintManager {
         ownSolver = Solver()
         delegatedTo = manager
         managedViews.forEach { delegatedTo?.addManagedView(it) }
-        managedConstraints.forEach { delegatedTo?.addConstraint(it) }
+        managedConstraints.flatMap { it.value }.forEach { delegatedTo?.addConstraint(it) }
     }
 
     fun stopDelegation() {
@@ -69,53 +74,72 @@ internal class ConstraintManager {
 
         removeDelegate()
         managedEquations.flatMap { it.value }.forEach { ownSolver.addEquation(it) }
-        managedConstraints.forEach {
+        managedConstraints.flatMap { it.value }.forEach {
             it.constraintItems.map { it.equation }.forEach { ownSolver.addEquation(it) }
             it.isManaged = true
         }
     }
 
-    fun addManagedView(viewId: Int) {
-        if (managedViews.contains(viewId)) {
+    fun addManagedView(view: View) {
+        if (managedViews.contains(view)) {
             return
         }
 
-        managedViews.add(viewId)
-        val equations = ComplexEquationsProvider(viewId).equations
-        managedEquations[viewId] = equations
+        managedViews.add(view)
+        val equations = DefaultEquationsProvider(view).equations
+        managedEquations[view] = equations
         if (delegatedTo != null) {
-            delegatedTo?.addManagedView(viewId)
+            delegatedTo?.addManagedView(view)
         } else {
             equations.forEach { ownSolver.addEquation(it) }
         }
     }
 
-    fun removeManagedView(viewId: Int) {
-        if (!managedViews.contains(viewId)) {
+    fun removeManagedView(view: View) {
+        if (!managedViews.contains(view)) {
             return
         }
 
-        managedViews.remove(viewId)
-        val constraints = managedConstraints.filter { !verifyViewIdsUsedByConstraint(it) }
-        managedConstraints.removeAll(constraints)
+        managedViews.remove(view)
+
         if (delegatedTo != null) {
-            delegatedTo?.removeManagedView(viewId)
+            delegatedTo?.removeManagedView(view)
         } else {
-            managedEquations[viewId]?.forEach { ownSolver.removeEquation(it) }
-            constraints.forEach {
-                it.constraintItems.map { it.equation }.forEach { ownSolver.removeEquation(it) }
-                it.isManaged = false
+            managedEquations[view]?.forEach { ownSolver.removeEquation(it) }
+            managedConstraints.forEach { _, constraints ->
+                val constraintsToRemove = constraints.filter { !verifyViewIdsUsedByConstraint(it) }
+                constraints.removeAll(constraintsToRemove)
+                constraintsToRemove.forEach {
+                    it.constraintItems.map { it.equation }.forEach { ownSolver.removeEquation(it) }
+                    it.isManaged = false
+                }
             }
         }
-        managedEquations.remove(viewId)
+
+        managedConstraints.remove(view)
+        managedEquations.remove(view)
     }
 
     fun removeConstraintCreatedFromView(view: View) {
-        managedConstraints.filter { it.view == view }.forEach { removeConstraint(it) }
+        managedConstraints[view]?.forEach { removeConstraint(it) }
+    }
+
+    // TODO Rewrite
+    fun getValueConstraint(variable: ConstraintVariable): Constraint {
+        val constraint = managedConstraints[variable.view]?.firstOrNull { it.view == variable.view && it.constraintItems.map { it.leftVariable }.contains(variable) }
+        if (constraint != null) {
+            return constraint
+        } else {
+            val newConstraint = Constraint(variable.view, listOf(
+                    ConstraintItem(ConstraintVariable(variable.view, variable.type), ConstraintOperator.equal, offset = 0)
+            ))
+            addConstraint(newConstraint)
+            return newConstraint
+        }
     }
 
     private fun verifyViewIdsUsedByConstraint(constraint: Constraint): Boolean {
-        return constraint.constraintItems.flatMap { it.equation.terms.map { it.variable.viewId } }.all { managedViews.contains(it) }
+        return constraint.constraintItems.flatMap { it.equation.terms.map { it.variable.view } }.all { managedViews.contains(it) }
     }
 
     private fun removeDelegate() {
@@ -125,8 +149,11 @@ internal class ConstraintManager {
 
         managedViews.forEach { delegatedTo?.removeManagedView(it) }
         delegatedTo = null
-        val constraints = managedConstraints.filter { !verifyViewIdsUsedByConstraint(it) }
-        managedConstraints.removeAll(constraints)
-        constraints.forEach { it.isManaged = false }
+
+        managedConstraints.forEach { _, constraints ->
+            val constraintsToRemove = constraints.filter { !verifyViewIdsUsedByConstraint(it) }
+            constraints.removeAll(constraintsToRemove)
+            constraintsToRemove.forEach { it.isManaged = false }
+        }
     }
 }

@@ -8,8 +8,8 @@ import android.view.View
 class ConstraintMaker internal constructor(view: View, createdConstraints: MutableList<Constraint>,
                                            private val types: List<ConstraintType>) : ConstraintMakerProvider(view, createdConstraints) {
 
-    private val parentViewIdOrError: Int
-        get() = (view.parent as? View)?.id ?: throw RuntimeException()
+    private val parentViewOrError: View
+        get() = view.parent as? View ?: throw RuntimeException()
 
     fun equalTo(variable: ConstraintVariable): Constraint {
         return Constraint(variable, ConstraintOperator.equal)
@@ -20,11 +20,11 @@ class ConstraintMaker internal constructor(view: View, createdConstraints: Mutab
     }
 
     fun equalTo(view: View): Constraint {
-        return Constraint(view.id, ConstraintOperator.equal)
+        return Constraint(view, ConstraintOperator.equal)
     }
 
     fun equalToSuperview(): Constraint {
-        return Constraint(parentViewIdOrError, ConstraintOperator.equal)
+        return Constraint(parentViewOrError, ConstraintOperator.equal)
     }
 
     fun lessThanOrEqualTo(variable: ConstraintVariable): Constraint {
@@ -36,11 +36,11 @@ class ConstraintMaker internal constructor(view: View, createdConstraints: Mutab
     }
 
     fun lessThanOrEqualTo(view: View): Constraint {
-        return Constraint(view.id, ConstraintOperator.lessOrEqual)
+        return Constraint(view, ConstraintOperator.lessOrEqual)
     }
 
     fun lessThanOrEqualToSuperview(): Constraint {
-        return Constraint(parentViewIdOrError, ConstraintOperator.lessOrEqual)
+        return Constraint(parentViewOrError, ConstraintOperator.lessOrEqual)
     }
 
     fun greaterThanOrEqualTo(variable: ConstraintVariable): Constraint {
@@ -52,11 +52,11 @@ class ConstraintMaker internal constructor(view: View, createdConstraints: Mutab
     }
 
     fun greaterThanOrEqualTo(view: View): Constraint {
-        return Constraint(view.id, ConstraintOperator.greaterOrEqual)
+        return Constraint(view, ConstraintOperator.greaterOrEqual)
     }
 
     fun greaterThanOrEqualToSuperview(): Constraint {
-        return Constraint(parentViewIdOrError, ConstraintOperator.greaterOrEqual)
+        return Constraint(parentViewOrError, ConstraintOperator.greaterOrEqual)
     }
 
     override fun ConstraintMaker(type: ConstraintType): ConstraintMaker {
@@ -64,12 +64,12 @@ class ConstraintMaker internal constructor(view: View, createdConstraints: Mutab
     }
 
     private fun Constraint(variable: ConstraintVariable, operator: ConstraintOperator): Constraint {
-        return Constraint(types.distinct().map { ConstraintItem(ConstraintVariable(view.id, it), operator, variable) })
+        return Constraint(types.distinct().map { ConstraintItem(ConstraintVariable(view, it), operator, variable) })
     }
 
-    private fun Constraint(viewId: Int, operator: ConstraintOperator): Constraint {
+    private fun Constraint(view: View, operator: ConstraintOperator): Constraint {
         return Constraint(types.distinct().map {
-            ConstraintItem(ConstraintVariable(view.id, it), operator, ConstraintVariable(viewId, it))
+            ConstraintItem(ConstraintVariable(this.view, it), operator, ConstraintVariable(view, it))
         })
     }
 
@@ -84,8 +84,8 @@ class ConstraintMaker internal constructor(view: View, createdConstraints: Mutab
             ConstraintType.centerY -> ConstraintType.top
             else -> type
         }
-        return ConstraintItem(ConstraintVariable(view.id, type), operator,
-                variableType?.let { ConstraintVariable(parentViewIdOrError, type) }, value)
+        return ConstraintItem(ConstraintVariable(view, type), operator,
+                variableType?.let { ConstraintVariable(parentViewOrError, type) }, value)
     }
 
     private fun Constraint(constraintItems: List<ConstraintItem>): Constraint {

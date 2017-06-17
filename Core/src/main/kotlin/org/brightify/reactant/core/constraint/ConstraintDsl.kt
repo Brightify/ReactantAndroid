@@ -8,43 +8,83 @@ import android.view.View
  */
 open class ConstraintDsl internal constructor(private val view: View) {
 
-    internal val constraintManager: ConstraintManager
-        get() = findConstraintSolver(view)
+    internal val constraintManager: ConstraintManager by lazy {
+        findConstraintSolver(view)
+    }
 
     val left: ConstraintVariable
-        get() = ConstrainVariable(ConstraintType.left)
+        get() = ConstraintVariable(ConstraintType.left)
 
     val top: ConstraintVariable
-        get() = ConstrainVariable(ConstraintType.top)
+        get() = ConstraintVariable(ConstraintType.top)
 
     val right: ConstraintVariable
-        get() = ConstrainVariable(ConstraintType.right)
+        get() = ConstraintVariable(ConstraintType.right)
 
     val bottom: ConstraintVariable
-        get() = ConstrainVariable(ConstraintType.bottom)
+        get() = ConstraintVariable(ConstraintType.bottom)
 
     val width: ConstraintVariable
-        get() = ConstrainVariable(ConstraintType.width)
+        get() = ConstraintVariable(ConstraintType.width)
 
     val height: ConstraintVariable
-        get() = ConstrainVariable(ConstraintType.height)
-
-    val centerX: ConstraintVariable
-        get() = ConstrainVariable(ConstraintType.centerX)
-
-    val centerY: ConstraintVariable
-        get() = ConstrainVariable(ConstraintType.centerY)
+        get() = ConstraintVariable(ConstraintType.height)
 
     val leading: ConstraintVariable
-        get() = ConstrainVariable(ConstraintType.leading)
+        get() = ConstraintVariable(ConstraintType.leading)
 
     val trailing: ConstraintVariable
-        get() = ConstrainVariable(ConstraintType.trailing)
+        get() = ConstraintVariable(ConstraintType.trailing)
+
+    val centerX: ConstraintVariable
+        get() = ConstraintVariable(ConstraintType.centerX)
+
+    val centerY: ConstraintVariable
+        get() = ConstraintVariable(ConstraintType.centerY)
+
+    val leftMargin: ConstraintVariable
+        get() = ConstraintVariable(ConstraintType.leftMargin)
+
+    val topMargin: ConstraintVariable
+        get() = ConstraintVariable(ConstraintType.topMargin)
+
+    val rightMargin: ConstraintVariable
+        get() = ConstraintVariable(ConstraintType.rightMargin)
+
+    val bottomMargin: ConstraintVariable
+        get() = ConstraintVariable(ConstraintType.bottomMargin)
+
+    val leadingMargin: ConstraintVariable
+        get() = ConstraintVariable(ConstraintType.leadingMargin)
+
+    val trailingMargin: ConstraintVariable
+        get() = ConstraintVariable(ConstraintType.trailingMargin)
+
+    val centerXWithMargins: ConstraintVariable
+        get() = ConstraintVariable(ConstraintType.centerXWithMargins)
+
+    val centerYWithMargins: ConstraintVariable
+        get() = ConstraintVariable(ConstraintType.centerYWithMargins)
+
+    var margin: Margin
+        get() = MarginModifier(
+                constraintManager.valueForVariable(ConstraintVariable(ConstraintType.topMarginSize)),
+                constraintManager.valueForVariable(ConstraintVariable(ConstraintType.leftMarginSize)),
+                constraintManager.valueForVariable(ConstraintVariable(ConstraintType.bottomMarginSize)),
+                constraintManager.valueForVariable(ConstraintVariable(ConstraintType.rightMarginSize)),
+                { margin = it }
+        )
+        set(value) {
+            constraintManager.getValueConstraint(ConstraintVariable(ConstraintType.topMarginSize)).offset = value.top
+            constraintManager.getValueConstraint(ConstraintVariable(ConstraintType.leftMarginSize)).offset = value.left
+            constraintManager.getValueConstraint(ConstraintVariable(ConstraintType.bottomMarginSize)).offset = value.bottom
+            constraintManager.getValueConstraint(ConstraintVariable(ConstraintType.rightMarginSize)).offset = value.right
+        }
 
     fun makeConstraints(closure: ConstraintMakerProvider.() -> Unit) {
         val createdConstraints = ArrayList<Constraint>()
         closure(ConstraintMakerProvider(view, createdConstraints))
-        createdConstraints.forEach { it.activate() }
+        createdConstraints.filter { it.isActive }.forEach { it.activate() }
     }
 
     fun remakeConstraints(closure: ConstraintMakerProvider.() -> Unit) {
@@ -52,16 +92,22 @@ open class ConstraintDsl internal constructor(private val view: View) {
         makeConstraints(closure)
     }
 
-    fun debugValues(recursive: Boolean = false) {
-        if (recursive && view is AutoLayout) {
+    fun debugValues(description: String = view.javaClass.simpleName) {
+        listOf(top, left, bottom, right, width, height, centerX, centerY, topMargin, leftMargin, bottomMargin, rightMargin,
+                centerXWithMargins, centerYWithMargins).forEach {
+            Log.d("debugValues(view=$description)",
+                    it.type.toString().padEnd(18) + " = " + constraintManager.valueForVariable(it).toString()
+            )
+        }
+        Log.d("debugValues(view=$description)", "margin".padEnd(18) + " = " + margin.toString())
+    }
+
+    fun debugValuesRecursive() {
+        if (view is AutoLayout) {
             debugValues()
-            (0 until view.childCount).map { ConstraintDsl(view.getChildAt(it)) }.forEach { it.debugValues(true) }
+            (0 until view.childCount).map { ConstraintDsl(view.getChildAt(it)) }.forEach { it.debugValuesRecursive() }
         } else {
-            listOf(top, left, bottom, right, width, height, centerX, centerY).forEach {
-                Log.d("debugValues(type=${view.javaClass.simpleName}, viewId=${view.id})",
-                        it.type.toString().padEnd(7) + " = " + constraintManager.valueForVariable(it).toString()
-                )
-            }
+            debugValues()
         }
     }
 
@@ -74,7 +120,7 @@ open class ConstraintDsl internal constructor(private val view: View) {
         }
     }
 
-    private fun ConstrainVariable(type: ConstraintType): ConstraintVariable = ConstraintVariable(view.id, type)
+    private fun ConstraintVariable(type: ConstraintType): ConstraintVariable = ConstraintVariable(view, type)
 
     private tailrec fun findConstraintSolver(view: View): ConstraintManager {
         if (view is AutoLayout) {

@@ -12,7 +12,6 @@ class ConstraintPriority(priority: Int, val description: String = priority.toStr
         val high = ConstraintPriority(750, "high")
         val medium = ConstraintPriority(500, "medium")
         val low = ConstraintPriority(250, "low")
-        val intrinsic = ConstraintPriority(100, "intrinsic")
     }
 
     override fun toString(): String {
