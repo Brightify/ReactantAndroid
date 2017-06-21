@@ -75,10 +75,10 @@ open class ConstraintDsl internal constructor(private val view: View) {
                 { margin = it }
         )
         set(value) {
-            constraintManager.getValueConstraint(ConstraintVariable(ConstraintType.topMarginSize)).offset = value.top
-            constraintManager.getValueConstraint(ConstraintVariable(ConstraintType.leftMarginSize)).offset = value.left
-            constraintManager.getValueConstraint(ConstraintVariable(ConstraintType.bottomMarginSize)).offset = value.bottom
-            constraintManager.getValueConstraint(ConstraintVariable(ConstraintType.rightMarginSize)).offset = value.right
+            constraintManager.setValueForVariable(ConstraintVariable(ConstraintType.topMarginSize), value.top)
+            constraintManager.setValueForVariable(ConstraintVariable(ConstraintType.leftMarginSize), value.left)
+            constraintManager.setValueForVariable(ConstraintVariable(ConstraintType.bottomMarginSize), value.bottom)
+            constraintManager.setValueForVariable(ConstraintVariable(ConstraintType.rightMarginSize), value.right)
         }
 
     fun makeConstraints(closure: ConstraintMakerProvider.() -> Unit) {
@@ -125,7 +125,7 @@ open class ConstraintDsl internal constructor(private val view: View) {
 
     private tailrec fun findConstraintSolver(view: View): ConstraintManager {
         if (view is AutoLayout) {
-            return view.constraintSolver
+            return view.constraintManager
         } else {
             return findConstraintSolver(view.parent as? View ?: throw RuntimeException()) // TODO
         }

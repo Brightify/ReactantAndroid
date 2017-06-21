@@ -1,5 +1,6 @@
 package org.brightify.reactant.core.constraint
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.util.AttributeSet
 import android.view.View
@@ -10,7 +11,10 @@ import android.view.ViewGroup
  */
 open class AutoLayout : ViewGroup {
 
-    internal var constraintSolver = ConstraintManager()
+    internal var constraintManager = ConstraintManager()
+
+    private val density: Double
+        get() = resources.displayMetrics.density.toDouble()
 
     constructor(context: Context?) : super(context) {
         init()
@@ -30,37 +34,42 @@ open class AutoLayout : ViewGroup {
     }
 
     private fun init() {
-        constraintSolver.addManagedView(this)
-        constraintSolver.addConstraint(
-                Constraint(this, listOf(
-                        ConstraintItem(ConstraintVariable(this, ConstraintType.left), ConstraintOperator.equal),
-                        ConstraintItem(ConstraintVariable(this, ConstraintType.top), ConstraintOperator.equal)
-                ))
-        )
+        constraintManager.addManagedView(this)
+        constraintManager.setValueForVariable(snp.top, 0)
+        constraintManager.setValueForVariable(snp.left, 0)
     }
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         (0 until childCount).map { getChildAt(it) }.forEach {
             it.layout(
-                    dpiForVariable(it.snp.left),
-                    dpiForVariable(it.snp.top),
-                    dpiForVariable(it.snp.right),
-                    dpiForVariable(it.snp.bottom)
+                    getChildPosition(it.snp.left),
+                    getChildPosition(it.snp.top),
+                    getChildPosition(it.snp.right),
+                    getChildPosition(it.snp.bottom)
             )
         }
         snp.debugValuesRecursive()
     }
 
+    @SuppressLint("DrawAllocation")
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+        constraintManager.resetValueForVariable(snp.width)
+        constraintManager.resetValueForVariable(snp.height)
 
-        // TODO
+        (0 until childCount).map { getChildAt(it) }.forEach {
+            it.measure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED)
 
-        (0 until childCount).map { getChildAt(it) }.forEach { it.measure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED) }
-
-        if (!constraintSolver.isDelegated) {
-            constraintSolver.updateIntrinsicSizes(resources.displayMetrics.density)
+            if (it !is AutoLayout) {
+                constraintManager.setValueForVariable(ConstraintVariable(it, ConstraintType.intrinsicWidth), it.measuredWidth / density)
+                constraintManager.setValueForVariable(ConstraintVariable(it, ConstraintType.intrinsicHeight), it.measuredHeight / density)
+            }
         }
+
+        updateSizeConstraint(widthMeasureSpec, snp.width)
+        updateSizeConstraint(heightMeasureSpec, snp.height)
+
+        setMeasuredDimension((constraintManager.valueForVariable(snp.width) * density).toInt(),
+                (constraintManager.valueForVariable(snp.height) * density).toInt())
     }
 
     override fun shouldDelayChildPressedState() = false
@@ -70,11 +79,12 @@ open class AutoLayout : ViewGroup {
 
         child?.let {
             if (it is AutoLayout) {
-                it.constraintSolver.delegateTo(constraintSolver)
+                it.constraintManager.delegateTo(constraintManager)
+                it.constraintManager.resetValueForVariable(it.snp.top)
+                it.constraintManager.resetValueForVariable(it.snp.left)
             } else {
-                constraintSolver.addManagedView(it)
+                constraintManager.addManagedView(it)
             }
-            it.layoutParams = LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
         }
     }
 
@@ -83,9 +93,11 @@ open class AutoLayout : ViewGroup {
 
         child?.let {
             if (it is AutoLayout) {
-                it.constraintSolver.stopDelegation()
+                it.constraintManager.stopDelegation()
+                it.constraintManager.setValueForVariable(snp.top, 0)
+                it.constraintManager.setValueForVariable(snp.left, 0)
             } else {
-                constraintSolver.removeManagedView(it)
+                constraintManager.removeManagedView(it)
             }
         }
     }
@@ -95,7 +107,26 @@ open class AutoLayout : ViewGroup {
         return this
     }
 
-    private fun dpiForVariable(variable: ConstraintVariable): Int {
-        return (constraintSolver.valueForVariable(variable) * resources.displayMetrics.density).toInt()
+    private fun getChildPosition(variable: ConstraintVariable): Int {
+        val offsetType = when (variable.type) {
+            ConstraintType.left, ConstraintType.right -> ConstraintType.left
+            else -> ConstraintType.top
+        }
+        val offset = constraintManager.valueForVariable(ConstraintVariable(this, offsetType))
+        val positionInDpi = constraintManager.valueForVariable(variable) - offset
+        return (positionInDpi * density).toInt()
+    }
+
+    private fun updateSizeConstraint(measureSpec: Int, variable: ConstraintVariable) {
+        when (MeasureSpec.getMode(measureSpec)) {
+            MeasureSpec.EXACTLY -> constraintManager.setValueForVariable(variable, MeasureSpec.getSize(measureSpec) / density)
+            MeasureSpec.AT_MOST -> {
+                val width = constraintManager.valueForVariable(variable)
+                val maxWidth = MeasureSpec.getSize(measureSpec) / density
+                if (width > maxWidth) {
+                    constraintManager.setValueForVariable(variable, maxWidth)
+                }
+            }
+        }
     }
 }
