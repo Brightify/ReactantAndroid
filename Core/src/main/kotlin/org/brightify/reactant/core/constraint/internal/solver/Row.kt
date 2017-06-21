@@ -1,5 +1,6 @@
-package org.brightify.reactant.core.constraint.solver
+package org.brightify.reactant.core.constraint.internal.solver
 
+import org.brightify.reactant.core.constraint.internal.util.isAlmostZero
 import java.util.LinkedHashMap
 
 /**
@@ -7,13 +8,10 @@ import java.util.LinkedHashMap
  */
 internal class Row(var constant: Double = 0.0) {
 
-    private var symbolMap = LinkedHashMap<Symbol, Double>()
-
-    val symbols: Map<Symbol, Double>
-        get() = symbolMap
+    var symbols = LinkedHashMap<Symbol, Double>()
 
     constructor(other: Row) : this(other.constant) {
-        symbolMap = LinkedHashMap(other.symbolMap)
+        symbols = LinkedHashMap(other.symbols)
     }
 
     fun add(value: Double): Double {
@@ -22,35 +20,35 @@ internal class Row(var constant: Double = 0.0) {
     }
 
     fun insert(symbol: Symbol, coefficient: Double = 1.0) {
-        symbolMap[symbol] = (symbolMap[symbol] ?: 0.0) + coefficient
+        symbols[symbol] = (symbols[symbol] ?: 0.0) + coefficient
 
-        if (symbolMap[symbol]?.isAlmostZero == true) {
-            symbolMap.remove(symbol)
+        if (symbols[symbol]?.isAlmostZero == true) {
+            symbols.remove(symbol)
         }
     }
 
     fun insert(other: Row, coefficient: Double = 1.0) {
         this.constant += other.constant * coefficient
 
-        other.symbolMap.forEach { (key, value) -> insert(key, value * coefficient) }
+        other.symbols.forEach { (key, value) -> insert(key, value * coefficient) }
     }
 
     fun remove(symbol: Symbol) {
-        symbolMap.remove(symbol)
+        symbols.remove(symbol)
     }
 
     fun reverseSign() {
         constant *= -1
 
-        symbolMap.forEach { (key, value) -> symbolMap[key] = -value }
+        symbols.forEach { (key, value) -> symbols[key] = -value }
     }
 
     fun solveFor(symbol: Symbol) {
-        val coefficient = -1.0 / (symbolMap[symbol] ?: 1.0)
-        symbolMap.remove(symbol)
+        val coefficient = -1.0 / (symbols[symbol] ?: 1.0)
+        symbols.remove(symbol)
         constant *= coefficient
 
-        symbolMap.forEach { (key, value) -> symbolMap[key] = value * coefficient }
+        symbols.forEach { (key, value) -> symbols[key] = value * coefficient }
     }
 
     fun solveFor(lhs: Symbol, rhs: Symbol) {
@@ -59,12 +57,12 @@ internal class Row(var constant: Double = 0.0) {
     }
 
     fun coefficientFor(symbol: Symbol): Double {
-        return symbolMap[symbol] ?: 0.0
+        return symbols[symbol] ?: 0.0
     }
 
     fun substitute(symbol: Symbol, row: Row) {
-        symbolMap[symbol]?.let {
-            symbolMap.remove(symbol)
+        symbols[symbol]?.let {
+            symbols.remove(symbol)
             insert(row, it)
         }
     }

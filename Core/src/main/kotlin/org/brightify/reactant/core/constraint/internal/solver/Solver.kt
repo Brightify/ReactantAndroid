@@ -1,12 +1,12 @@
-package org.brightify.reactant.core.constraint.solver
+package org.brightify.reactant.core.constraint.internal.solver
 
 import org.brightify.reactant.core.constraint.Constraint
-import org.brightify.reactant.core.constraint.ConstraintItem
-import org.brightify.reactant.core.constraint.ConstraintOperator
 import org.brightify.reactant.core.constraint.ConstraintPriority
 import org.brightify.reactant.core.constraint.ConstraintVariable
-import org.brightify.reactant.core.constraint.exception.UnsatisfiableConstraintEquationException
 import org.brightify.reactant.core.constraint.exception.UnsatisfiableConstraintException
+import org.brightify.reactant.core.constraint.internal.ConstraintItem
+import org.brightify.reactant.core.constraint.internal.ConstraintOperator
+import org.brightify.reactant.core.constraint.internal.util.isAlmostZero
 import java.util.LinkedHashMap
 
 /**
@@ -20,7 +20,7 @@ internal class Solver {
     private val rows = LinkedHashMap<Symbol, Row>()
     private val variables = LinkedHashMap<ConstraintVariable, Symbol>()
     private val objective = Row()
-    private var artificalRow: Row? = null
+    private var artificialRow: Row? = null
 
     fun addConstraint(constraint: Constraint) {
         val errorItems = ArrayList<ConstraintItem>()
@@ -148,9 +148,9 @@ internal class Solver {
 
             val rowWithSymbol = rows[symbol]
             if (rowWithSymbol != null) {
-                row.insert(rowWithSymbol, it.coefficient.toDouble())
+                row.insert(rowWithSymbol, it.coefficient)
             } else {
-                row.insert(symbol, it.coefficient.toDouble())
+                row.insert(symbol, it.coefficient)
             }
         }
 
@@ -204,10 +204,10 @@ internal class Solver {
     private fun addWithArtificialVariable(row: Row): Boolean {
         val artificialVariable = Symbol(Symbol.Type.slack)
         rows[artificialVariable] = row
-        artificalRow = Row(row)
-        artificalRow?.let { optimize(it) }
-        val success = artificalRow?.constant?.isAlmostZero == true
-        artificalRow = null
+        artificialRow = Row(row)
+        artificialRow?.let { optimize(it) }
+        val success = artificialRow?.constant?.isAlmostZero == true
+        artificialRow = null
 
         val artificialRow = rows[artificialVariable]
         if (artificialRow != null) {
@@ -243,7 +243,7 @@ internal class Solver {
     private fun substitute(symbol: Symbol, row: Row) {
         rows.values.forEach { it.substitute(symbol, row) }
         objective.substitute(symbol, row)
-        artificalRow?.substitute(symbol, row)
+        artificialRow?.substitute(symbol, row)
     }
 
     private fun getEnteringSymbol(objective: Row): Symbol? {

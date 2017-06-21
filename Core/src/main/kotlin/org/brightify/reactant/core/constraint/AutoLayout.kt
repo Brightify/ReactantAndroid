@@ -5,6 +5,9 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.View
 import android.view.ViewGroup
+import org.brightify.reactant.core.constraint.internal.ConstraintManager
+import org.brightify.reactant.core.constraint.internal.ConstraintType
+import org.brightify.reactant.core.constraint.util.snp
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
@@ -45,19 +48,21 @@ open class AutoLayout : ViewGroup {
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         (0 until childCount).map { getChildAt(it) }.forEach {
+            val dsl = it.snp
             it.layout(
-                    getChildPosition(it.snp.left),
-                    getChildPosition(it.snp.top),
-                    getChildPosition(it.snp.right),
-                    getChildPosition(it.snp.bottom)
+                    getChildPosition(dsl.left),
+                    getChildPosition(dsl.top),
+                    getChildPosition(dsl.right),
+                    getChildPosition(dsl.bottom)
             )
         }
     }
 
     @SuppressLint("DrawAllocation")
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        constraintManager.resetValueForVariable(snp.width)
-        constraintManager.resetValueForVariable(snp.height)
+        val dsl = snp
+        constraintManager.resetValueForVariable(dsl.width)
+        constraintManager.resetValueForVariable(dsl.height)
 
         (0 until childCount).map { getChildAt(it) }.forEach {
             it.measure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED)
@@ -68,11 +73,11 @@ open class AutoLayout : ViewGroup {
             }
         }
 
-        updateSizeConstraint(widthMeasureSpec, snp.width)
-        updateSizeConstraint(heightMeasureSpec, snp.height)
+        updateSizeConstraint(widthMeasureSpec, dsl.width)
+        updateSizeConstraint(heightMeasureSpec, dsl.height)
 
-        setMeasuredDimension((constraintManager.valueForVariable(snp.width) * density).toInt(),
-                (constraintManager.valueForVariable(snp.height) * density).toInt())
+        setMeasuredDimension((constraintManager.valueForVariable(dsl.width) * density).toInt(),
+                (constraintManager.valueForVariable(dsl.height) * density).toInt())
     }
 
     override fun shouldDelayChildPressedState() = false

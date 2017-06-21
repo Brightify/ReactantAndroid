@@ -1,10 +1,12 @@
-package org.brightify.reactant.core.constraint
+package org.brightify.reactant.core.constraint.internal
 
 import android.view.View
+import org.brightify.reactant.core.constraint.Constraint
+import org.brightify.reactant.core.constraint.ConstraintVariable
 import org.brightify.reactant.core.constraint.exception.ViewNotManagedByCommonAutoLayoutException
-import org.brightify.reactant.core.constraint.solver.Equation
-import org.brightify.reactant.core.constraint.solver.Solver
-import org.brightify.reactant.core.constraint.util.DefaultEquationsProvider
+import org.brightify.reactant.core.constraint.internal.solver.Equation
+import org.brightify.reactant.core.constraint.internal.solver.Solver
+import org.brightify.reactant.core.constraint.internal.util.DefaultEquationsProvider
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>

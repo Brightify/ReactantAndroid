@@ -1,7 +1,12 @@
-package org.brightify.reactant.core.constraint
+package org.brightify.reactant.core.constraint.dsl
 
 import android.view.View
+import org.brightify.reactant.core.constraint.Constraint
+import org.brightify.reactant.core.constraint.ConstraintVariable
 import org.brightify.reactant.core.constraint.exception.MissingParentException
+import org.brightify.reactant.core.constraint.internal.ConstraintItem
+import org.brightify.reactant.core.constraint.internal.ConstraintOperator
+import org.brightify.reactant.core.constraint.internal.ConstraintType
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
@@ -83,6 +88,10 @@ class ConstraintMaker internal constructor(view: View, createdConstraints: Mutab
             ConstraintType.width, ConstraintType.height -> null
             ConstraintType.centerX, ConstraintType.centerXWithMargins -> ConstraintType.left
             ConstraintType.centerY, ConstraintType.centerYWithMargins -> ConstraintType.top
+            ConstraintType.leftMargin -> ConstraintType.left
+            ConstraintType.topMargin -> ConstraintType.top
+            ConstraintType.rightMargin -> ConstraintType.right
+            ConstraintType.bottomMargin -> ConstraintType.bottom
             else -> type
         }
         return ConstraintItem(ConstraintVariable(view, type), operator,

@@ -1,6 +1,4 @@
-package org.brightify.reactant.core.constraint.exception
-
-import org.brightify.reactant.core.constraint.solver.Equation
+package org.brightify.reactant.core.constraint.internal.solver
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>

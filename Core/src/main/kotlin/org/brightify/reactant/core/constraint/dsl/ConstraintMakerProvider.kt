@@ -1,6 +1,8 @@
-package org.brightify.reactant.core.constraint
+package org.brightify.reactant.core.constraint.dsl
 
 import android.view.View
+import org.brightify.reactant.core.constraint.Constraint
+import org.brightify.reactant.core.constraint.internal.ConstraintType
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
@@ -78,7 +80,7 @@ open class ConstraintMakerProvider internal constructor(protected val view: View
     val centerWithMargins: ConstraintMaker
         get() = centerXWithMargins.centerYWithMargins
 
-    protected open fun ConstraintMaker(type: ConstraintType): ConstraintMaker {
+    internal open fun ConstraintMaker(type: ConstraintType): ConstraintMaker {
         return ConstraintMaker(view, createdConstraints, listOf(type))
     }
 }

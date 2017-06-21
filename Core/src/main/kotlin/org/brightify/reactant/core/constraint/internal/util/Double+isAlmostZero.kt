@@ -1,4 +1,4 @@
-package org.brightify.reactant.core.constraint.solver
+package org.brightify.reactant.core.constraint.internal.util
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>

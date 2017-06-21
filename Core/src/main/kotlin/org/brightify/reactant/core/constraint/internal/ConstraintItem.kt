@@ -1,7 +1,9 @@
-package org.brightify.reactant.core.constraint
+package org.brightify.reactant.core.constraint.internal
 
-import org.brightify.reactant.core.constraint.solver.Equation
-import org.brightify.reactant.core.constraint.solver.Term
+import org.brightify.reactant.core.constraint.ConstraintPriority
+import org.brightify.reactant.core.constraint.ConstraintVariable
+import org.brightify.reactant.core.constraint.internal.solver.Equation
+import org.brightify.reactant.core.constraint.internal.solver.Term
 import kotlin.properties.Delegates.observable
 
 /**
@@ -28,7 +30,7 @@ internal class ConstraintItem(val leftVariable: ConstraintVariable, val operator
     var equation = createEquation()
 
     override fun toString(): String {
-        val rightVariable = rightVariable?.let { Term(multiplier, rightVariable).toString() + " " } ?: ""
+        val rightVariable = rightVariable?.let { Term(multiplier.toDouble(), rightVariable).toString() + " " } ?: ""
         val offset = offset.toDouble()
         val absOffset = Math.abs(offset)
         val offsetString: String
@@ -39,19 +41,15 @@ internal class ConstraintItem(val leftVariable: ConstraintVariable, val operator
         } else if (rightVariable.isEmpty()) {
             offsetString = "$absOffset "
         } else {
-            offsetString = "+ $absOffset "
+            offsetString = "+  "
         }
 
         return "{$leftVariable} $operator $rightVariable$offsetString($priority)"
     }
 
     private fun createEquation(): Equation {
-        return Equation(
-                leftTerms = listOf(Term(leftVariable)),
-                operator = operator,
-                rightConstant = offset,
-                rightTerms = rightVariable?.let { listOf(Term(multiplier, it)) } ?: emptyList(),
-                priority = priority
-        )
+        val terms = mutableListOf(Term(leftVariable))
+        rightVariable?.let { terms.add(Term(-multiplier.toDouble(), it)) }
+        return Equation(-offset.toDouble(), terms, operator, priority)
     }
 }

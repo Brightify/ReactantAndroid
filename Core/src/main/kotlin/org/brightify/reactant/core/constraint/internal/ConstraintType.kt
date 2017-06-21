@@ -1,9 +1,9 @@
-package org.brightify.reactant.core.constraint
+package org.brightify.reactant.core.constraint.internal
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
-class ConstraintType private constructor(private val description: String) {
+internal class ConstraintType private constructor(private val description: String) {
 
     companion object {
         val left = ConstraintType("left")
@@ -21,12 +21,12 @@ class ConstraintType private constructor(private val description: String) {
         val centerXWithMargins = ConstraintType("centerXWithMargins")
         val centerYWithMargins = ConstraintType("centerYWithMargins")
 
-        internal val leftMarginSize = ConstraintType("leftMarginSize")
-        internal val topMarginSize = ConstraintType("topMarginSize")
-        internal val rightMarginSize = ConstraintType("rightMarginSize")
-        internal val bottomMarginSize = ConstraintType("bottomMarginSize")
-        internal val intrinsicWidth = ConstraintType("intrinsicWidth")
-        internal val intrinsicHeight = ConstraintType("intrinsicHeight")
+        val leftMarginSize = ConstraintType("leftMarginSize")
+        val topMarginSize = ConstraintType("topMarginSize")
+        val rightMarginSize = ConstraintType("rightMarginSize")
+        val bottomMarginSize = ConstraintType("bottomMarginSize")
+        val intrinsicWidth = ConstraintType("intrinsicWidth")
+        val intrinsicHeight = ConstraintType("intrinsicHeight")
     }
 
     override fun toString(): String = description

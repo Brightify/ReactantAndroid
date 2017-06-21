@@ -1,4 +1,4 @@
-package org.brightify.reactant.core.constraint
+package org.brightify.reactant.core.constraint.util
 
 import android.view.View
 import android.view.ViewGroup

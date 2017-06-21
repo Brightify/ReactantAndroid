@@ -1,4 +1,4 @@
-package org.brightify.reactant.core.constraint
+package org.brightify.reactant.core.constraint.util
 
 import kotlin.properties.Delegates
 

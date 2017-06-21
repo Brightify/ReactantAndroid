@@ -2,6 +2,9 @@ package org.brightify.reactant.core.constraint
 
 import android.view.View
 import org.brightify.reactant.core.constraint.exception.InsetUsedOnSizeConstraintException
+import org.brightify.reactant.core.constraint.internal.ConstraintItem
+import org.brightify.reactant.core.constraint.internal.ConstraintType
+import org.brightify.reactant.core.constraint.util.snp
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
@@ -74,7 +77,7 @@ class Constraint internal constructor(internal val view: View, internal val cons
 
     fun inset(top: Number = 0, left: Number = 0, bottom: Number = 0, right: Number = 0): Constraint {
         constraintItems.forEach {
-            when(it.type) {
+            when (it.type) {
                 ConstraintType.top -> it.offset = top
                 ConstraintType.left -> it.offset = left
                 ConstraintType.bottom -> it.offset = -bottom.toDouble()

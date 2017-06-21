@@ -1,17 +1,22 @@
-package org.brightify.reactant.core.constraint
+package org.brightify.reactant.core.constraint.dsl
 
 import android.util.Log
 import android.view.View
+import org.brightify.reactant.core.constraint.AutoLayout
+import org.brightify.reactant.core.constraint.Constraint
+import org.brightify.reactant.core.constraint.ConstraintVariable
 import org.brightify.reactant.core.constraint.exception.AutoLayoutNotFoundException
+import org.brightify.reactant.core.constraint.internal.ConstraintManager
+import org.brightify.reactant.core.constraint.internal.ConstraintType
+import org.brightify.reactant.core.constraint.util.Margin
+import org.brightify.reactant.core.constraint.util.children
+import org.brightify.reactant.core.constraint.util.description
+import org.brightify.reactant.core.constraint.util.snp
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
-open class ConstraintDsl internal constructor(private val view: View) {
-
-    internal val constraintManager: ConstraintManager by lazy {
-        findConstraintSolver(view)
-    }
+class ConstraintDsl internal constructor(private val view: View) {
 
     val left: ConstraintVariable
         get() = ConstraintVariable(ConstraintType.left)
@@ -81,6 +86,10 @@ open class ConstraintDsl internal constructor(private val view: View) {
             constraintManager.setValueForVariable(ConstraintVariable(ConstraintType.bottomMarginSize), value.bottom)
             constraintManager.setValueForVariable(ConstraintVariable(ConstraintType.rightMarginSize), value.right)
         }
+
+    internal val constraintManager: ConstraintManager by lazy {
+        findConstraintSolver(view)
+    }
 
     fun makeConstraints(closure: ConstraintMakerProvider.() -> Unit) {
         val createdConstraints = ArrayList<Constraint>()
