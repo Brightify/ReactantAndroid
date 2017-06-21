@@ -2,6 +2,7 @@ package org.brightify.reactant.core.constraint
 
 import android.util.Log
 import android.view.View
+import org.brightify.reactant.core.constraint.exception.AutoLayoutNotFoundException
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
@@ -30,11 +31,12 @@ open class ConstraintDsl internal constructor(private val view: View) {
     val height: ConstraintVariable
         get() = ConstraintVariable(ConstraintType.height)
 
+    // TODO Add support for RTL layouts
     val leading: ConstraintVariable
-        get() = ConstraintVariable(ConstraintType.leading)
+        get() = left
 
     val trailing: ConstraintVariable
-        get() = ConstraintVariable(ConstraintType.trailing)
+        get() = right
 
     val centerX: ConstraintVariable
         get() = ConstraintVariable(ConstraintType.centerX)
@@ -55,10 +57,10 @@ open class ConstraintDsl internal constructor(private val view: View) {
         get() = ConstraintVariable(ConstraintType.bottomMargin)
 
     val leadingMargin: ConstraintVariable
-        get() = ConstraintVariable(ConstraintType.leadingMargin)
+        get() = leftMargin
 
     val trailingMargin: ConstraintVariable
-        get() = ConstraintVariable(ConstraintType.trailingMargin)
+        get() = rightMargin
 
     val centerXWithMargins: ConstraintVariable
         get() = ConstraintVariable(ConstraintType.centerXWithMargins)
@@ -67,13 +69,12 @@ open class ConstraintDsl internal constructor(private val view: View) {
         get() = ConstraintVariable(ConstraintType.centerYWithMargins)
 
     var margin: Margin
-        get() = MarginModifier(
+        get() = Margin(
                 constraintManager.valueForVariable(ConstraintVariable(ConstraintType.topMarginSize)),
                 constraintManager.valueForVariable(ConstraintVariable(ConstraintType.leftMarginSize)),
                 constraintManager.valueForVariable(ConstraintVariable(ConstraintType.bottomMarginSize)),
-                constraintManager.valueForVariable(ConstraintVariable(ConstraintType.rightMarginSize)),
-                { margin = it }
-        )
+                constraintManager.valueForVariable(ConstraintVariable(ConstraintType.rightMarginSize)))
+                .apply { onChange = { margin = it } }
         set(value) {
             constraintManager.setValueForVariable(ConstraintVariable(ConstraintType.topMarginSize), value.top)
             constraintManager.setValueForVariable(ConstraintVariable(ConstraintType.leftMarginSize), value.left)
@@ -88,36 +89,41 @@ open class ConstraintDsl internal constructor(private val view: View) {
     }
 
     fun remakeConstraints(closure: ConstraintMakerProvider.() -> Unit) {
-        constraintManager.removeConstraintCreatedFromView(view)
+        constraintManager.removeConstraintsCreatedFromView(view)
         makeConstraints(closure)
     }
 
-    fun debugValues(description: String = view.javaClass.simpleName) {
-        listOf(top, left, bottom, right, width, height, centerX, centerY, topMargin, leftMargin, bottomMargin, rightMargin,
+    fun debugValues() {
+        (listOf(top, left, bottom, right, width, height, centerX, centerY, topMargin, leftMargin, bottomMargin, rightMargin,
                 centerXWithMargins, centerYWithMargins, ConstraintVariable(ConstraintType.intrinsicWidth),
-                ConstraintVariable(ConstraintType.intrinsicHeight)).forEach {
-            Log.d("debugValues(view=$description)",
-                    it.type.toString().padEnd(18) + " = " + constraintManager.valueForVariable(it).toString()
-            )
-        }
-        Log.d("debugValues(view=$description)", "margin".padEnd(18) + " = " + margin.toString())
+                ConstraintVariable(ConstraintType.intrinsicHeight))
+                .map {
+                    val value = constraintManager.valueForVariable(it)
+                    "${it.type} = ${if (value == 0.0) Math.abs(value) else value}"
+                }
+                .joinToString("\n") + "\nmargin = $margin")
+                .let { Log.d("debugValues(view=${view.description})", it) }
     }
 
     fun debugValuesRecursive() {
+        debugValues()
         if (view is AutoLayout) {
-            debugValues()
-            (0 until view.childCount).map { ConstraintDsl(view.getChildAt(it)) }.forEach { it.debugValuesRecursive() }
-        } else {
-            debugValues()
+            view.children.forEach { it.snp.debugValuesRecursive() }
         }
     }
 
-    fun debugConstraints(recursive: Boolean = false) {
-        if (recursive && view is AutoLayout) {
-            debugConstraints()
-            (0 until view.childCount).map { ConstraintDsl(view.getChildAt(it)) }.forEach { it.debugConstraints(true) }
-        } else {
-            // TODO
+    fun debugConstraints() {
+        constraintManager.allConstraints
+                .flatMap { it.constraintItems }
+                .filter { it.leftVariable.view == view || it.rightVariable?.view == view }
+                .map { it.toString() }
+                .joinToString("\n").let { Log.d("debugConstraints(view=${view.description})", it) }
+    }
+
+    fun debugConstraintsRecursive() {
+        debugConstraints()
+        if (view is AutoLayout) {
+            view.children.forEach { it.snp.debugConstraintsRecursive() }
         }
     }
 
@@ -127,7 +133,7 @@ open class ConstraintDsl internal constructor(private val view: View) {
         if (view is AutoLayout) {
             return view.constraintManager
         } else {
-            return findConstraintSolver(view.parent as? View ?: throw RuntimeException()) // TODO
+            return findConstraintSolver(view.parent as? View ?: throw AutoLayoutNotFoundException(this.view))
         }
     }
 }

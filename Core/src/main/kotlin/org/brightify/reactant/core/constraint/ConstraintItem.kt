@@ -27,6 +27,24 @@ internal class ConstraintItem(val leftVariable: ConstraintVariable, val operator
 
     var equation = createEquation()
 
+    override fun toString(): String {
+        val rightVariable = rightVariable?.let { Term(multiplier, rightVariable).toString() + " " } ?: ""
+        val offset = offset.toDouble()
+        val absOffset = Math.abs(offset)
+        val offsetString: String
+        if (offset == 0.0 && !rightVariable.isEmpty()) {
+            offsetString = ""
+        } else if (offset < 0) {
+            offsetString = "- $absOffset "
+        } else if (rightVariable.isEmpty()) {
+            offsetString = "$absOffset "
+        } else {
+            offsetString = "+ $absOffset "
+        }
+
+        return "{$leftVariable} $operator $rightVariable$offsetString($priority)"
+    }
+
     private fun createEquation(): Equation {
         return Equation(
                 leftTerms = listOf(Term(leftVariable)),

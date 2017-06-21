@@ -1,8 +1,12 @@
 package org.brightify.reactant.core.constraint.solver
 
+import org.brightify.reactant.core.constraint.Constraint
+import org.brightify.reactant.core.constraint.ConstraintItem
 import org.brightify.reactant.core.constraint.ConstraintOperator
 import org.brightify.reactant.core.constraint.ConstraintPriority
 import org.brightify.reactant.core.constraint.ConstraintVariable
+import org.brightify.reactant.core.constraint.exception.UnsatisfiableConstraintEquationException
+import org.brightify.reactant.core.constraint.exception.UnsatisfiableConstraintException
 import java.util.LinkedHashMap
 
 /**
@@ -18,6 +22,24 @@ internal class Solver {
     private val objective = Row()
     private var artificalRow: Row? = null
 
+    fun addConstraint(constraint: Constraint) {
+        val errorItems = ArrayList<ConstraintItem>()
+        constraint.constraintItems.forEach {
+            try {
+                addEquation(it.equation)
+            } catch(_: UnsatisfiableConstraintEquationException) {
+                errorItems.add(it)
+            }
+        }
+        if (!errorItems.isEmpty()) {
+            throw UnsatisfiableConstraintException(Constraint(constraint.view, errorItems))
+        }
+    }
+
+    fun removeConstraint(constraint: Constraint) {
+        constraint.constraintItems.forEach { removeEquation(it.equation) }
+    }
+
     fun addEquation(equation: Equation) {
         if (tagForEquation.containsKey(equation)) {
             return
@@ -30,7 +52,7 @@ internal class Solver {
             if (row.constant.isAlmostZero) {
                 subject = tag.marker
             } else {
-                throw UnsatisfiableConstraintException(equation)
+                throw UnsatisfiableConstraintEquationException(equation)
             }
         }
 
@@ -39,7 +61,7 @@ internal class Solver {
             substitute(subject, row)
             rows[subject] = row
         } else if (!addWithArtificialVariable(row)) {
-            throw UnsatisfiableConstraintException(equation)
+            throw UnsatisfiableConstraintEquationException(equation)
         }
 
         tagForEquation[equation] = tag
@@ -121,20 +143,16 @@ internal class Solver {
 
     private fun createRow(equation: Equation): Pair<Row, Tag> {
         val row = Row(equation.constant)
-        equation.terms
-                .groupBy { it.variable }
-                .map { Term(it.value.map { it.coefficient.toDouble() }.reduce { acc, coefficient -> acc + coefficient }, it.key) }
-                .filter { !it.coefficient.toDouble().isAlmostZero }
-                .forEach {
-                    val symbol = getVarSymbol(it.variable)
+        equation.terms.simplified().forEach {
+            val symbol = getVarSymbol(it.variable)
 
-                    val rowWithSymbol = rows[symbol]
-                    if (rowWithSymbol != null) {
-                        row.insert(rowWithSymbol, it.coefficient.toDouble())
-                    } else {
-                        row.insert(symbol, it.coefficient.toDouble())
-                    }
-                }
+            val rowWithSymbol = rows[symbol]
+            if (rowWithSymbol != null) {
+                row.insert(rowWithSymbol, it.coefficient.toDouble())
+            } else {
+                row.insert(symbol, it.coefficient.toDouble())
+            }
+        }
 
         val marker: Symbol
         var other: Symbol? = null
@@ -211,7 +229,7 @@ internal class Solver {
     private fun optimize(objective: Row) {
         while (true) {
             val entering = getEnteringSymbol(objective) ?: return
-            val leaving = getLeavingSymbol(entering) ?: return // TODO throw RuntimeException()
+            val leaving = getLeavingSymbol(entering) ?: return
 
             rows[leaving]?.let { row ->
                 rows.remove(leaving)

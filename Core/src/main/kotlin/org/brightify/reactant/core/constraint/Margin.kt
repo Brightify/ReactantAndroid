@@ -5,7 +5,25 @@ import kotlin.properties.Delegates
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
-open class Margin(open var top: Number = 0, open var left: Number = 0, open var bottom: Number = 0, open var right: Number = 0) {
+class Margin(top: Number = 0, left: Number = 0, bottom: Number = 0, right: Number = 0) {
+
+    internal var onChange: ((Margin) -> Unit)? = null
+
+    var top: Number by Delegates.observable(top) { _, _, _ ->
+        onChange?.invoke(this)
+    }
+
+    var left: Number by Delegates.observable(left) { _, _, _ ->
+        onChange?.invoke(this)
+    }
+
+    var bottom: Number by Delegates.observable(bottom) { _, _, _ ->
+        onChange?.invoke(this)
+    }
+
+    var right: Number by Delegates.observable(right) { _, _, _ ->
+        onChange?.invoke(this)
+    }
 
     constructor(value: Number) : this(value, value, value, value)
 
@@ -31,25 +49,5 @@ open class Margin(open var top: Number = 0, open var left: Number = 0, open var 
 
     override fun toString(): String {
         return "top: $top, left: $left, bottom: $bottom, right: $right"
-    }
-}
-
-internal class MarginModifier(top: Number, left: Number, bottom: Number, right: Number, onChange: (Margin) -> Unit) : Margin(top, left,
-        bottom, right) {
-
-    override var top: Number by Delegates.observable(top) { _, _, _ ->
-        onChange(this)
-    }
-
-    override var left: Number by Delegates.observable(left) { _, _, _ ->
-        onChange(this)
-    }
-
-    override var bottom: Number by Delegates.observable(bottom) { _, _, _ ->
-        onChange(this)
-    }
-
-    override var right: Number by Delegates.observable(right) { _, _, _ ->
-        onChange(this)
     }
 }

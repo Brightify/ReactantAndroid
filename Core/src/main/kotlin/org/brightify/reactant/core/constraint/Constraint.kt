@@ -1,6 +1,7 @@
 package org.brightify.reactant.core.constraint
 
 import android.view.View
+import org.brightify.reactant.core.constraint.exception.InsetUsedOnSizeConstraintException
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
@@ -86,7 +87,7 @@ class Constraint internal constructor(internal val view: View, internal val cons
                 ConstraintType.rightMargin -> it.offset = -right.toDouble()
                 ConstraintType.centerXWithMargins -> it.offset = left
                 ConstraintType.centerYWithMargins -> it.offset = top
-                // TODO Exception else ->
+                else -> throw InsetUsedOnSizeConstraintException()
             }
         }
         return this
@@ -98,6 +99,10 @@ class Constraint internal constructor(internal val view: View, internal val cons
 
     fun deactivate() {
         isActive = false
+    }
+
+    override fun toString(): String {
+        return constraintItems.map { it.toString() }.joinToString("\n")
     }
 
     private fun updateConstraint(closure: () -> Unit) {

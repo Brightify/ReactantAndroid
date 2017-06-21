@@ -26,11 +26,12 @@ open class ConstraintMakerProvider internal constructor(protected val view: View
     val height: ConstraintMaker
         get() = ConstraintMaker(ConstraintType.height)
 
+    // TODO Add support for RTL layouts
     val leading: ConstraintMaker
-        get() = ConstraintMaker(ConstraintType.leading)
+        get() = left
 
     val trailing: ConstraintMaker
-        get() = ConstraintMaker(ConstraintType.trailing)
+        get() = right
 
     val centerX: ConstraintMaker
         get() = ConstraintMaker(ConstraintType.centerX)
@@ -51,10 +52,10 @@ open class ConstraintMakerProvider internal constructor(protected val view: View
         get() = ConstraintMaker(ConstraintType.bottomMargin)
 
     val leadingMargin: ConstraintMaker
-        get() = ConstraintMaker(ConstraintType.leadingMargin)
+        get() = leftMargin
 
     val trailingMargin: ConstraintMaker
-        get() = ConstraintMaker(ConstraintType.trailingMargin)
+        get() = rightMargin
 
     val centerXWithMargins: ConstraintMaker
         get() = ConstraintMaker(ConstraintType.centerXWithMargins)

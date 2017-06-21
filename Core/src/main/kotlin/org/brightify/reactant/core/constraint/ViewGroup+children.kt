@@ -1,12 +1,10 @@
 package org.brightify.reactant.core.constraint
 
 import android.view.View
+import android.view.ViewGroup
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
-val View.snp: ConstraintDsl
-    get() = ConstraintDsl(this)
-
-val View.description: String
-    get() = "${javaClass.simpleName}($id)"
+val ViewGroup.children: List<View>
+    get() = (0 until childCount).map { getChildAt(it) }

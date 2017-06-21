@@ -7,5 +7,20 @@ import org.brightify.reactant.core.constraint.ConstraintVariable
  */
 internal class Term(val coefficient: Number, val variable: ConstraintVariable) {
 
-    constructor(variable: ConstraintVariable): this(1, variable)
+    constructor(variable: ConstraintVariable) : this(1, variable)
+
+    override fun toString(): String {
+        val sign = if (coefficient.toDouble() >= 0) "" else "- "
+        val coefficient = Math.abs(coefficient.toDouble())
+        val coefficientString = if (coefficient == 1.0) "" else "$coefficient * "
+        return "$sign$coefficientString{$variable}"
+    }
+}
+
+internal fun Iterable<Term>.simplified(): List<Term> {
+    return groupBy { it.variable }
+            .map {
+                Term(it.value.map { it.coefficient.toDouble() }.reduce { acc, coefficient -> acc + coefficient }, it.key)
+            }
+            .filter { !it.coefficient.toDouble().isAlmostZero }
 }

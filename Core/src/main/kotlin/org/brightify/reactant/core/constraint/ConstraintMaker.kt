@@ -1,6 +1,7 @@
 package org.brightify.reactant.core.constraint
 
 import android.view.View
+import org.brightify.reactant.core.constraint.exception.MissingParentException
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
@@ -9,7 +10,7 @@ class ConstraintMaker internal constructor(view: View, createdConstraints: Mutab
                                            private val types: List<ConstraintType>) : ConstraintMakerProvider(view, createdConstraints) {
 
     private val parentViewOrError: View
-        get() = view.parent as? View ?: throw RuntimeException()
+        get() = view.parent as? View ?: throw MissingParentException(view)
 
     fun equalTo(variable: ConstraintVariable): Constraint {
         return Constraint(variable, ConstraintOperator.equal)

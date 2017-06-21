@@ -1,6 +1,7 @@
 package org.brightify.reactant.core.constraint
 
 import android.view.View
+import org.brightify.reactant.core.constraint.exception.ViewNotManagedByCommonAutoLayoutException
 import org.brightify.reactant.core.constraint.solver.Equation
 import org.brightify.reactant.core.constraint.solver.Solver
 import org.brightify.reactant.core.constraint.util.DefaultEquationsProvider
@@ -24,6 +25,9 @@ internal class ConstraintManager {
     val managedViews: Set<View>
         get() = managedEquations.keys
 
+    val allConstraints: List<Constraint>
+        get() = managedConstraints.flatMap { it.value }
+
     fun addConstraint(constraint: Constraint) {
         if (managedConstraints[constraint.view]?.contains(constraint) == true) {
             return
@@ -33,10 +37,11 @@ internal class ConstraintManager {
             delegatedTo?.addConstraint(constraint)
         } else {
             if (verifyViewIdsUsedByConstraint(constraint)) {
-                constraint.constraintItems.map { it.equation }.forEach { ownSolver.addEquation(it) }
+                ownSolver.addConstraint(constraint)
                 constraint.isManaged = true
             } else {
-                // TODO Exception unknown id
+                throw ViewNotManagedByCommonAutoLayoutException(constraint.view,
+                        constraint.constraintItems.mapNotNull { it.rightVariable?.view }.first { !managedViews.contains(it) })
             }
         }
 
@@ -54,7 +59,7 @@ internal class ConstraintManager {
         if (isDelegated) {
             delegatedTo?.removeConstraint(constraint)
         } else {
-            constraint.constraintItems.map { it.equation }.forEach { ownSolver.removeEquation(it) }
+            ownSolver.removeConstraint(constraint)
             constraint.isManaged = false
         }
 
@@ -82,7 +87,7 @@ internal class ConstraintManager {
         removeDelegate()
         managedEquations.flatMap { it.value }.forEach { ownSolver.addEquation(it) }
         managedConstraints.flatMap { it.value }.forEach {
-            it.constraintItems.map { it.equation }.forEach { ownSolver.addEquation(it) }
+            ownSolver.addConstraint(it)
             it.isManaged = true
         }
     }
@@ -106,13 +111,13 @@ internal class ConstraintManager {
             return
         }
 
-        removeConstraintCreatedFromView(view)
+        removeConstraintsCreatedFromView(view)
         managedConstraints.flatMap { it.value }.filter { !verifyViewIdsUsedByConstraint(it) }.forEach { removeConstraint(it) }
 
         removeManagedViewRecursive(view)
     }
 
-    fun removeConstraintCreatedFromView(view: View) {
+    fun removeConstraintsCreatedFromView(view: View) {
         managedConstraints[view]?.forEach { removeConstraint(it) }
     }
 

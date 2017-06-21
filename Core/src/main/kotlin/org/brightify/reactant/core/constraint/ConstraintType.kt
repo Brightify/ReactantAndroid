@@ -12,16 +12,12 @@ class ConstraintType private constructor(private val description: String) {
         val bottom = ConstraintType("bottom")
         val width = ConstraintType("width")
         val height = ConstraintType("height")
-        val leading = left // TODO Add support for RTL layouts
-        val trailing = right
         val centerX = ConstraintType("centerX")
         val centerY = ConstraintType("centerY")
         val leftMargin = ConstraintType("leftMargin")
         val topMargin = ConstraintType("topMargin")
         val rightMargin = ConstraintType("rightMargin")
         val bottomMargin = ConstraintType("bottomMargin")
-        val leadingMargin = leftMargin
-        val trailingMargin = rightMargin
         val centerXWithMargins = ConstraintType("centerXWithMargins")
         val centerYWithMargins = ConstraintType("centerYWithMargins")
 

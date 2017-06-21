@@ -37,6 +37,10 @@ open class AutoLayout : ViewGroup {
         constraintManager.addManagedView(this)
         constraintManager.setValueForVariable(snp.top, 0)
         constraintManager.setValueForVariable(snp.left, 0)
+
+        if (id == View.NO_ID) {
+            id = View.generateViewId()
+        }
     }
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
@@ -48,7 +52,6 @@ open class AutoLayout : ViewGroup {
                     getChildPosition(it.snp.bottom)
             )
         }
-        snp.debugValuesRecursive()
     }
 
     @SuppressLint("DrawAllocation")
@@ -84,6 +87,10 @@ open class AutoLayout : ViewGroup {
                 it.constraintManager.resetValueForVariable(it.snp.left)
             } else {
                 constraintManager.addManagedView(it)
+            }
+
+            if (it.id == View.NO_ID) {
+                it.id = View.generateViewId()
             }
         }
     }
