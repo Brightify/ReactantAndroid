@@ -38,15 +38,20 @@ class Constraint internal constructor(internal val view: View, internal val cons
     var isActive: Boolean
         get() = isManaged
         set(value) {
-            if (value) {
-                view.snp.constraintManager.addConstraint(this)
-            } else {
-                view.snp.constraintManager.removeConstraint(this)
+            if (initialized) {
+                if (value) {
+                    view.snp.constraintManager.addConstraint(this)
+                } else {
+                    view.snp.constraintManager.removeConstraint(this)
+                }
             }
+
             isManaged = value
         }
 
     internal var isManaged = true
+
+    internal var initialized = false
 
     fun multipliedBy(value: Number): Constraint {
         this.multiplier = value

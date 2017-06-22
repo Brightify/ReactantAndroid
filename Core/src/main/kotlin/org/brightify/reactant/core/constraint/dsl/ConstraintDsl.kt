@@ -4,10 +4,12 @@ import android.util.Log
 import android.view.View
 import org.brightify.reactant.core.constraint.AutoLayout
 import org.brightify.reactant.core.constraint.Constraint
+import org.brightify.reactant.core.constraint.ConstraintPriority
 import org.brightify.reactant.core.constraint.ConstraintVariable
 import org.brightify.reactant.core.constraint.exception.AutoLayoutNotFoundException
-import org.brightify.reactant.core.constraint.internal.ConstraintManager
 import org.brightify.reactant.core.constraint.internal.ConstraintType
+import org.brightify.reactant.core.constraint.internal.manager.ConstraintManager
+import org.brightify.reactant.core.constraint.internal.util.IntrinsicSize
 import org.brightify.reactant.core.constraint.util.Margin
 import org.brightify.reactant.core.constraint.util.children
 import org.brightify.reactant.core.constraint.util.description
@@ -75,10 +77,10 @@ class ConstraintDsl internal constructor(private val view: View) {
 
     var margin: Margin
         get() = Margin(
-                constraintManager.valueForVariable(ConstraintVariable(ConstraintType.topMarginSize)),
-                constraintManager.valueForVariable(ConstraintVariable(ConstraintType.leftMarginSize)),
-                constraintManager.valueForVariable(ConstraintVariable(ConstraintType.bottomMarginSize)),
-                constraintManager.valueForVariable(ConstraintVariable(ConstraintType.rightMarginSize)))
+                constraintManager.getValueForVariable(ConstraintVariable(ConstraintType.topMarginSize)),
+                constraintManager.getValueForVariable(ConstraintVariable(ConstraintType.leftMarginSize)),
+                constraintManager.getValueForVariable(ConstraintVariable(ConstraintType.bottomMarginSize)),
+                constraintManager.getValueForVariable(ConstraintVariable(ConstraintType.rightMarginSize)))
                 .apply { onChange = { margin = it } }
         set(value) {
             constraintManager.setValueForVariable(ConstraintVariable(ConstraintType.topMarginSize), value.top)
@@ -87,30 +89,80 @@ class ConstraintDsl internal constructor(private val view: View) {
             constraintManager.setValueForVariable(ConstraintVariable(ConstraintType.rightMarginSize), value.right)
         }
 
-    internal val constraintManager: ConstraintManager by lazy {
-        findConstraintSolver(view)
+    var horizontalContentHuggingPriority: ConstraintPriority
+        get() = intrinsicSize.horizontalContentHuggingPriority
+        set(value) {
+            intrinsicSize.horizontalContentHuggingPriority = value
+        }
+
+    var verticalContentHuggingPriority: ConstraintPriority
+        get() = intrinsicSize.verticalContentHuggingPriority
+        set(value) {
+            intrinsicSize.verticalContentHuggingPriority = value
+        }
+
+    var horizontalContentCompressionResistancePriority: ConstraintPriority
+        get() = intrinsicSize.horizontalContentCompressionResistancePriority
+        set(value) {
+            intrinsicSize.horizontalContentCompressionResistancePriority = value
+        }
+
+    var verticalContentCompressionResistancePriority: ConstraintPriority
+        get() = intrinsicSize.verticalContentCompressionResistancePriority
+        set(value) {
+            intrinsicSize.verticalContentCompressionResistancePriority = value
+        }
+
+    internal var intrinsicWidth: Double
+        get() = intrinsicSize.intrinsicWidth
+        set(value) {
+            intrinsicSize.intrinsicWidth = value
+        }
+
+    internal var intrinsicHeight: Double
+        get() = intrinsicSize.intrinsicHeight
+        set(value) {
+            intrinsicSize.intrinsicHeight = value
+        }
+
+    internal val constraintManager: ConstraintManager =
+            (view as? AutoLayout ?: view.parent as? AutoLayout)?.constraintManager ?: throw AutoLayoutNotFoundException(view)
+
+    private val intrinsicSize: IntrinsicSize by lazy {
+        constraintManager.getViewIntrinsicSize(view)
     }
 
     fun makeConstraints(closure: ConstraintMakerProvider.() -> Unit) {
         val createdConstraints = ArrayList<Constraint>()
         closure(ConstraintMakerProvider(view, createdConstraints))
-        createdConstraints.filter { it.isActive }.forEach { it.activate() }
+        createdConstraints.forEach {
+            it.initialized = true
+            if (it.isActive) {
+                it.activate()
+            }
+        }
     }
 
     fun remakeConstraints(closure: ConstraintMakerProvider.() -> Unit) {
-        constraintManager.removeConstraintsCreatedFromView(view)
+        constraintManager.removeViewConstraintsCreatedByUser(view)
         makeConstraints(closure)
     }
 
     fun debugValues() {
+        val otherValues = "margin = $margin\n" +
+                "intrinsicWidth = $intrinsicWidth\n" +
+                "intrinsicHeight = $intrinsicHeight\n" +
+                "horizontalContentHuggingPriority = $horizontalContentHuggingPriority\n" +
+                "verticalContentHuggingPriority = $verticalContentHuggingPriority\n" +
+                "horizontalContentCompressionResistancePriority = $horizontalContentCompressionResistancePriority\n" +
+                "verticalContentCompressionResistancePriority = $verticalContentCompressionResistancePriority"
         (listOf(top, left, bottom, right, width, height, centerX, centerY, topMargin, leftMargin, bottomMargin, rightMargin,
-                centerXWithMargins, centerYWithMargins, ConstraintVariable(ConstraintType.intrinsicWidth),
-                ConstraintVariable(ConstraintType.intrinsicHeight))
+                centerXWithMargins, centerYWithMargins)
                 .map {
-                    val value = constraintManager.valueForVariable(it)
+                    val value = constraintManager.getValueForVariable(it)
                     "${it.type} = ${if (value == 0.0) Math.abs(value) else value}"
                 }
-                .joinToString("\n") + "\nmargin = $margin")
+                .joinToString("\n") + "\n$otherValues")
                 .let { Log.d("debugValues(view=${view.description})", it) }
     }
 
@@ -137,12 +189,4 @@ class ConstraintDsl internal constructor(private val view: View) {
     }
 
     private fun ConstraintVariable(type: ConstraintType): ConstraintVariable = ConstraintVariable(view, type)
-
-    private tailrec fun findConstraintSolver(view: View): ConstraintManager {
-        if (view is AutoLayout) {
-            return view.constraintManager
-        } else {
-            return findConstraintSolver(view.parent as? View ?: throw AutoLayoutNotFoundException(this.view))
-        }
-    }
 }

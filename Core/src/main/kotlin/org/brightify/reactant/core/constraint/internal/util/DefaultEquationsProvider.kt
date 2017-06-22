@@ -1,7 +1,6 @@
 package org.brightify.reactant.core.constraint.internal.util
 
 import android.view.View
-import org.brightify.reactant.core.constraint.ConstraintPriority
 import org.brightify.reactant.core.constraint.ConstraintVariable
 import org.brightify.reactant.core.constraint.internal.ConstraintType
 import org.brightify.reactant.core.constraint.internal.solver.Equation
@@ -72,20 +71,8 @@ internal class DefaultEquationsProvider(val view: View) {
             Term(-0.5, Variable(ConstraintType.bottom))
     ))
 
-    private val intrinsicWidth = Equation(terms = listOf(
-            Term(Variable(ConstraintType.intrinsicWidth)),
-            Term(-1.0, Variable(ConstraintType.width))),
-            priority = ConstraintPriority.low
-    )
-
-    private val intrinsicHeight = Equation(terms = listOf(
-            Term(Variable(ConstraintType.intrinsicHeight)),
-            Term(-1.0, Variable(ConstraintType.height))),
-            priority = ConstraintPriority.low
-    )
-
     val equations = listOf(width, height, centerX, centerY, leftMargin, topMargin, rightMargin, bottomMargin,
-            centerXWithMargins, centerYWithMargins, intrinsicWidth, intrinsicHeight)
+            centerXWithMargins, centerYWithMargins)
 
     private fun Variable(type: ConstraintType) = ConstraintVariable(view, type)
 }

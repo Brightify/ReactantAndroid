@@ -88,7 +88,7 @@ internal class Solver {
         optimize(objective)
     }
 
-    fun valueForVariable(variable: ConstraintVariable): Double {
+    fun getValueForVariable(variable: ConstraintVariable): Double {
         return variables[variable]?.let { rows[it]?.constant } ?: 0.0
     }
 
