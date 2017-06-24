@@ -20,9 +20,11 @@ interface Component<STATE, ACTION> {
 
     val action: Observable<ACTION>
 
-    fun needsUpdate(): Boolean
+    fun init()
 
     fun afterInit()
+
+    fun needsUpdate(): Boolean
 
     fun update()
 

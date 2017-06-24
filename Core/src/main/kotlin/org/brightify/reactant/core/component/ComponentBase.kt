@@ -14,6 +14,10 @@ open class ComponentBase<STATE, ACTION>: ComponentWithDelegate<STATE, ACTION> {
 
     override val actions: List<Observable<ACTION>> = emptyList()
 
+    override fun init() {
+        init(true)
+    }
+
     open fun init(canUpdate: Boolean) {
         componentDelegate.ownerComponent = this
 
@@ -24,11 +28,11 @@ open class ComponentBase<STATE, ACTION>: ComponentWithDelegate<STATE, ACTION> {
         componentDelegate.canUpdate = canUpdate
     }
 
-    override fun needsUpdate(): Boolean {
-        return true
+    override fun afterInit() {
     }
 
-    override fun afterInit() {
+    override fun needsUpdate(): Boolean {
+        return true
     }
 
     override fun update() {

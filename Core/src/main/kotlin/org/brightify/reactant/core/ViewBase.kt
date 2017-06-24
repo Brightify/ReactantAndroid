@@ -4,6 +4,7 @@ import android.content.Context
 import android.view.View
 import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
+import org.brightify.reactant.core.component.Component
 import org.brightify.reactant.core.component.ComponentDelegate
 import org.brightify.reactant.core.component.ComponentWithDelegate
 import org.brightify.reactant.core.constraint.AutoLayout
@@ -15,11 +16,11 @@ open class ViewBase<STATE, ACTION>(context: Context): AutoLayout(context), Compo
 
     override val lifecycleDisposeBag = CompositeDisposable()
 
-    override val componentDelegate = ComponentDelegate<STATE, ACTION>()
+    final override val componentDelegate = ComponentDelegate<STATE, ACTION>()
 
     override val actions: List<Observable<ACTION>> = emptyList()
 
-    open fun init() {
+    override fun init() {
         componentDelegate.ownerComponent = this
 
         loadView()
@@ -31,12 +32,10 @@ open class ViewBase<STATE, ACTION>(context: Context): AutoLayout(context), Compo
         componentDelegate.canUpdate = true
     }
 
-    override fun needsUpdate(): Boolean {
-        return true
-    }
-
     override fun afterInit() {
     }
+
+    override fun needsUpdate(): Boolean = true
 
     override fun update() {
     }
@@ -49,7 +48,7 @@ open class ViewBase<STATE, ACTION>(context: Context): AutoLayout(context), Compo
 
     protected fun <T: View> make(factory: (Context) -> T): T {
         val view = factory(context)
-        (view as? ViewBase<*, *>)?.init()
+        (view as? Component<*, *>)?.init()
         return view
     }
 
