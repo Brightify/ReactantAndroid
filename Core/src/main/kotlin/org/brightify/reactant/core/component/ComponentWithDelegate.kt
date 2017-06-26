@@ -6,7 +6,7 @@ import io.reactivex.disposables.CompositeDisposable
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
-interface ComponentWithDelegate<STATE, ACTION>: Component<STATE, ACTION> {
+interface ComponentWithDelegate<STATE, ACTION> : Component<STATE, ACTION> {
 
     val componentDelegate: ComponentDelegate<STATE, ACTION>
 

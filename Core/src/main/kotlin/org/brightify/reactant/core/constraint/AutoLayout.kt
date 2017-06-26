@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.View
 import android.view.ViewGroup
+import org.brightify.reactant.core.assignId
 import org.brightify.reactant.core.constraint.internal.ConstraintType
 import org.brightify.reactant.core.constraint.internal.manager.ConstraintManager
 import org.brightify.reactant.core.constraint.internal.manager.DelegatedConstraintManager
@@ -41,10 +42,7 @@ open class AutoLayout : ViewGroup {
 
     private fun init() {
         constraintManager.addManagedView(this)
-
-        if (id == View.NO_ID) {
-            id = View.generateViewId()
-        }
+        assignId()
     }
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
@@ -99,9 +97,7 @@ open class AutoLayout : ViewGroup {
                 constraintManager.addManagedView(it)
             }
 
-            if (it.id == View.NO_ID) {
-                it.id = View.generateViewId()
-            }
+            assignId()
         }
     }
 

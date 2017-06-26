@@ -1,8 +1,5 @@
 package org.brightify.reactant.core
 
-import android.annotation.SuppressLint
-import android.app.Fragment
-import android.content.Context
 import android.os.Bundle
 import android.support.v4.app.SupportActivity
 import android.view.LayoutInflater
@@ -14,14 +11,16 @@ import io.reactivex.rxkotlin.addTo
 import org.brightify.reactant.core.component.Component
 import org.brightify.reactant.core.component.ComponentDelegate
 import org.brightify.reactant.core.component.ComponentWithDelegate
+import org.brightify.reactant.core.constraint.AutoLayout
+import org.brightify.reactant.core.constraint.ConstraintPriority
+import org.brightify.reactant.core.constraint.util.snp
 import kotlin.properties.Delegates
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
-@SuppressLint("ValidFragment")
-open class ControllerBase<STATE, ROOT, ROOT_ACTION>(private val rootViewFactory: (Context) -> ROOT, title: String = "")
-    : Fragment(), ComponentWithDelegate<STATE, Unit> where ROOT : View, ROOT : Component<*, ROOT_ACTION> {
+open class ControllerBase<STATE, ROOT, ROOT_ACTION>(private val rootViewFactory: FactoryWithContext<ROOT>, title: String = "")
+    : ViewController(), ComponentWithDelegate<STATE, Unit> where ROOT : View, ROOT : Component<*, ROOT_ACTION> {
 
     final override val lifecycleDisposeBag = CompositeDisposable()
 
@@ -58,8 +57,11 @@ open class ControllerBase<STATE, ROOT, ROOT_ACTION>(private val rootViewFactory:
 
         title = title
         rootView = rootViewFactory(activity)
-        rootView.init()
         rootView.action.subscribe { act(it) }.addTo(lifecycleDisposeBag)
+        (rootView as? AutoLayout)?.let {
+            it.snp.verticalContentCompressionResistancePriority = ConstraintPriority.high
+            it.snp.horizontalContentCompressionResistancePriority = ConstraintPriority.high
+        }
 
         afterInit()
     }

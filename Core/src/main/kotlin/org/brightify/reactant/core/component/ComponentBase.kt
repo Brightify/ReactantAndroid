@@ -6,7 +6,7 @@ import io.reactivex.disposables.CompositeDisposable
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
-open class ComponentBase<STATE, ACTION>: ComponentWithDelegate<STATE, ACTION> {
+open class ComponentBase<STATE, ACTION> : ComponentWithDelegate<STATE, ACTION> {
 
     override val lifecycleDisposeBag = CompositeDisposable()
 
@@ -14,18 +14,16 @@ open class ComponentBase<STATE, ACTION>: ComponentWithDelegate<STATE, ACTION> {
 
     override val actions: List<Observable<ACTION>> = emptyList()
 
-    override fun init() {
-        init(true)
-    }
+    open val initialCanUpdate: Boolean = true
 
-    open fun init(canUpdate: Boolean) {
+    override fun init() {
         componentDelegate.ownerComponent = this
 
         resetActions()
 
         afterInit()
 
-        componentDelegate.canUpdate = canUpdate
+        componentDelegate.canUpdate = initialCanUpdate
     }
 
     override fun afterInit() {
