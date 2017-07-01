@@ -7,16 +7,18 @@ import android.support.v7.app.AppCompatActivity
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
-open class ReactantActivity(private val wireframe: Wireframe) : AppCompatActivity() {
+open class ReactantActivity(private val wireframeFactory: (ReactantActivity) -> Wireframe) : AppCompatActivity() {
 
     private val RootFragmentTag = "RootFragment"
+
+    constructor(wireframe: Wireframe): this({ wireframe })
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         if (savedInstanceState == null) {
             val transaction = fragmentManager.beginTransaction()
-            transaction.replace(android.R.id.content, ViewControllerWrapper(wireframe.entryPoint()), RootFragmentTag)
+            transaction.replace(android.R.id.content, ViewControllerWrapper(wireframeFactory(this).entryPoint()), RootFragmentTag)
             transaction.commit()
         }
     }
