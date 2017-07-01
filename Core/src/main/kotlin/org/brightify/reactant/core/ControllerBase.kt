@@ -1,10 +1,7 @@
 package org.brightify.reactant.core
 
-import android.os.Bundle
 import android.support.v4.app.SupportActivity
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.addTo
@@ -34,8 +31,9 @@ open class ControllerBase<STATE, ROOT, ROOT_ACTION>(private val rootViewFactory:
         (activity as? SupportActivity)?.title = title
     }
 
-    lateinit var rootView: ROOT
-        private set
+    @Suppress("UNCHECKED_CAST")
+    val rootView: ROOT
+        get() = contentView as ROOT
 
     private val castRootView: RootView?
         get() = rootView as? RootView
@@ -52,11 +50,9 @@ open class ControllerBase<STATE, ROOT, ROOT_ACTION>(private val rootViewFactory:
     override fun update() {
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
+    override fun onCreate() {
         title = title
-        rootView = rootViewFactory(activity)
+        contentView = rootViewFactory(activity)
         rootView.action.subscribe { act(it) }.addTo(lifecycleDisposeBag)
         (rootView as? AutoLayout)?.let {
             it.snp.verticalContentCompressionResistancePriority = ConstraintPriority.high
@@ -66,35 +62,23 @@ open class ControllerBase<STATE, ROOT, ROOT_ACTION>(private val rootViewFactory:
         afterInit()
     }
 
-    override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        return rootView
-    }
-
     override fun onStart() {
-        super.onStart()
-
         castRootView?.onStart()
     }
 
     override fun onResume() {
-        super.onResume()
-
         componentDelegate.canUpdate = true
 
         castRootView?.onResume()
     }
 
     override fun onPause() {
-        super.onPause()
-
         componentDelegate.canUpdate = false
 
         castRootView?.onPause()
     }
 
     override fun onStop() {
-        super.onStop()
-
         castRootView?.onStop()
     }
 

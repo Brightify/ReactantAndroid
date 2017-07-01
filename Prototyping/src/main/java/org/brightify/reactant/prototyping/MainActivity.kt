@@ -2,7 +2,6 @@ package org.brightify.reactant.prototyping
 
 import android.content.Context
 import android.graphics.Color
-import android.os.Bundle
 import android.view.View
 import android.widget.TextView
 import com.jakewharton.rxbinding2.view.clicks
@@ -48,14 +47,7 @@ class MainWireframe : Wireframe() {
     }
 }
 
-class MainActivity : ReactantActivity() {
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        rootViewController = MainWireframe().entryPoint()
-    }
-}
+class MainActivity : ReactantActivity(MainWireframe())
 
 class InitialController(private val reactions: InitialController.Reactions) : ControllerBase<Unit, CustomView, Unit>(
         make(::CustomView, "Initial")) {

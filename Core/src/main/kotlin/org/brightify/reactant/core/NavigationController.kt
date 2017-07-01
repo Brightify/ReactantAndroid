@@ -1,9 +1,7 @@
 package org.brightify.reactant.core
 
+import android.app.FragmentManager
 import android.app.FragmentTransaction
-import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 
@@ -15,25 +13,23 @@ class NavigationController : ViewController() {
     private val transactionsMadeBeforeInitialization = ArrayList<() -> Unit>()
     private var initialized = false
 
-    private lateinit var contentView: View
+    private val childFragmentManager: FragmentManager
+        get() = viewControllerWrapper.childFragmentManager
 
-    override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        contentView = make(::FrameLayout)
+    override fun onCreate() {
+        contentView = FrameLayout(activity)
         contentView.assignId()
         contentView.layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-        return contentView
     }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-
+    override fun onActivityCreated() {
         initialized = true
         transactionsMadeBeforeInitialization.forEach { it() }
         transactionsMadeBeforeInitialization.clear()
     }
 
     override fun onBackPressed(): Boolean {
-        if (childFragmentManager.top?.onBackPressed() == true) {
+        if (childFragmentManager.top?.viewController?.onBackPressed() == true) {
             return true
         }
 
@@ -45,7 +41,7 @@ class NavigationController : ViewController() {
     fun push(controller: ViewController, animated: Boolean = true) {
         transaction {
             val transaction = childFragmentManager.beginTransaction()
-            transaction.replace(contentView.id, controller)
+            transaction.replace(contentView.id, ViewControllerWrapper(controller))
             transaction.addToBackStack(null)
             transaction.setTransition(if (animated) FragmentTransaction.TRANSIT_FRAGMENT_OPEN else FragmentTransaction.TRANSIT_NONE)
             transaction.commit()
@@ -54,7 +50,7 @@ class NavigationController : ViewController() {
 
     fun pop(animated: Boolean = true): ViewController? {
         return transaction {
-            childFragmentManager.top.also { childFragmentManager.popBackStackImmediate() }
+            childFragmentManager.top.also { childFragmentManager.popBackStackImmediate() }?.viewController
         }
     }
 
