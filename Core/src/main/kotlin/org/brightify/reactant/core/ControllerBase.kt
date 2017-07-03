@@ -55,10 +55,10 @@ open class ControllerBase<STATE, ROOT, ROOT_ACTION>(private val rootViewFactory:
         contentView = rootViewFactory(activity)
         rootView.action.subscribe { act(it) }.addTo(lifecycleDisposeBag)
         (rootView as? AutoLayout)?.let {
-            it.snp.verticalContentCompressionResistancePriority = ConstraintPriority.high
-            it.snp.horizontalContentCompressionResistancePriority = ConstraintPriority.high
-            it.snp.verticalContentHuggingPriority = ConstraintPriority.high
-            it.snp.horizontalContentHuggingPriority = ConstraintPriority.high
+            it.snp.verticalContentCompressionResistancePriority = ConstraintPriority.required
+            it.snp.horizontalContentCompressionResistancePriority = ConstraintPriority.required
+            it.snp.verticalContentHuggingPriority = ConstraintPriority.required
+            it.snp.horizontalContentHuggingPriority = ConstraintPriority.required
         }
 
         afterInit()
