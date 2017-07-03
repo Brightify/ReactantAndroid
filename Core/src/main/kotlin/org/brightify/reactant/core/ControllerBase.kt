@@ -57,6 +57,8 @@ open class ControllerBase<STATE, ROOT, ROOT_ACTION>(private val rootViewFactory:
         (rootView as? AutoLayout)?.let {
             it.snp.verticalContentCompressionResistancePriority = ConstraintPriority.high
             it.snp.horizontalContentCompressionResistancePriority = ConstraintPriority.high
+            it.snp.verticalContentHuggingPriority = ConstraintPriority.high
+            it.snp.horizontalContentHuggingPriority = ConstraintPriority.high
         }
 
         afterInit()

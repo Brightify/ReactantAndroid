@@ -41,7 +41,7 @@ internal class ConstraintItem(val leftVariable: ConstraintVariable, val operator
         } else if (rightVariable.isEmpty()) {
             offsetString = "$absOffset "
         } else {
-            offsetString = "+  "
+            offsetString = "+ $absOffset "
         }
 
         return "{$leftVariable} $operator $rightVariable$offsetString($priority)"
