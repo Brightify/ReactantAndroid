@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import org.brightify.reactant.core.assignId
 import org.brightify.reactant.core.constraint.internal.ConstraintType
 import org.brightify.reactant.core.constraint.internal.manager.ConstraintManager
@@ -82,6 +83,10 @@ open class AutoLayout : ViewGroup {
 
         setMeasuredDimension((constraintManager.getValueForVariable(dsl.width) * density).toInt(),
                 (constraintManager.getValueForVariable(dsl.height) * density).toInt())
+
+        if (constraintManager is MainConstraintManager) {
+            afterMeasure()
+        }
     }
 
     override fun shouldDelayChildPressedState() = false
@@ -109,6 +114,17 @@ open class AutoLayout : ViewGroup {
                 it.constraintManager = constraintManager.splitToMainManagerForAutoLayout(it)
             } else {
                 constraintManager.removeManagedView(it)
+            }
+        }
+    }
+
+    private fun afterMeasure() {
+        children.forEach {
+            if (it is AutoLayout) {
+                it.afterMeasure()
+            } else if (it is TextView) {
+                it.width = (constraintManager.getValueForVariable(it.snp.width) * density).toInt()
+                it.height = (constraintManager.getValueForVariable(it.snp.height) * density).toInt()
             }
         }
     }
