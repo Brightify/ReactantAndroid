@@ -63,7 +63,7 @@ open class AutoLayout : ViewGroup {
         constraintManager.resetValueForVariable(dsl.top)
         constraintManager.resetValueForVariable(dsl.left)
 
-        children.forEach {
+        children.filter { it !is ViewGroup || it is AutoLayout }.forEach {
             it.measure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED)
 
             if (it !is AutoLayout) {
@@ -81,8 +81,7 @@ open class AutoLayout : ViewGroup {
         dsl.intrinsicWidth = getMeasuredSize(widthMeasureSpec, constraintManager.getValueForVariable(dsl.width))
         dsl.intrinsicHeight = getMeasuredSize(heightMeasureSpec, constraintManager.getValueForVariable(dsl.height))
 
-        setMeasuredDimension((constraintManager.getValueForVariable(dsl.width) * density).toInt(),
-                (constraintManager.getValueForVariable(dsl.height) * density).toInt())
+        setMeasuredDimension(getValueForVariableInPx(dsl.width), getValueForVariableInPx(dsl.height))
 
         if (constraintManager is MainConstraintManager) {
             afterMeasure()
@@ -102,7 +101,7 @@ open class AutoLayout : ViewGroup {
                 constraintManager.addManagedView(it)
             }
 
-            assignId()
+            it.assignId()
         }
     }
 
@@ -123,8 +122,13 @@ open class AutoLayout : ViewGroup {
             if (it is AutoLayout) {
                 it.afterMeasure()
             } else if (it is TextView) {
-                it.width = (constraintManager.getValueForVariable(it.snp.width) * density).toInt()
-                it.height = (constraintManager.getValueForVariable(it.snp.height) * density).toInt()
+                val dsl = it.snp
+                it.width = getValueForVariableInPx(dsl.width)
+                it.height = getValueForVariableInPx(dsl.height)
+            } else if (it is ViewGroup) {
+                val dsl = it.snp
+                it.measure(MeasureSpec.makeMeasureSpec(getValueForVariableInPx(dsl.width), MeasureSpec.EXACTLY),
+                        MeasureSpec.makeMeasureSpec(getValueForVariableInPx(dsl.height), MeasureSpec.EXACTLY))
             }
         }
     }
@@ -137,6 +141,10 @@ open class AutoLayout : ViewGroup {
         val offset = constraintManager.getValueForVariable(ConstraintVariable(this, offsetType))
         val positionInDpi = constraintManager.getValueForVariable(variable) - offset
         return (positionInDpi * density).toInt()
+    }
+
+    private fun getValueForVariableInPx(variable: ConstraintVariable): Int {
+        return (constraintManager.getValueForVariable(variable) * density).toInt()
     }
 
     private fun getMeasuredSize(measureSpec: Int, currentSize: Double): Double {

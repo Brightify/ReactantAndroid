@@ -113,7 +113,7 @@ class Constraint internal constructor(internal val view: View, internal val cons
         return constraintItems.map { it.toString() }.joinToString("\n")
     }
 
-    private fun updateConstraint(closure: () -> Unit) {
+    private inline fun updateConstraint(closure: () -> Unit) {
         if (isActive) {
             deactivate()
             closure()
