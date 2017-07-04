@@ -45,6 +45,7 @@ class NavigationController : ViewController() {
             transaction.addToBackStack(null)
             transaction.setTransition(if (animated) FragmentTransaction.TRANSIT_FRAGMENT_OPEN else FragmentTransaction.TRANSIT_NONE)
             transaction.commit()
+            controller.navigationController = this
         }
     }
 
