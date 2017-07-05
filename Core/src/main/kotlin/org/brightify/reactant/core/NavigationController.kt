@@ -4,12 +4,18 @@ import android.app.FragmentManager
 import android.app.FragmentTransaction
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import io.reactivex.Observable
+import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.rxkotlin.addTo
+import io.reactivex.rxkotlin.subscribeBy
+import io.reactivex.subjects.ReplaySubject
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
 class NavigationController : ViewController() {
 
+    private val lifetimeDisposeBag = CompositeDisposable()
     private val transactionsMadeBeforeInitialization = ArrayList<() -> Unit>()
     private var initialized = false
 
@@ -69,6 +75,50 @@ class NavigationController : ViewController() {
                 push(controller, animated)
             }
         } ?: emptyList()
+    }
+
+    fun <C : ViewController> push(controller: Observable<C>, animated: Boolean = true) {
+        controller
+                .subscribeBy(
+                        onNext = { push(controller = it, animated = animated) }
+                )
+                .addTo(lifetimeDisposeBag)
+    }
+
+    fun <C : ViewController> replace(controller: Observable<C>, animated: Boolean = true): Observable<ViewController?> {
+        val replacedController = ReplaySubject.create<ViewController?>(1)
+        controller
+                .subscribeBy(
+                        onNext = { controller ->
+                            replacedController.onNext(replace(controller = controller, animated = animated))
+                        },
+                        onComplete = { replacedController.onComplete() }
+                )
+                .addTo(lifetimeDisposeBag)
+        return replacedController
+    }
+
+    fun <C: ViewController>popAllAndReplace(controller: Observable<C>): Observable<List<ViewController>> {
+//        let transition = CATransition ()
+//        transition.duration = 0.5
+//        transition.type = kCATransitionMoveIn
+//        transition.subtype = kCATransitionFromLeft
+//        transition.timingFunction = CAMediaTimingFunction(name: kCAMediaTimingFunctionEaseInEaseOut)
+//        view.layer.add(transition, forKey: nil)
+
+        return replaceAll(controller = controller, animated = false)
+    }
+
+    fun <C: ViewController>replaceAll(controller: Observable<C>, animated: Boolean = true): Observable<List<ViewController>> {
+        val oldControllers = ReplaySubject.create<List<ViewController>>(1)
+        controller
+                .subscribeBy(
+                        onNext = { oldControllers.onNext(replaceAll(controller = it, animated = animated)) },
+                        onComplete = { oldControllers.onComplete() }
+                )
+                .addTo(lifetimeDisposeBag)
+
+        return oldControllers
     }
 
     private fun <T> transaction(transaction: () -> T?): T? {
