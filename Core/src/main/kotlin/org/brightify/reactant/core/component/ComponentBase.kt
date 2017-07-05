@@ -9,7 +9,7 @@ import org.brightify.reactant.core.makeGuard
  */
 open class ComponentBase<STATE, ACTION> : ComponentWithDelegate<STATE, ACTION> {
 
-    override val lifecycleDisposeBag = CompositeDisposable()
+    override val lifetimeDisposeBag = CompositeDisposable()
 
     override val componentDelegate = ComponentDelegate<STATE, ACTION>()
 

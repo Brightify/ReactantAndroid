@@ -98,18 +98,18 @@ class NavigationController : ViewController() {
         return replacedController
     }
 
-    fun <C: ViewController>popAllAndReplace(controller: Observable<C>): Observable<List<ViewController>> {
-//        let transition = CATransition ()
-//        transition.duration = 0.5
-//        transition.type = kCATransitionMoveIn
-//        transition.subtype = kCATransitionFromLeft
-//        transition.timingFunction = CAMediaTimingFunction(name: kCAMediaTimingFunctionEaseInEaseOut)
-//        view.layer.add(transition, forKey: nil)
+    fun <C : ViewController> popAllAndReplace(controller: Observable<C>): Observable<List<ViewController>> {
+        //        let transition = CATransition ()
+        //        transition.duration = 0.5
+        //        transition.type = kCATransitionMoveIn
+        //        transition.subtype = kCATransitionFromLeft
+        //        transition.timingFunction = CAMediaTimingFunction(name: kCAMediaTimingFunctionEaseInEaseOut)
+        //        view.layer.add(transition, forKey: nil)
 
         return replaceAll(controller = controller, animated = false)
     }
 
-    fun <C: ViewController>replaceAll(controller: Observable<C>, animated: Boolean = true): Observable<List<ViewController>> {
+    fun <C : ViewController> replaceAll(controller: Observable<C>, animated: Boolean = true): Observable<List<ViewController>> {
         val oldControllers = ReplaySubject.create<List<ViewController>>(1)
         controller
                 .subscribeBy(

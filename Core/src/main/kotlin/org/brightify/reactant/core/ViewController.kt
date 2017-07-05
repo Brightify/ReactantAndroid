@@ -1,17 +1,20 @@
 package org.brightify.reactant.core
 
 import android.view.View
+import android.view.WindowManager
 import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.addTo
 import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.subjects.ReplaySubject
+import kotlin.properties.Delegates
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
 open class ViewController {
 
+    // TODO Error
     val activity: ReactantActivity
         get() = viewControllerWrapper.activity!!
 
@@ -23,6 +26,22 @@ open class ViewController {
     internal lateinit var viewControllerWrapper: ViewControllerWrapper
 
     private val lifetimeDisposeBag = CompositeDisposable()
+
+    var actionBarHidden: Boolean by Delegates.observable(false) { _, _, _ ->
+        if (actionBarHidden) {
+            activity.supportActionBar?.hide()
+        } else {
+            activity.supportActionBar?.show()
+        }
+    }
+
+    var statusBarTranslucent: Boolean by Delegates.observable(false) { _, _, _ ->
+        if (statusBarTranslucent) {
+            activity.window.addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
+        } else {
+            activity.window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
+        }
+    }
 
     /**
      * Returns true if event is handled.
@@ -42,6 +61,8 @@ open class ViewController {
     }
 
     open fun onResume() {
+        actionBarHidden = actionBarHidden
+        statusBarTranslucent = statusBarTranslucent
     }
 
     open fun onPause() {
@@ -59,7 +80,7 @@ open class ViewController {
         activity.dismiss(animated)
     }
 
-    fun <C: ViewController>present(controller: Observable<C>, animated: Boolean = true): Observable<C> {
+    fun <C : ViewController> present(controller: Observable<C>, animated: Boolean = true): Observable<C> {
         val replay = ReplaySubject.create<C>(1)
         controller
                 .switchMap { controllerInstance ->
@@ -70,7 +91,7 @@ open class ViewController {
                 }, onComplete = {
                     replay.onComplete()
                 })
-                .addTo(lifetimeDisposeBag )
+                .addTo(lifetimeDisposeBag)
         return replay
     }
 }

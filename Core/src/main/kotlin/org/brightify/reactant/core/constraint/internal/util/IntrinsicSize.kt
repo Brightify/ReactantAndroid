@@ -14,29 +14,29 @@ import kotlin.properties.Delegates
 internal class IntrinsicSize(view: View) {
 
     var intrinsicWidth: Double by Delegates.observable(0.0) { _, _, _ ->
-        if (intrinsicWidth == 0.0) {
-            horizontalContentHuggingConstraint.deactivate()
-            horizontalContentCompressionResistanceConstraint.deactivate()
-        } else {
-            horizontalContentHuggingConstraint.activate()
-            horizontalContentCompressionResistanceConstraint.activate()
-        }
+        horizontalContentHuggingConstraint.deactivate()
+        horizontalContentCompressionResistanceConstraint.deactivate()
 
         horizontalContentHuggingConstraint.offset(intrinsicWidth)
         horizontalContentCompressionResistanceConstraint.offset(intrinsicWidth)
+
+        if (intrinsicWidth != 0.0) {
+            horizontalContentHuggingConstraint.activate()
+            horizontalContentCompressionResistanceConstraint.activate()
+        }
     }
 
     var intrinsicHeight: Double by Delegates.observable(0.0) { _, _, _ ->
-        if (intrinsicHeight == 0.0) {
-            verticalContentHuggingConstraint.deactivate()
-            verticalContentCompressionResistanceConstraint.deactivate()
-        } else {
-            verticalContentHuggingConstraint.activate()
-            verticalContentCompressionResistanceConstraint.activate()
-        }
+        verticalContentHuggingConstraint.deactivate()
+        verticalContentCompressionResistanceConstraint.deactivate()
 
         verticalContentHuggingConstraint.offset(intrinsicHeight)
         verticalContentCompressionResistanceConstraint.offset(intrinsicHeight)
+
+        if (intrinsicHeight != 0.0) {
+            verticalContentHuggingConstraint.activate()
+            verticalContentCompressionResistanceConstraint.activate()
+        }
     }
 
     var horizontalContentHuggingPriority: ConstraintPriority by Delegates.observable(ConstraintPriority.low) { _, _, _ ->

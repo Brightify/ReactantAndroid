@@ -19,7 +19,7 @@ import kotlin.properties.Delegates
 open class ControllerBase<STATE, ROOT, ROOT_ACTION>(private val rootViewFactory: FactoryWithContext<ROOT>, title: String = "")
     : ViewController(), ComponentWithDelegate<STATE, Unit> where ROOT : View, ROOT : Component<*, ROOT_ACTION> {
 
-    final override val lifecycleDisposeBag = CompositeDisposable()
+    final override val lifetimeDisposeBag = CompositeDisposable()
 
     final override val componentDelegate = ComponentDelegate<STATE, Unit>()
 
@@ -55,9 +55,11 @@ open class ControllerBase<STATE, ROOT, ROOT_ACTION>(private val rootViewFactory:
     }
 
     override fun onCreate() {
+        super.onCreate()
+
         title = title
         contentView = rootViewFactory(activity)
-        rootView.action.subscribe { act(it) }.addTo(lifecycleDisposeBag)
+        rootView.action.subscribe { act(it) }.addTo(lifetimeDisposeBag)
         (rootView as? AutoLayout)?.let {
             it.snp.verticalContentCompressionResistancePriority = ConstraintPriority.required
             it.snp.horizontalContentCompressionResistancePriority = ConstraintPriority.required
@@ -69,22 +71,30 @@ open class ControllerBase<STATE, ROOT, ROOT_ACTION>(private val rootViewFactory:
     }
 
     override fun onStart() {
+        super.onStart()
+
         castRootView?.onStart()
     }
 
     override fun onResume() {
+        super.onResume()
+
         componentDelegate.canUpdate = true
 
         castRootView?.onResume()
     }
 
     override fun onPause() {
+        super.onPause()
+
         componentDelegate.canUpdate = false
 
         castRootView?.onPause()
     }
 
     override fun onStop() {
+        super.onStop()
+
         castRootView?.onStop()
     }
 

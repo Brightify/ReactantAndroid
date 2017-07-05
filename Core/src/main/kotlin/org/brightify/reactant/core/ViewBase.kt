@@ -12,7 +12,7 @@ import org.brightify.reactant.core.constraint.AutoLayout
  */
 open class ViewBase<STATE, ACTION>(context: Context) : AutoLayout(context), ComponentWithDelegate<STATE, ACTION> {
 
-    override val lifecycleDisposeBag = CompositeDisposable()
+    override val lifetimeDisposeBag = CompositeDisposable()
 
     final override val componentDelegate = ComponentDelegate<STATE, ACTION>()
 

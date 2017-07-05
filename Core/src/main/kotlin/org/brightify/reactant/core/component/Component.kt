@@ -8,7 +8,7 @@ import io.reactivex.disposables.CompositeDisposable
  */
 interface Component<STATE, ACTION> {
 
-    val lifecycleDisposeBag: CompositeDisposable
+    val lifetimeDisposeBag: CompositeDisposable
 
     val stateDisposeBag: CompositeDisposable
 
