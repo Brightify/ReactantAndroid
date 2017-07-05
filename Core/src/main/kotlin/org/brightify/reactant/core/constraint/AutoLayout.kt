@@ -4,7 +4,6 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import org.brightify.reactant.core.assignId
 import org.brightify.reactant.core.constraint.internal.ConstraintType
 import org.brightify.reactant.core.constraint.internal.manager.ConstraintManager
@@ -63,7 +62,7 @@ open class AutoLayout : ViewGroup {
         constraintManager.resetValueForVariable(dsl.top)
         constraintManager.resetValueForVariable(dsl.left)
 
-        children.filter { it !is ViewGroup || it is AutoLayout }.forEach {
+        children.forEach {
             it.measure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED)
 
             if (it !is AutoLayout) {
@@ -121,11 +120,7 @@ open class AutoLayout : ViewGroup {
         children.forEach {
             if (it is AutoLayout) {
                 it.afterMeasure()
-            } else if (it is TextView) {
-                val dsl = it.snp
-                it.width = getValueForVariableInPx(dsl.width)
-                it.height = getValueForVariableInPx(dsl.height)
-            } else if (it is ViewGroup) {
+            } else {
                 val dsl = it.snp
                 it.measure(MeasureSpec.makeMeasureSpec(getValueForVariableInPx(dsl.width), MeasureSpec.EXACTLY),
                         MeasureSpec.makeMeasureSpec(getValueForVariableInPx(dsl.height), MeasureSpec.EXACTLY))
