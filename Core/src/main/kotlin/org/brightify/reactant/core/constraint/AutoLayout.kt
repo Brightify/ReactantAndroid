@@ -95,7 +95,7 @@ open class AutoLayout : ViewGroup {
         child?.let {
             if (it is AutoLayout) {
                 it.constraintManager.addAllToManager(constraintManager)
-                it.constraintManager = DelegatedConstraintManager(constraintManager)
+                it.constraintManager = DelegatedConstraintManager(this)
             } else {
                 constraintManager.addManagedView(it)
             }
