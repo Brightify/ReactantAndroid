@@ -13,6 +13,12 @@ import kotlin.reflect.KProperty
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
 class ComponentDelegate<STATE, ACTION> {
+
+    sealed class StateWrapper<STATE> {
+        class HasState<STATE>(val state: STATE): StateWrapper<STATE>()
+        class NoState<STATE>: StateWrapper<STATE>()
+    }
+
     val stateDisposeBag = CompositeDisposable()
 
     val observableState: Observable<STATE>
@@ -24,15 +30,15 @@ class ComponentDelegate<STATE, ACTION> {
     var componentState: STATE
         get() {
             val state = stateStorage
-            if (state != null) {
-                return state
+            if (state is StateWrapper.HasState<STATE>) {
+                return state.state
             } else {
                 throw UnsupportedOperationException()
             }
         }
         set(value) {
-            previousComponentState = stateStorage
-            stateStorage = value
+            previousComponentState = (stateStorage as? StateWrapper.HasState)?.state
+            stateStorage = StateWrapper.HasState(value)
             needsUpdate = true
         }
 
@@ -54,7 +60,7 @@ class ComponentDelegate<STATE, ACTION> {
     var ownerComponent: Component<STATE, ACTION>? by object : ObservableProperty<Component<STATE, ACTION>?>(null) {
 
         override fun afterChange(property: KProperty<*>, oldValue: Component<STATE, ACTION>?, newValue: Component<STATE, ACTION>?) {
-            needsUpdate = stateStorage != null
+            needsUpdate = hasComponentState
         }
     }
 
@@ -64,12 +70,12 @@ class ComponentDelegate<STATE, ACTION> {
     }
 
     val hasComponentState: Boolean
-        get() = stateStorage != null
+        get() = stateStorage is StateWrapper.HasState
 
     private val observableStateSubject = ReplaySubject.create<STATE>(1)
     private val actionSubject = PublishSubject.create<ACTION>()
 
-    private var stateStorage: STATE? = null
+    private var stateStorage: StateWrapper<STATE> = StateWrapper.NoState()
 
     private val actionsDisposeBag = CompositeDisposable()
 
@@ -79,7 +85,7 @@ class ComponentDelegate<STATE, ACTION> {
 
     private fun update() {
         // TODO Exceptions
-        if (stateStorage == null) {
+        if (!hasComponentState) {
             throw UnsupportedOperationException()
         }
 
