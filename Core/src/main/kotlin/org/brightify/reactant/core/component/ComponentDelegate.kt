@@ -12,7 +12,7 @@ import kotlin.reflect.KProperty
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
-class ComponentDelegate<STATE, ACTION>() {
+class ComponentDelegate<STATE, ACTION> {
     val stateDisposeBag = CompositeDisposable()
 
     val observableState: Observable<STATE>

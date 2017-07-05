@@ -18,6 +18,10 @@ open class ViewBase<STATE, ACTION>(context: Context) : AutoLayout(context), Comp
 
     override val actions: List<Observable<ACTION>> = emptyList()
 
+    init {
+        makeGuard()
+    }
+
     override fun init() {
         componentDelegate.ownerComponent = this
 

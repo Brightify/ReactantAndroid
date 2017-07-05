@@ -2,6 +2,7 @@ package org.brightify.reactant.core.component
 
 import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
+import org.brightify.reactant.core.makeGuard
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
@@ -15,6 +16,10 @@ open class ComponentBase<STATE, ACTION> : ComponentWithDelegate<STATE, ACTION> {
     override val actions: List<Observable<ACTION>> = emptyList()
 
     open val initialCanUpdate: Boolean = true
+
+    init {
+        makeGuard()
+    }
 
     override fun init() {
         componentDelegate.ownerComponent = this

@@ -38,6 +38,10 @@ open class ControllerBase<STATE, ROOT, ROOT_ACTION>(private val rootViewFactory:
     private val castRootView: RootView?
         get() = rootView as? RootView
 
+    init {
+        makeGuard()
+    }
+
     override fun init() {
         componentDelegate.ownerComponent = this
     }
