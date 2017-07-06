@@ -19,6 +19,7 @@ import org.brightify.reactant.core.constraint.AutoLayout
 import org.brightify.reactant.core.constraint.util.children
 import org.brightify.reactant.core.constraint.util.snp
 import org.brightify.reactant.core.make
+import org.brightify.reactant.core.makeComponent
 import org.brightify.reactant.prototyping.CustomView.Styles.text
 
 /**
@@ -33,7 +34,7 @@ class MainWireframe : Wireframe() {
             navigationController.push(main())
         }
 
-        navigationController.push(make(::InitialController, reactions))
+        navigationController.push(makeComponent(::InitialController, reactions))
 
         return navigationController
     }
@@ -43,14 +44,14 @@ class MainWireframe : Wireframe() {
             navigationController.pop()
         }
 
-        return make(::MainController, reactions)
+        return makeComponent(::MainController, reactions)
     }
 }
 
 class MainActivity : ReactantActivity(MainWireframe())
 
 class InitialController(private val reactions: InitialController.Reactions) : ControllerBase<Unit, CustomView, Unit>(
-        make(::CustomView, "Initial")) {
+        makeComponent(::CustomView, "Initial")) {
 
     data class Reactions(val onNext: () -> Unit)
 
@@ -59,7 +60,7 @@ class InitialController(private val reactions: InitialController.Reactions) : Co
     }
 }
 
-class MainController(private val reactions: MainController.Reactions) : ControllerBase<Unit, AnotherView, Unit>(make(::AnotherView)) {
+class MainController(private val reactions: MainController.Reactions) : ControllerBase<Unit, AnotherView, Unit>(makeComponent(::AnotherView)) {
 
     data class Reactions(val onNext: () -> Unit)
 
@@ -114,8 +115,8 @@ class CustomView(title: String, context: Context) : ViewBase<Int, Unit>(context)
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(changed, left, top, right, bottom)
 
-        snp.debugValuesRecursive()
-        snp.debugConstraintsRecursive()
+//        snp.debugValuesRecursive()
+//        snp.debugConstraintsRecursive()
     }
 
     override val actions: List<Observable<Unit>> = listOf(button.clicks())
