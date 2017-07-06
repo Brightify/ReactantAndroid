@@ -19,7 +19,6 @@ import org.brightify.reactant.core.constraint.AutoLayout
 import org.brightify.reactant.core.constraint.util.children
 import org.brightify.reactant.core.constraint.util.snp
 import org.brightify.reactant.core.make
-import org.brightify.reactant.core.makeComponent
 import org.brightify.reactant.prototyping.CustomView.Styles.text
 
 /**
@@ -34,7 +33,7 @@ class MainWireframe : Wireframe() {
             navigationController.push(main())
         }
 
-        navigationController.push(makeComponent(::InitialController, reactions))
+        navigationController.push(make(::InitialController, reactions))
 
         return navigationController
     }
@@ -44,14 +43,14 @@ class MainWireframe : Wireframe() {
             navigationController.pop()
         }
 
-        return makeComponent(::MainController, reactions)
+        return make(::MainController, reactions)
     }
 }
 
 class MainActivity : ReactantActivity(MainWireframe())
 
 class InitialController(private val reactions: InitialController.Reactions) : ControllerBase<Unit, CustomView, Unit>(
-        makeComponent(::CustomView, "Initial")) {
+        make(::CustomView, "Initial")) {
 
     data class Reactions(val onNext: () -> Unit)
 
@@ -60,7 +59,7 @@ class InitialController(private val reactions: InitialController.Reactions) : Co
     }
 }
 
-class MainController(private val reactions: MainController.Reactions) : ControllerBase<Unit, AnotherView, Unit>(makeComponent(::AnotherView)) {
+class MainController(private val reactions: MainController.Reactions) : ControllerBase<Unit, AnotherView, Unit>(make(::AnotherView)) {
 
     data class Reactions(val onNext: () -> Unit)
 
