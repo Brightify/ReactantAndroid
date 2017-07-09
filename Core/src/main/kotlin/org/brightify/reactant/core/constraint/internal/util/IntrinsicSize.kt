@@ -3,8 +3,10 @@ package org.brightify.reactant.core.constraint.internal.util
 import android.view.View
 import org.brightify.reactant.core.constraint.Constraint
 import org.brightify.reactant.core.constraint.ConstraintPriority
+import org.brightify.reactant.core.constraint.ConstraintVariable
 import org.brightify.reactant.core.constraint.internal.ConstraintItem
 import org.brightify.reactant.core.constraint.internal.ConstraintOperator
+import org.brightify.reactant.core.constraint.internal.ConstraintType
 import org.brightify.reactant.core.constraint.util.snp
 import kotlin.properties.Delegates
 
@@ -13,30 +15,21 @@ import kotlin.properties.Delegates
  */
 internal class IntrinsicSize(view: View) {
 
+    private val widthVariable = ConstraintVariable(view, ConstraintType.intrinsicWidth)
+    private val heightVariable = ConstraintVariable(view, ConstraintType.intrinsicHeight)
+
     var intrinsicWidth: Double by Delegates.observable(0.0) { _, _, _ ->
-        horizontalContentHuggingConstraint.deactivate()
-        horizontalContentCompressionResistanceConstraint.deactivate()
+        view.snp.constraintManager.setValueForVariable(widthVariable, intrinsicWidth)
 
-        horizontalContentHuggingConstraint.offset(intrinsicWidth)
-        horizontalContentCompressionResistanceConstraint.offset(intrinsicWidth)
-
-        if (intrinsicWidth != 0.0) {
-            horizontalContentHuggingConstraint.activate()
-            horizontalContentCompressionResistanceConstraint.activate()
-        }
+        horizontalContentHuggingConstraint.isActive = intrinsicWidth != 0.0
+        horizontalContentCompressionResistanceConstraint.isActive = intrinsicWidth != 0.0
     }
 
     var intrinsicHeight: Double by Delegates.observable(0.0) { _, _, _ ->
-        verticalContentHuggingConstraint.deactivate()
-        verticalContentCompressionResistanceConstraint.deactivate()
+        view.snp.constraintManager.setValueForVariable(heightVariable, intrinsicHeight)
 
-        verticalContentHuggingConstraint.offset(intrinsicHeight)
-        verticalContentCompressionResistanceConstraint.offset(intrinsicHeight)
-
-        if (intrinsicHeight != 0.0) {
-            verticalContentHuggingConstraint.activate()
-            verticalContentCompressionResistanceConstraint.activate()
-        }
+        verticalContentHuggingConstraint.isActive = intrinsicHeight != 0.0
+        verticalContentCompressionResistanceConstraint.isActive = intrinsicHeight != 0.0
     }
 
     var horizontalContentHuggingPriority: ConstraintPriority by Delegates.observable(ConstraintPriority.low) { _, _, _ ->
@@ -56,19 +49,19 @@ internal class IntrinsicSize(view: View) {
     }
 
     private val horizontalContentHuggingConstraint = Constraint(view,
-            listOf(ConstraintItem(view.snp.width, ConstraintOperator.lessOrEqual, offset = intrinsicWidth)))
+            listOf(ConstraintItem(view.snp.width, ConstraintOperator.lessOrEqual, widthVariable)))
             .priority(horizontalContentHuggingPriority)
 
     private val verticalContentHuggingConstraint = Constraint(view,
-            listOf(ConstraintItem(view.snp.height, ConstraintOperator.lessOrEqual, offset = intrinsicHeight)))
+            listOf(ConstraintItem(view.snp.height, ConstraintOperator.lessOrEqual, heightVariable)))
             .priority(verticalContentHuggingPriority)
 
     private val horizontalContentCompressionResistanceConstraint = Constraint(view,
-            listOf(ConstraintItem(view.snp.width, ConstraintOperator.greaterOrEqual, offset = intrinsicWidth)))
+            listOf(ConstraintItem(view.snp.width, ConstraintOperator.greaterOrEqual, widthVariable)))
             .priority(horizontalContentCompressionResistancePriority)
 
     private val verticalContentCompressionResistanceConstraint = Constraint(view,
-            listOf(ConstraintItem(view.snp.height, ConstraintOperator.greaterOrEqual, offset = intrinsicHeight)))
+            listOf(ConstraintItem(view.snp.height, ConstraintOperator.greaterOrEqual, heightVariable)))
             .priority(verticalContentCompressionResistancePriority)
 
     val constraints = listOf(horizontalContentHuggingConstraint, verticalContentHuggingConstraint,

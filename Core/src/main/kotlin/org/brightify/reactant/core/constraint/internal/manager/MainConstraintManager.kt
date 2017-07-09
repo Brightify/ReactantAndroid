@@ -5,8 +5,6 @@ import org.brightify.reactant.core.constraint.AutoLayout
 import org.brightify.reactant.core.constraint.Constraint
 import org.brightify.reactant.core.constraint.ConstraintVariable
 import org.brightify.reactant.core.constraint.exception.ViewNotManagedByCommonAutoLayoutException
-import org.brightify.reactant.core.constraint.internal.ConstraintItem
-import org.brightify.reactant.core.constraint.internal.ConstraintOperator
 import org.brightify.reactant.core.constraint.internal.solver.Equation
 import org.brightify.reactant.core.constraint.internal.solver.Solver
 import org.brightify.reactant.core.constraint.internal.util.DefaultEquationsProvider
@@ -21,7 +19,7 @@ internal class MainConstraintManager : ConstraintManager {
     private val solver = Solver()
     private val equations = HashMap<View, List<Equation>>()
     private val constraints = HashMap<View, HashSet<Constraint>>()
-    private val valueConstraints = HashMap<ConstraintVariable, Constraint>()
+    private val valueForVariable = HashMap<ConstraintVariable, Number>()
     private val intrinsicSizes = HashMap<View, IntrinsicSize>()
 
     private val managedViews: Set<View>
@@ -84,14 +82,13 @@ internal class MainConstraintManager : ConstraintManager {
         constraints.flatMap { it.value }.filter { !verifyViewsUsedByConstraint(it) }.forEach { removeConstraint(it) }
         constraints.remove(view)
 
-        valueConstraints.filter { it.key.view == view }.forEach { (variable, _) -> valueConstraints.remove(variable) }
+        valueForVariable.filter { it.key.view == view }.forEach { (variable, _) -> resetValueForVariable(variable) }
 
         intrinsicSizes.remove(view)
     }
 
     override fun removeViewConstraintsCreatedByUser(view: View) {
         constraints[view]
-                ?.minus(valueConstraints.filter { it.key.view == view }.map { it.value })
                 ?.minus(intrinsicSizes[view]?.constraints ?: emptyList())
                 ?.forEach { removeConstraint(it) }
     }
@@ -103,19 +100,13 @@ internal class MainConstraintManager : ConstraintManager {
             return
         }
 
-        var valueConstraint = valueConstraints[variable]
-        if (valueConstraint == null) {
-            valueConstraint = Constraint(variable.view, listOf(ConstraintItem(variable, ConstraintOperator.equal)))
-            valueConstraint.initialized = true
-            valueConstraints[variable] = valueConstraint
-        }
-
-        valueConstraint.offset = value
-        addConstraint(valueConstraint)
+        solver.setValueForVariable(variable, value)
+        valueForVariable[variable] = value
     }
 
     override fun resetValueForVariable(variable: ConstraintVariable) {
-        valueConstraints[variable]?.let { removeConstraint(it) }
+        solver.resetValueForVariable(variable)
+        valueForVariable.remove(variable)
     }
 
     override fun getViewIntrinsicSize(view: View): IntrinsicSize {
@@ -134,7 +125,7 @@ internal class MainConstraintManager : ConstraintManager {
             equations.forEach { mainManager.solver.addEquation(it) }
         }
         constraints.flatMap { it.value }.forEach { mainManager.addConstraint(it) }
-        mainManager.valueConstraints.putAll(valueConstraints)
+        valueForVariable.forEach { (variable, value) -> mainManager.setValueForVariable(variable, value) }
         mainManager.intrinsicSizes.putAll(intrinsicSizes)
     }
 
@@ -153,7 +144,9 @@ internal class MainConstraintManager : ConstraintManager {
             mainManager.equations[view] = equations
             equations.forEach { mainManager.solver.addEquation(it) }
         }
-        mainManager.valueConstraints.putAll(valueConstraints.filter { disconnectedViews.contains(it.key.view) })
+        valueForVariable.filter { disconnectedViews.contains(it.key.view) }.forEach { (variable, value) ->
+            mainManager.setValueForVariable(variable, value)
+        }
         mainManager.intrinsicSizes.putAll(intrinsicSizes.filter { disconnectedViews.contains(it.key) })
 
         val constraintsOfDisconnectedViews = constraints.flatMap { it.value }.filter { verifyViewsUsedByConstraint(it, disconnectedViews) }
