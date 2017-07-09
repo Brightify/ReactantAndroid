@@ -15,8 +15,8 @@ import kotlin.reflect.KProperty
 class ComponentDelegate<STATE, ACTION> {
 
     sealed class StateWrapper<STATE> {
-        class HasState<STATE>(val state: STATE): StateWrapper<STATE>()
-        class NoState<STATE>: StateWrapper<STATE>()
+        class HasState<STATE>(val state: STATE) : StateWrapper<STATE>()
+        class NoState<STATE> : StateWrapper<STATE>()
     }
 
     val stateDisposeBag = CompositeDisposable()

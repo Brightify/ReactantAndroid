@@ -51,14 +51,12 @@ internal class MainConstraintManager : ConstraintManager {
     }
 
     override fun removeConstraint(constraint: Constraint) {
-        if (constraints[constraint.view]?.contains(constraint) != true) {
+        if (constraints[constraint.view]?.remove(constraint) != true) {
             return
         }
 
         solver.removeConstraint(constraint)
         constraint.isManaged = false
-
-        constraints[constraint.view]?.remove(constraint)
     }
 
     override fun addManagedView(view: View) {

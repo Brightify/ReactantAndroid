@@ -11,7 +11,7 @@ open class ReactantActivity(private val wireframeFactory: (ReactantActivity) -> 
 
     private val RootFragmentTag = "RootFragment"
 
-    constructor(wireframe: Wireframe): this({ wireframe })
+    constructor(wireframe: Wireframe) : this({ wireframe })
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

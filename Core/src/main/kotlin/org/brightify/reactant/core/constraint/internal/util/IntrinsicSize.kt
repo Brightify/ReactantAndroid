@@ -8,6 +8,7 @@ import org.brightify.reactant.core.constraint.internal.ConstraintItem
 import org.brightify.reactant.core.constraint.internal.ConstraintOperator
 import org.brightify.reactant.core.constraint.internal.ConstraintType
 import org.brightify.reactant.core.constraint.util.snp
+import org.brightify.reactant.core.util.onChange
 import kotlin.properties.Delegates
 
 /**
@@ -18,26 +19,18 @@ internal class IntrinsicSize(view: View) {
     private val widthVariable = ConstraintVariable(view, ConstraintType.intrinsicWidth)
     private val heightVariable = ConstraintVariable(view, ConstraintType.intrinsicHeight)
 
-    var intrinsicWidth: Double by Delegates.observable(0.0) { _, oldValue, newValue ->
-        if (oldValue == newValue) {
-            return@observable
-        }
-
-        view.snp.constraintManager.setValueForVariable(widthVariable, intrinsicWidth)
-
+    var intrinsicWidth: Double by onChange(0.0) { _, _, _ ->
         horizontalContentHuggingConstraint.isActive = intrinsicWidth != 0.0
         horizontalContentCompressionResistanceConstraint.isActive = intrinsicWidth != 0.0
+
+        view.snp.constraintManager.setValueForVariable(widthVariable, intrinsicWidth)
     }
 
-    var intrinsicHeight: Double by Delegates.observable(0.0) { _, oldValue, newValue ->
-        if (oldValue == newValue) {
-            return@observable
-        }
-
-        view.snp.constraintManager.setValueForVariable(heightVariable, intrinsicHeight)
-
+    var intrinsicHeight: Double by onChange(0.0) { _, _, _ ->
         verticalContentHuggingConstraint.isActive = intrinsicHeight != 0.0
         verticalContentCompressionResistanceConstraint.isActive = intrinsicHeight != 0.0
+
+        view.snp.constraintManager.setValueForVariable(heightVariable, intrinsicHeight)
     }
 
     var horizontalContentHuggingPriority: ConstraintPriority by Delegates.observable(ConstraintPriority.low) { _, _, _ ->

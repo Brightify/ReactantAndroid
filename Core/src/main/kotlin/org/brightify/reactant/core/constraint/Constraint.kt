@@ -14,24 +14,30 @@ class Constraint internal constructor(internal val view: View, internal val cons
     var multiplier: Number
         get() = constraintItems.first().multiplier
         set(value) {
-            updateConstraint {
-                constraintItems.forEach { it.multiplier = value }
+            if (multiplier != value) {
+                updateConstraint {
+                    constraintItems.forEach { it.multiplier = value }
+                }
             }
         }
 
     var offset: Number
         get() = constraintItems.first().offset
         set(value) {
-            updateConstraint {
-                constraintItems.forEach { it.offset = value }
+            if (offset != value) {
+                updateConstraint {
+                    constraintItems.forEach { it.offset = value }
+                }
             }
         }
 
     var priority: ConstraintPriority
         get() = constraintItems.first().priority
         set(value) {
-            updateConstraint {
-                constraintItems.forEach { it.priority = value }
+            if (priority != value) {
+                updateConstraint {
+                    constraintItems.forEach { it.priority = value }
+                }
             }
         }
 

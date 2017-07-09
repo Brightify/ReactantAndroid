@@ -10,7 +10,7 @@ import java.util.UUID
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
-internal class ViewControllerWrapper(): Fragment() {
+internal class ViewControllerWrapper() : Fragment() {
 
     private val InstanceUUIDKey = "ViewController"
 
@@ -19,7 +19,7 @@ internal class ViewControllerWrapper(): Fragment() {
 
     var viewController: ViewController? = null
 
-    constructor(viewController: ViewController): this() {
+    constructor(viewController: ViewController) : this() {
         this.viewController = viewController
         viewController.viewControllerWrapper = this
     }

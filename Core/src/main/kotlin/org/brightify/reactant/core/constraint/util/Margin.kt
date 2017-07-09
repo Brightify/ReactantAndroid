@@ -1,6 +1,6 @@
 package org.brightify.reactant.core.constraint.util
 
-import kotlin.properties.Delegates
+import org.brightify.reactant.core.util.onChange
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
@@ -9,19 +9,19 @@ class Margin(top: Number = 0, left: Number = 0, bottom: Number = 0, right: Numbe
 
     internal var onChange: ((Margin) -> Unit)? = null
 
-    var top: Number by Delegates.observable(top) { _, _, _ ->
+    var top: Number by onChange(top) { _, _, _ ->
         onChange?.invoke(this)
     }
 
-    var left: Number by Delegates.observable(left) { _, _, _ ->
+    var left: Number by onChange(left) { _, _, _ ->
         onChange?.invoke(this)
     }
 
-    var bottom: Number by Delegates.observable(bottom) { _, _, _ ->
+    var bottom: Number by onChange(bottom) { _, _, _ ->
         onChange?.invoke(this)
     }
 
-    var right: Number by Delegates.observable(right) { _, _, _ ->
+    var right: Number by onChange(right) { _, _, _ ->
         onChange?.invoke(this)
     }
 

@@ -4,7 +4,7 @@ import org.brightify.reactant.core.constraint.ConstraintPriority
 import org.brightify.reactant.core.constraint.ConstraintVariable
 import org.brightify.reactant.core.constraint.internal.solver.Equation
 import org.brightify.reactant.core.constraint.internal.solver.Term
-import kotlin.properties.Delegates.observable
+import org.brightify.reactant.core.util.onChange
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
@@ -12,15 +12,15 @@ import kotlin.properties.Delegates.observable
 internal class ConstraintItem(val leftVariable: ConstraintVariable, val operator: ConstraintOperator,
                               val rightVariable: ConstraintVariable? = null, offset: Number = 0) {
 
-    var multiplier: Number by observable(1 as Number) { _, _, _ ->
+    var multiplier: Number by onChange(1 as Number) { _, _, _ ->
         equation = createEquation()
     }
 
-    var offset: Number by observable(offset) { _, _, _ ->
+    var offset: Number by onChange(offset) { _, _, _ ->
         equation = createEquation()
     }
 
-    var priority: ConstraintPriority by observable(ConstraintPriority.required) { _, _, _ ->
+    var priority: ConstraintPriority by onChange(ConstraintPriority.required) { _, _, _ ->
         equation = createEquation()
     }
 

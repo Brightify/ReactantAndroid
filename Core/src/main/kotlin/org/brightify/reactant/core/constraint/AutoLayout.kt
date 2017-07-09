@@ -5,7 +5,6 @@ import android.util.AttributeSet
 import android.view.View
 import android.view.ViewGroup
 import org.brightify.reactant.core.assignId
-import org.brightify.reactant.core.constraint.internal.ConstraintType
 import org.brightify.reactant.core.constraint.internal.manager.ConstraintManager
 import org.brightify.reactant.core.constraint.internal.manager.DelegatedConstraintManager
 import org.brightify.reactant.core.constraint.internal.manager.MainConstraintManager
@@ -49,13 +48,17 @@ open class AutoLayout : ViewGroup {
     }
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+        val dsl = snp
+        val offsetTop = constraintManager.getValueForVariable(dsl.top)
+        val offsetLeft = constraintManager.getValueForVariable(dsl.left)
+
         children.forEach {
-            val dsl = it.snp
+            val itDsl = it.snp
             it.layout(
-                    getChildPosition(dsl.left),
-                    getChildPosition(dsl.top),
-                    getChildPosition(dsl.right),
-                    getChildPosition(dsl.bottom)
+                    getChildPosition(itDsl.left, offsetLeft),
+                    getChildPosition(itDsl.top, offsetTop),
+                    getChildPosition(itDsl.right, offsetLeft),
+                    getChildPosition(itDsl.bottom, offsetTop)
             )
         }
     }
@@ -70,7 +73,6 @@ open class AutoLayout : ViewGroup {
                 itDsl.intrinsicHeight = it.measuredHeight / density
             }
         }
-
 
         val dsl = snp
         dsl.intrinsicWidth = getMeasuredSize(widthMeasureSpec, constraintManager.getValueForVariable(dsl.width))
@@ -128,12 +130,7 @@ open class AutoLayout : ViewGroup {
         }
     }
 
-    private fun getChildPosition(variable: ConstraintVariable): Int {
-        val offsetType = when (variable.type) {
-            ConstraintType.left, ConstraintType.right -> ConstraintType.left
-            else -> ConstraintType.top
-        }
-        val offset = constraintManager.getValueForVariable(ConstraintVariable(this, offsetType))
+    private fun getChildPosition(variable: ConstraintVariable, offset: Double): Int {
         val positionInDpi = constraintManager.getValueForVariable(variable) - offset
         return (positionInDpi * density).toInt()
     }
