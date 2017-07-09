@@ -43,6 +43,9 @@ open class AutoLayout : ViewGroup {
     private fun init() {
         constraintManager.addManagedView(this)
         assignId()
+
+        constraintManager.setValueForVariable(snp.top, 0)
+        constraintManager.setValueForVariable(snp.left, 0)
     }
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
@@ -58,10 +61,6 @@ open class AutoLayout : ViewGroup {
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        val dsl = snp
-        constraintManager.resetValueForVariable(dsl.top)
-        constraintManager.resetValueForVariable(dsl.left)
-
         children.forEach {
             it.measure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED)
 
@@ -72,11 +71,8 @@ open class AutoLayout : ViewGroup {
             }
         }
 
-        if (constraintManager is MainConstraintManager) {
-            constraintManager.setValueForVariable(dsl.top, 0)
-            constraintManager.setValueForVariable(dsl.left, 0)
-        }
 
+        val dsl = snp
         dsl.intrinsicWidth = getMeasuredSize(widthMeasureSpec, constraintManager.getValueForVariable(dsl.width))
         dsl.intrinsicHeight = getMeasuredSize(heightMeasureSpec, constraintManager.getValueForVariable(dsl.height))
 
@@ -94,6 +90,8 @@ open class AutoLayout : ViewGroup {
 
         child?.let {
             if (it is AutoLayout) {
+                it.constraintManager.resetValueForVariable(it.snp.top)
+                it.constraintManager.resetValueForVariable(it.snp.left)
                 it.constraintManager.addAllToManager(constraintManager)
                 it.constraintManager = DelegatedConstraintManager(this)
             } else {
@@ -110,6 +108,8 @@ open class AutoLayout : ViewGroup {
         child?.let {
             if (it is AutoLayout) {
                 it.constraintManager = constraintManager.splitToMainManagerForAutoLayout(it)
+                it.constraintManager.setValueForVariable(it.snp.top, 0)
+                it.constraintManager.setValueForVariable(it.snp.left, 0)
             } else {
                 constraintManager.removeManagedView(it)
             }
