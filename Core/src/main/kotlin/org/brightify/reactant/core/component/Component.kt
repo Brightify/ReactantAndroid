@@ -39,3 +39,8 @@ fun <STATE, ACTION> Component<STATE, ACTION>.withState(state: STATE): Component<
     setComponentState(state)
     return this
 }
+
+fun <STATE>Component<STATE, *>.mutateState(mutation: STATE.() -> Unit) {
+    mutation(componentState)
+    setComponentState(componentState)
+}
