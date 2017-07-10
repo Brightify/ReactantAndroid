@@ -19,6 +19,8 @@ open class ViewController {
         get() = viewControllerWrapper.activity!!
 
     var navigationController: NavigationController? = null
+    var tabBarController: TabBarController? = null
+    open val tabBarItem: TabBarItem? = null
 
     lateinit var contentView: View
         internal set
