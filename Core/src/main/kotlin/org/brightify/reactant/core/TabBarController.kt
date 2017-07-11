@@ -12,7 +12,6 @@ import org.brightify.reactant.core.constraint.util.snp
  *  @author <a href="mailto:matous@brightify.org">Matous Hybl</a>
  */
 open class TabBarController(private val controllers: Array<ViewController>) : ViewController() {
-    private var initialized = false
 
     lateinit var fragmentContainer: FrameLayout
     lateinit var tabBar: BottomNavigationView
@@ -47,10 +46,10 @@ open class TabBarController(private val controllers: Array<ViewController>) : Vi
 
     override fun onActivityCreated() {
         super.onActivityCreated()
-        initialized = true
 
         controllers.forEach { controller ->
-            val item = tabBar.menu.add(controller.tabBarItem?.title ?: "Undefined")
+            val text = controller.tabBarItem?.titleRes?.let { activity.resources.getString(it) } ?: "Undefined"
+            val item = tabBar.menu.add(text)
             val imageRes = controller.tabBarItem?.imageRes
             if (imageRes != null) {
                 item.icon = activity.resources.getDrawable(imageRes)
@@ -76,4 +75,4 @@ open class TabBarController(private val controllers: Array<ViewController>) : Vi
     }
 }
 
-data class TabBarItem(val title: String, val imageRes: Int)
+data class TabBarItem(val titleRes: Int, val imageRes: Int)

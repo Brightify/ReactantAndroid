@@ -3,11 +3,18 @@ package org.brightify.reactant.core
 import android.os.Build
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
+import io.reactivex.Observable
+import io.reactivex.subjects.PublishSubject
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
 open class ReactantActivity(private val wireframeFactory: (ReactantActivity) -> Wireframe) : AppCompatActivity() {
+
+    private val onResumeSubject = PublishSubject.create<Unit>()
+
+    val resumed: Observable<Unit>
+        get() = onResumeSubject
 
     private val RootFragmentTag = "RootFragment"
 
@@ -32,6 +39,11 @@ open class ReactantActivity(private val wireframeFactory: (ReactantActivity) -> 
                 finish()
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        onResumeSubject.onNext(Unit)
     }
 
     fun present(controller: ViewController, animated: Boolean = true) {

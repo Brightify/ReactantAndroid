@@ -1,5 +1,9 @@
 package org.brightify.reactant.core
 
+import android.graphics.Color
+import android.os.Build
+import android.support.annotation.RequiresApi
+import android.util.Log
 import android.view.View
 import android.view.WindowManager
 import io.reactivex.Observable
@@ -21,6 +25,22 @@ open class ViewController {
     var navigationController: NavigationController? = null
     var tabBarController: TabBarController? = null
     open val tabBarItem: TabBarItem? = null
+
+    var statusBarColor: Int
+        get() {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                return activity.window.statusBarColor
+            }
+            Log.w("Reactant", "You are attempting to use status bar color API on unsupported OS version")
+            return Color.BLACK
+        }
+        set(value) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                activity.window.statusBarColor = value
+            } else {
+                Log.w("Reactant", "You are attempting to use status bar color API on unsupported OS version")
+            }
+        }
 
     lateinit var contentView: View
         internal set
