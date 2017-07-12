@@ -3,9 +3,11 @@ package org.brightify.reactant.core
 import android.app.FragmentManager
 import android.app.FragmentTransaction
 import android.support.design.widget.BottomNavigationView
+import android.view.Menu
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import org.brightify.reactant.core.constraint.AutoLayout
+import org.brightify.reactant.core.constraint.ConstraintPriority
 import org.brightify.reactant.core.constraint.util.snp
 
 /**
@@ -37,6 +39,7 @@ open class TabBarController(private val controllers: Array<ViewController>) : Vi
             bottom.equalTo(tabBar.snp.top)
         }
 
+        tabBar.snp.verticalContentHuggingPriority = ConstraintPriority.required
         tabBar.snp.makeConstraints {
             left.equalToSuperview()
             right.equalToSuperview()
@@ -47,15 +50,19 @@ open class TabBarController(private val controllers: Array<ViewController>) : Vi
     override fun onActivityCreated() {
         super.onActivityCreated()
 
-        controllers.forEach { controller ->
+        controllers.forEachIndexed { index, controller ->
             val text = controller.tabBarItem?.titleRes?.let { activity.resources.getString(it) } ?: "Undefined"
-            val item = tabBar.menu.add(text)
+            val item = tabBar.menu.add(Menu.NONE, index, 0, text)
             val imageRes = controller.tabBarItem?.imageRes
             if (imageRes != null) {
                 item.icon = activity.resources.getDrawable(imageRes)
             }
             item.setOnMenuItemClickListener {
-                displayController(controller)
+                if(tabBar.selectedItemId != item.itemId) {
+                    displayController(controller)
+                } else {
+                    // FIXME pop backstack - check guidelines for correct behavior
+                }
                 return@setOnMenuItemClickListener false
             }
         }
