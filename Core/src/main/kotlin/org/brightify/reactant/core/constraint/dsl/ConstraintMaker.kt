@@ -86,12 +86,8 @@ class ConstraintMaker internal constructor(view: View, createdConstraints: Mutab
     private fun ConstraintItem(value: Number, operator: ConstraintOperator, type: ConstraintType): ConstraintItem {
         val variableType = when (type) {
             ConstraintType.width, ConstraintType.height -> null
-            ConstraintType.centerX, ConstraintType.centerXWithMargins -> ConstraintType.left
-            ConstraintType.centerY, ConstraintType.centerYWithMargins -> ConstraintType.top
-            ConstraintType.leftMargin -> ConstraintType.left
-            ConstraintType.topMargin -> ConstraintType.top
-            ConstraintType.rightMargin -> ConstraintType.right
-            ConstraintType.bottomMargin -> ConstraintType.bottom
+            ConstraintType.centerX -> ConstraintType.left
+            ConstraintType.centerY -> ConstraintType.top
             else -> type
         }
         return ConstraintItem(ConstraintVariable(view, type), operator,

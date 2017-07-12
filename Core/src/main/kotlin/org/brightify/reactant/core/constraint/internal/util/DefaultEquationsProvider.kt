@@ -35,44 +35,7 @@ internal class DefaultEquationsProvider(val view: View) {
             Term(-0.5, Variable(ConstraintType.bottom))
     ))
 
-    private val leftMargin = Equation(terms = listOf(
-            Term(Variable(ConstraintType.leftMargin)),
-            Term(-1.0, Variable(ConstraintType.left)),
-            Term(Variable(ConstraintType.leftMarginSize))
-    ))
-
-    private val topMargin = Equation(terms = listOf(
-            Term(Variable(ConstraintType.topMargin)),
-            Term(-1.0, Variable(ConstraintType.top)),
-            Term(Variable(ConstraintType.topMarginSize))
-    ))
-
-    private val rightMargin = Equation(terms = listOf(
-            Term(Variable(ConstraintType.rightMargin)),
-            Term(-1.0, Variable(ConstraintType.right)),
-            Term(-1.0, Variable(ConstraintType.rightMarginSize))
-    ))
-
-    private val bottomMargin = Equation(terms = listOf(
-            Term(Variable(ConstraintType.bottomMargin)),
-            Term(-1.0, Variable(ConstraintType.bottom)),
-            Term(-1.0, Variable(ConstraintType.bottomMarginSize))
-    ))
-
-    private val centerXWithMargins = Equation(terms = listOf(
-            Term(Variable(ConstraintType.centerXWithMargins)),
-            Term(-0.5, Variable(ConstraintType.leftMargin)),
-            Term(-0.5, Variable(ConstraintType.rightMargin))
-    ))
-
-    private val centerYWithMargins = Equation(terms = listOf(
-            Term(Variable(ConstraintType.centerYWithMargins)),
-            Term(-0.5, Variable(ConstraintType.top)),
-            Term(-0.5, Variable(ConstraintType.bottom))
-    ))
-
-    val equations = listOf(width, height, centerX, centerY, leftMargin, topMargin, rightMargin, bottomMargin,
-            centerXWithMargins, centerYWithMargins)
+    val equations = listOf(width, height, centerX, centerY)
 
     private fun Variable(type: ConstraintType) = ConstraintVariable(view, type)
 }

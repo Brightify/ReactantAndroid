@@ -10,7 +10,6 @@ import org.brightify.reactant.core.constraint.exception.AutoLayoutNotFoundExcept
 import org.brightify.reactant.core.constraint.internal.ConstraintType
 import org.brightify.reactant.core.constraint.internal.manager.ConstraintManager
 import org.brightify.reactant.core.constraint.internal.util.IntrinsicSize
-import org.brightify.reactant.core.constraint.util.Margin
 import org.brightify.reactant.core.constraint.util.children
 import org.brightify.reactant.core.constraint.util.description
 import org.brightify.reactant.core.constraint.util.snp
@@ -50,44 +49,6 @@ class ConstraintDsl internal constructor(private val view: View) {
 
     val centerY: ConstraintVariable
         get() = ConstraintVariable(ConstraintType.centerY)
-
-    val leftMargin: ConstraintVariable
-        get() = ConstraintVariable(ConstraintType.leftMargin)
-
-    val topMargin: ConstraintVariable
-        get() = ConstraintVariable(ConstraintType.topMargin)
-
-    val rightMargin: ConstraintVariable
-        get() = ConstraintVariable(ConstraintType.rightMargin)
-
-    val bottomMargin: ConstraintVariable
-        get() = ConstraintVariable(ConstraintType.bottomMargin)
-
-    val leadingMargin: ConstraintVariable
-        get() = leftMargin
-
-    val trailingMargin: ConstraintVariable
-        get() = rightMargin
-
-    val centerXWithMargins: ConstraintVariable
-        get() = ConstraintVariable(ConstraintType.centerXWithMargins)
-
-    val centerYWithMargins: ConstraintVariable
-        get() = ConstraintVariable(ConstraintType.centerYWithMargins)
-
-    var margin: Margin
-        get() = Margin(
-                constraintManager.getValueForVariable(ConstraintVariable(ConstraintType.topMarginSize)),
-                constraintManager.getValueForVariable(ConstraintVariable(ConstraintType.leftMarginSize)),
-                constraintManager.getValueForVariable(ConstraintVariable(ConstraintType.bottomMarginSize)),
-                constraintManager.getValueForVariable(ConstraintVariable(ConstraintType.rightMarginSize)))
-                .apply { onChange = { margin = it } }
-        set(value) {
-            constraintManager.setValueForVariable(ConstraintVariable(ConstraintType.topMarginSize), value.top)
-            constraintManager.setValueForVariable(ConstraintVariable(ConstraintType.leftMarginSize), value.left)
-            constraintManager.setValueForVariable(ConstraintVariable(ConstraintType.bottomMarginSize), value.bottom)
-            constraintManager.setValueForVariable(ConstraintVariable(ConstraintType.rightMarginSize), value.right)
-        }
 
     var horizontalContentHuggingPriority: ConstraintPriority
         get() = intrinsicSize.horizontalContentHuggingPriority
@@ -149,15 +110,13 @@ class ConstraintDsl internal constructor(private val view: View) {
     }
 
     fun debugValues() {
-        val otherValues = "margin = $margin\n" +
-                "intrinsicWidth = $intrinsicWidth\n" +
+        val otherValues = "intrinsicWidth = $intrinsicWidth\n" +
                 "intrinsicHeight = $intrinsicHeight\n" +
                 "horizontalContentHuggingPriority = $horizontalContentHuggingPriority\n" +
                 "verticalContentHuggingPriority = $verticalContentHuggingPriority\n" +
                 "horizontalContentCompressionResistancePriority = $horizontalContentCompressionResistancePriority\n" +
                 "verticalContentCompressionResistancePriority = $verticalContentCompressionResistancePriority"
-        (listOf(top, left, bottom, right, width, height, centerX, centerY, topMargin, leftMargin, bottomMargin, rightMargin,
-                centerXWithMargins, centerYWithMargins)
+        (listOf(top, left, bottom, right, width, height, centerX, centerY)
                 .map {
                     val value = constraintManager.getValueForVariable(it)
                     "${it.type} = ${if (value == 0.0) Math.abs(value) else value}"
