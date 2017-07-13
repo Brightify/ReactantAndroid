@@ -13,7 +13,11 @@ import io.reactivex.subjects.ReplaySubject
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
-class NavigationController : ViewController() {
+class NavigationController() : ViewController() {
+
+    constructor(initalController: ViewController) : this() {
+        push(initalController, animated = false)
+    }
 
     private val lifetimeDisposeBag = CompositeDisposable()
     private val transactionsMadeBeforeInitialization = ArrayList<() -> Unit>()

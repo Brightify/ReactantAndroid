@@ -13,7 +13,7 @@ import org.brightify.reactant.core.constraint.util.snp
 /**
  *  @author <a href="mailto:matous@brightify.org">Matous Hybl</a>
  */
-open class TabBarController(private val controllers: Array<ViewController>) : ViewController() {
+open class TabBarController(private val controllers: List<ViewController>) : ViewController() {
 
     lateinit var fragmentContainer: FrameLayout
     lateinit var tabBar: BottomNavigationView
@@ -70,6 +70,11 @@ open class TabBarController(private val controllers: Array<ViewController>) : Vi
         if (controller != null) {
             displayController(controller)
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+
     }
 
     private fun displayController(controller: ViewController, animated: Boolean = false) {
