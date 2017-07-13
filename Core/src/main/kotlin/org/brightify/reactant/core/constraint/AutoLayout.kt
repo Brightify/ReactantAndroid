@@ -40,8 +40,9 @@ open class AutoLayout : ViewGroup {
     }
 
     private fun init() {
-        constraintManager.addManagedView(this)
         assignId()
+
+        constraintManager.addManagedView(this)
 
         constraintManager.setValueForVariable(snp.top, 0)
         constraintManager.setValueForVariable(snp.left, 0)
@@ -91,6 +92,8 @@ open class AutoLayout : ViewGroup {
         super.onViewAdded(child)
 
         child?.let {
+            it.assignId()
+
             if (it is AutoLayout) {
                 it.constraintManager.resetValueForVariable(it.snp.top)
                 it.constraintManager.resetValueForVariable(it.snp.left)
@@ -99,8 +102,6 @@ open class AutoLayout : ViewGroup {
             } else {
                 constraintManager.addManagedView(it)
             }
-
-            it.assignId()
         }
     }
 
@@ -143,7 +144,7 @@ open class AutoLayout : ViewGroup {
         return when (MeasureSpec.getMode(measureSpec)) {
             MeasureSpec.EXACTLY -> MeasureSpec.getSize(measureSpec) / density
             MeasureSpec.AT_MOST -> Math.min(currentSize, MeasureSpec.getSize(measureSpec) / density)
-            else -> 0.0
+            else -> currentSize
         }
     }
 }

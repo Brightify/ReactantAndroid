@@ -1,7 +1,6 @@
 package org.brightify.reactant.core.constraint.internal.solver
 
 import org.brightify.reactant.core.constraint.internal.util.isAlmostZero
-import java.util.LinkedHashMap
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
@@ -61,9 +60,6 @@ internal class Row(var constant: Double = 0.0) {
     }
 
     fun substitute(symbol: Symbol, row: Row) {
-        symbols[symbol]?.let {
-            symbols.remove(symbol)
-            insert(row, it)
-        }
+        symbols.remove(symbol)?.let { insert(row, it) }
     }
 }

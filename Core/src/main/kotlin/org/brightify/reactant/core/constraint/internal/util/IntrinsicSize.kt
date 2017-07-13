@@ -20,16 +20,10 @@ internal class IntrinsicSize(view: View) {
     private val heightVariable = ConstraintVariable(view, ConstraintType.intrinsicHeight)
 
     var intrinsicWidth: Double by onChange(0.0) { _, _, _ ->
-        horizontalContentHuggingConstraint.isActive = intrinsicWidth != 0.0
-        horizontalContentCompressionResistanceConstraint.isActive = intrinsicWidth != 0.0
-
         view.snp.constraintManager.setValueForVariable(widthVariable, intrinsicWidth)
     }
 
     var intrinsicHeight: Double by onChange(0.0) { _, _, _ ->
-        verticalContentHuggingConstraint.isActive = intrinsicHeight != 0.0
-        verticalContentCompressionResistanceConstraint.isActive = intrinsicHeight != 0.0
-
         view.snp.constraintManager.setValueForVariable(heightVariable, intrinsicHeight)
     }
 
@@ -67,11 +61,4 @@ internal class IntrinsicSize(view: View) {
 
     val constraints = listOf(horizontalContentHuggingConstraint, verticalContentHuggingConstraint,
             horizontalContentCompressionResistanceConstraint, verticalContentCompressionResistanceConstraint)
-
-    init {
-        constraints.forEach {
-            it.isManaged = false
-            it.initialized = true
-        }
-    }
 }

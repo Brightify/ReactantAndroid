@@ -7,6 +7,7 @@ import org.brightify.reactant.core.constraint.ConstraintVariable
 import org.brightify.reactant.core.constraint.exception.ViewNotManagedByCommonAutoLayoutException
 import org.brightify.reactant.core.constraint.internal.solver.Equation
 import org.brightify.reactant.core.constraint.internal.solver.Solver
+import org.brightify.reactant.core.constraint.internal.solver.Term
 import org.brightify.reactant.core.constraint.internal.util.DefaultEquationsProvider
 import org.brightify.reactant.core.constraint.internal.util.IntrinsicSize
 import org.brightify.reactant.core.constraint.util.children
@@ -19,7 +20,7 @@ internal class MainConstraintManager : ConstraintManager {
     private val solver = Solver()
     private val equations = HashMap<View, List<Equation>>()
     private val constraints = HashMap<View, HashSet<Constraint>>()
-    private val valueForVariable = HashMap<ConstraintVariable, Number>()
+    private val valueForVariable = HashMap<ConstraintVariable, Equation>()
     private val intrinsicSizes = HashMap<View, IntrinsicSize>()
 
     private val managedViews: Set<View>
@@ -67,6 +68,11 @@ internal class MainConstraintManager : ConstraintManager {
         val equations = DefaultEquationsProvider(view).equations
         this.equations[view] = equations
         equations.forEach { solver.addEquation(it) }
+        intrinsicSizes[view] = IntrinsicSize(view)
+        intrinsicSizes[view]?.constraints?.forEach {
+            it.initialized = true
+            addConstraint(it)
+        }
     }
 
     override fun removeManagedView(view: View) {
@@ -98,33 +104,39 @@ internal class MainConstraintManager : ConstraintManager {
             return
         }
 
-        solver.setValueForVariable(variable, value)
-        valueForVariable[variable] = value
+        valueForVariable[variable]?.let {
+            solver.removeEquation(it)
+        }
+        val equation = Equation(-value.toDouble(), listOf(Term(variable)))
+        solver.addEquation(equation)
+        valueForVariable[variable] = equation
+
     }
 
     override fun resetValueForVariable(variable: ConstraintVariable) {
-        solver.resetValueForVariable(variable)
-        valueForVariable.remove(variable)
+        valueForVariable.remove(variable)?.let {
+            solver.removeEquation(it)
+        }
     }
 
-    override fun getViewIntrinsicSize(view: View): IntrinsicSize {
-        var size = intrinsicSizes[view]
-        if (size == null) {
-            size = IntrinsicSize(view)
-            intrinsicSizes[view] = size
-        }
-        return size
-    }
+    override fun getViewIntrinsicSize(view: View): IntrinsicSize = intrinsicSizes[view]!!
 
     override fun addAllToManager(manager: ConstraintManager) {
         val mainManager = manager.mainConstraintManager
         equations.forEach { (view, equations) ->
             mainManager.equations[view] = equations
-            equations.forEach { mainManager.solver.addEquation(it) }
+            //            equations.forEach { mainManager.solver.addEquation(it) }
         }
-        constraints.flatMap { it.value }.forEach { mainManager.addConstraint(it) }
-        valueForVariable.forEach { (variable, value) -> mainManager.setValueForVariable(variable, value) }
+        constraints.flatMap { it.value }.forEach {
+            //            mainManager.addConstraint(it)
+        }
+        mainManager.constraints.putAll(constraints)
+        valueForVariable.forEach { (variable, equation) ->
+            //            mainManager.solver.addEquation(equation)
+            mainManager.valueForVariable[variable] = equation
+        }
         mainManager.intrinsicSizes.putAll(intrinsicSizes)
+        mainManager.solver.addAll(solver)
     }
 
     override fun splitToMainManagerForAutoLayout(layout: AutoLayout): MainConstraintManager {
@@ -142,8 +154,9 @@ internal class MainConstraintManager : ConstraintManager {
             mainManager.equations[view] = equations
             equations.forEach { mainManager.solver.addEquation(it) }
         }
-        valueForVariable.filter { disconnectedViews.contains(it.key.view) }.forEach { (variable, value) ->
-            mainManager.setValueForVariable(variable, value)
+        valueForVariable.filter { disconnectedViews.contains(it.key.view) }.forEach { (variable, equation) ->
+            mainManager.solver.addEquation(equation)
+            mainManager.valueForVariable[variable] = equation
         }
         mainManager.intrinsicSizes.putAll(intrinsicSizes.filter { disconnectedViews.contains(it.key) })
 

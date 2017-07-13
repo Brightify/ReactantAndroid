@@ -7,7 +7,6 @@ import org.brightify.reactant.core.constraint.exception.UnsatisfiableConstraintE
 import org.brightify.reactant.core.constraint.internal.ConstraintItem
 import org.brightify.reactant.core.constraint.internal.ConstraintOperator
 import org.brightify.reactant.core.constraint.internal.util.isAlmostZero
-import java.util.LinkedHashMap
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
@@ -16,15 +15,34 @@ internal class Solver {
 
     private class Tag(val marker: Symbol, val other: Symbol?)
 
-    private class EditInfo(val tag: Tag, val equation: Equation, var constant: Double)
-
-    private val tagForEquation = LinkedHashMap<Equation, Tag>()
-    private val rows = LinkedHashMap<Symbol, Row>()
-    private val variables = LinkedHashMap<ConstraintVariable, Symbol>()
-    private val edits = LinkedHashMap<ConstraintVariable, EditInfo>()
-    private val infeasibleRows = ArrayList<Symbol>()
+    private val tagForEquation = HashMap<Equation, Tag>()
+    private val rows = HashMap<Symbol, Row>()
+    private val variables = HashMap<ConstraintVariable, Symbol>()
     private val objective = Row()
     private var artificialRow: Row? = null
+
+    fun addAll(solver: Solver) {
+        tagForEquation.putAll(solver.tagForEquation)
+        rows.putAll(solver.rows)
+        variables.putAll(solver.variables)
+
+        solver.tagForEquation.forEach { (equation, tag) ->
+            when (equation.operator) {
+                ConstraintOperator.lessOrEqual, ConstraintOperator.greaterOrEqual -> {
+                    if (equation.priority.priority < ConstraintPriority.required.priority) {
+                        objective.insert(tag.other!!, equation.priority.priority.toDouble())
+                    }
+                }
+                else -> {
+                    if (equation.priority.priority < ConstraintPriority.required.priority) {
+                        objective.insert(tag.marker, equation.priority.priority.toDouble())
+                        objective.insert(tag.other!!, equation.priority.priority.toDouble())
+                    }
+                }
+            }
+        }
+        optimize(objective)
+    }
 
     fun addConstraint(constraint: Constraint) {
         val errorItems = ArrayList<ConstraintItem>()
@@ -52,7 +70,7 @@ internal class Solver {
         val (row, tag) = createRow(equation)
         var subject = chooseSubject(row, tag)
 
-        if (subject == null && row.symbols.all { it.key.type == Symbol.Type.dummy }) {
+        if (subject == null && row.symbols.keys.all { it.type == Symbol.Type.dummy }) {
             if (row.constant.isAlmostZero) {
                 subject = tag.marker
             } else {
@@ -94,59 +112,6 @@ internal class Solver {
 
     fun getValueForVariable(variable: ConstraintVariable): Double {
         return variables[variable]?.let { rows[it]?.constant } ?: 0.0
-    }
-
-    fun setValueForVariable(variable: ConstraintVariable, value: Number) {
-        addEditVariable(variable)
-        val doubleValue = -value.toDouble()
-
-        edits[variable]?.let { info ->
-            val delta = doubleValue - info.constant
-            info.constant = doubleValue
-
-            rows[info.tag.marker]?.let {
-                if (it.add(-delta) < 0) {
-                    infeasibleRows.add(info.tag.marker)
-                }
-                dualOptimize()
-                return
-            }
-
-            info.tag.other?.let { other ->
-                rows[other]?.let {
-                    if (it.add(delta) < 0) {
-                        infeasibleRows.add(other)
-                    }
-                    dualOptimize()
-                    return
-                }
-            }
-
-            rows.forEach { (symbol, row) ->
-                val coefficient = row.coefficientFor(info.tag.marker)
-                if (coefficient != 0.0 && row.add(delta * coefficient) < 0.0 && symbol.type != Symbol.Type.external) {
-                    infeasibleRows.add(symbol)
-                }
-            }
-
-            dualOptimize()
-        }
-    }
-
-    fun resetValueForVariable(variable: ConstraintVariable) {
-        edits[variable]?.let { removeEquation(it.equation) }
-        edits.remove(variable)
-    }
-
-    private fun addEditVariable(variable: ConstraintVariable) {
-        if (edits.containsKey(variable)) {
-            return
-        }
-
-        val equation = Equation(terms = listOf(Term(variable)))
-        addEquation(equation)
-
-        edits.put(variable, EditInfo(tagForEquation[equation]!!, equation, 0.0))
     }
 
     private fun removeConstraintEffects(equation: Equation, tag: Tag) {
@@ -194,13 +159,12 @@ internal class Solver {
                 }
             }
         }
-
         return first ?: second ?: third
     }
 
     private fun createRow(equation: Equation): Pair<Row, Tag> {
         val row = Row(equation.constant)
-        equation.terms.simplified().forEach {
+        equation.terms.forEach {
             val symbol = getVarSymbol(it.variable)
 
             val rowWithSymbol = rows[symbol]
@@ -297,48 +261,19 @@ internal class Solver {
         }
     }
 
-    private fun dualOptimize() {
-        while (!infeasibleRows.isEmpty()) {
-            val leaving = infeasibleRows.last()
-            infeasibleRows.remove(leaving)
-            rows[leaving]?.let { row ->
-                if (row.constant < 0) {
-                    val entering = getDualEnteringSymbol(row)!!
-                    rows.remove(leaving)
-                    row.solveFor(leaving, entering)
-                    substitute(entering, row)
-                    rows.put(entering, row)
-                }
-            }
-        }
-    }
-
     private fun substitute(symbol: Symbol, row: Row) {
-        rows.forEach {
-            it.value.substitute(symbol, row)
-            if (it.key.type != Symbol.Type.external && it.value.constant < 0) {
-                infeasibleRows.add(it.key)
-            }
-        }
+        rows.forEach { it.value.substitute(symbol, row) }
         objective.substitute(symbol, row)
         artificialRow?.substitute(symbol, row)
     }
 
     private fun getEnteringSymbol(objective: Row): Symbol? {
-        return objective.symbols.filter { it.key.type != Symbol.Type.dummy && it.value < 0.0 }.map { it.key }.firstOrNull()
-    }
-
-    private fun getDualEnteringSymbol(row: Row): Symbol? {
-        var entering: Symbol? = null
-        var ratio = Double.MAX_VALUE
-        row.symbols.filter { it.key.type != Symbol.Type.dummy && it.value > 0 }.forEach {
-            val newRatio = objective.coefficientFor(it.key) / it.value
-            if (newRatio < ratio) {
-                ratio = newRatio
-                entering = it.key
+        objective.symbols.forEach { (symbol, value) ->
+            if (symbol.type != Symbol.Type.dummy && value < 0) {
+                return symbol
             }
         }
-        return entering
+        return null
     }
 
     private fun anyPivotableSymbol(row: Row): Symbol? {
@@ -349,13 +284,15 @@ internal class Solver {
         var ratio = Double.MAX_VALUE
         var symbol: Symbol? = null
 
-        rows.filter { it.key.type != Symbol.Type.external }.forEach {
-            val temp = it.value.coefficientFor(entering)
-            if (temp < 0) {
-                val temp_ratio = -it.value.constant / temp
-                if (temp_ratio < ratio) {
-                    ratio = temp_ratio
-                    symbol = it.key
+        rows.forEach {
+            if (it.key.type != Symbol.Type.external) {
+                val temp = it.value.coefficientFor(entering)
+                if (temp < 0) {
+                    val temp_ratio = -it.value.constant / temp
+                    if (temp_ratio < ratio) {
+                        ratio = temp_ratio
+                        symbol = it.key
+                    }
                 }
             }
         }
@@ -363,10 +300,11 @@ internal class Solver {
     }
 
     private fun getVarSymbol(variable: ConstraintVariable): Symbol {
-        return variables[variable] ?: {
-            val symbol = Symbol(Symbol.Type.external)
+        var symbol = variables[variable]
+        if (symbol == null) {
+            symbol = Symbol(Symbol.Type.external)
             variables[variable] = symbol
-            symbol
-        }()
+        }
+        return symbol
     }
 }
