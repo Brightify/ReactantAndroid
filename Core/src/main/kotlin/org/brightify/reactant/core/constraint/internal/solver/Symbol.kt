@@ -8,7 +8,7 @@ internal class Symbol(val type: Symbol.Type) {
     enum class Type {
         external,
         slack,
-        error,
+        objective,
         dummy
     }
 }

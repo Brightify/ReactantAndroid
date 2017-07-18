@@ -13,53 +13,47 @@ internal class Row(var constant: Double = 0.0) {
         symbols = LinkedHashMap(other.symbols)
     }
 
-    fun add(value: Double): Double {
-        constant += value
-        return constant
+    fun multiplyBy(coefficient: Double) {
+        constant *= coefficient
+
+        symbols.keys.forEach { symbols[it] = (symbols[it] ?: 0.0) * coefficient }
     }
 
-    fun insert(symbol: Symbol, coefficient: Double = 1.0) {
-        symbols[symbol] = (symbols[symbol] ?: 0.0) + coefficient
+    fun addExpression(row: Row, coefficient: Double, subject: Symbol? = null, solver: Solver? = null) {
+        constant += coefficient * row.constant
 
-        if (symbols[symbol]?.isAlmostZero == true) {
-            symbols.remove(symbol)
+        row.symbols.keys.forEach { clv -> row.symbols[clv]?.let { addVariable(clv, it * coefficient, subject, solver) } }
+    }
+
+    fun addVariable(symbol: Symbol, coefficient: Double, subject: Symbol? = null, solver: Solver? = null) {
+        val oldCoefficient = symbols[symbol]
+        if (oldCoefficient != null) {
+            val newCoefficient = oldCoefficient + coefficient
+            if (newCoefficient.isAlmostZero) {
+                subject?.let { solver?.onSymbolRemoved(symbol, it) }
+                symbols.remove(symbol)
+            } else {
+                symbols[symbol] = newCoefficient
+            }
+        } else if (!coefficient.isAlmostZero) {
+            symbols[symbol] = coefficient
+            subject?.let { solver?.onSymbolAdded(symbol, it) }
         }
     }
 
-    fun insert(other: Row, coefficient: Double = 1.0) {
-        this.constant += other.constant * coefficient
-
-        other.symbols.forEach { (key, value) -> insert(key, value * coefficient) }
+    fun substituteOut(symbol: Symbol, row: Row, subject: Symbol, solver: Solver) {
+        symbols.remove(symbol)?.let { addExpression(row, it, subject, solver) }
     }
 
-    fun remove(symbol: Symbol) {
-        symbols.remove(symbol)
+    fun changeSubject(old: Symbol, new: Symbol) {
+        symbols[old] = newSubject(new)
     }
 
-    fun reverseSign() {
-        constant *= -1
-
-        symbols.forEach { (key, value) -> symbols[key] = -value }
+    fun newSubject(subject: Symbol): Double {
+        val coefficient = 1.0 / (symbols.remove(subject) ?: 1.0)
+        multiplyBy(-coefficient)
+        return coefficient
     }
 
-    fun solveFor(symbol: Symbol) {
-        val coefficient = -1.0 / (symbols[symbol] ?: 1.0)
-        symbols.remove(symbol)
-        constant *= coefficient
-
-        symbols.forEach { (key, value) -> symbols[key] = value * coefficient }
-    }
-
-    fun solveFor(lhs: Symbol, rhs: Symbol) {
-        insert(lhs, -1.0)
-        solveFor(rhs)
-    }
-
-    fun coefficientFor(symbol: Symbol): Double {
-        return symbols[symbol] ?: 0.0
-    }
-
-    fun substitute(symbol: Symbol, row: Row) {
-        symbols.remove(symbol)?.let { insert(row, it) }
-    }
+    fun coefficientFor(symbol: Symbol): Double = symbols[symbol] ?: 0.0
 }

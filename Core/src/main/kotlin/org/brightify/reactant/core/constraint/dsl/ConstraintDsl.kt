@@ -110,18 +110,19 @@ class ConstraintDsl internal constructor(private val view: View) {
     }
 
     fun debugValues() {
-        val otherValues = "intrinsicWidth = $intrinsicWidth\n" +
+
+        val otherValues = if (view !is AutoLayout) "\nintrinsicWidth = $intrinsicWidth\n" +
                 "intrinsicHeight = $intrinsicHeight\n" +
                 "horizontalContentHuggingPriority = $horizontalContentHuggingPriority\n" +
                 "verticalContentHuggingPriority = $verticalContentHuggingPriority\n" +
                 "horizontalContentCompressionResistancePriority = $horizontalContentCompressionResistancePriority\n" +
-                "verticalContentCompressionResistancePriority = $verticalContentCompressionResistancePriority"
+                "verticalContentCompressionResistancePriority = $verticalContentCompressionResistancePriority" else ""
         (listOf(top, left, bottom, right, width, height, centerX, centerY)
                 .map {
                     val value = constraintManager.getValueForVariable(it)
                     "${it.type} = ${if (value == 0.0) Math.abs(value) else value}"
                 }
-                .joinToString("\n") + "\n$otherValues")
+                .joinToString("\n") + otherValues)
                 .let { Log.d("debugValues(view=${view.description})", it) }
     }
 

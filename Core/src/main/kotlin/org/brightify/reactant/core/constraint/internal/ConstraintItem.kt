@@ -50,6 +50,6 @@ internal class ConstraintItem(val leftVariable: ConstraintVariable, val operator
     private fun createEquation(): Equation {
         val terms = mutableListOf(Term(leftVariable))
         rightVariable?.let { terms.add(Term(-multiplier.toDouble(), it)) }
-        return Equation(-offset.toDouble(), terms, operator, priority)
+        return Equation(terms, operator, offset.toDouble(), priority)
     }
 }

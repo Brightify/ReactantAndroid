@@ -17,15 +17,8 @@ class ConstraintVariable internal constructor(internal val view: View, internal 
         if (this === other) return true
         if (other !is ConstraintVariable) return false
 
-        if (view != other.view) return false
-        if (type != other.type) return false
-
-        return true
+        return view == other.view && type == other.type
     }
 
-    override fun hashCode(): Int {
-        var result = view.hashCode()
-        result = 31 * result + type.hashCode()
-        return result
-    }
+    override fun hashCode(): Int = 31 * view.hashCode() + type.hashCode()
 }

@@ -6,50 +6,28 @@ import org.brightify.reactant.core.constraint.ConstraintVariable
 import org.brightify.reactant.core.constraint.exception.UnsatisfiableConstraintException
 import org.brightify.reactant.core.constraint.internal.ConstraintItem
 import org.brightify.reactant.core.constraint.internal.ConstraintOperator
-import org.brightify.reactant.core.constraint.internal.util.isAlmostZero
+import java.util.HashSet
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
 internal class Solver {
 
-    private class Tag(val marker: Symbol, val other: Symbol?)
+    private val errorSymbols = LinkedHashMap<Equation, HashSet<Symbol>>()
+    private val objective = Symbol(Symbol.Type.objective)
 
-    private val tagForEquation = HashMap<Equation, Tag>()
-    private val rows = HashMap<Symbol, Row>()
-    private val variables = HashMap<ConstraintVariable, Symbol>()
-    private val objective = Row()
-    private var artificialRow: Row? = null
+    private var columns = HashMap<Symbol, HashSet<Symbol>>()
+    private var rows = LinkedHashMap<Symbol, Row>().apply { put(objective, Row()) }
 
-    fun addAll(solver: Solver) {
-        tagForEquation.putAll(solver.tagForEquation)
-        rows.putAll(solver.rows)
-        variables.putAll(solver.variables)
-
-        solver.tagForEquation.forEach { (equation, tag) ->
-            when (equation.operator) {
-                ConstraintOperator.lessOrEqual, ConstraintOperator.greaterOrEqual -> {
-                    if (equation.priority.priority < ConstraintPriority.required.priority) {
-                        objective.insert(tag.other!!, equation.priority.priority.toDouble())
-                    }
-                }
-                else -> {
-                    if (equation.priority.priority < ConstraintPriority.required.priority) {
-                        objective.insert(tag.marker, equation.priority.priority.toDouble())
-                        objective.insert(tag.other!!, equation.priority.priority.toDouble())
-                    }
-                }
-            }
-        }
-        optimize(objective)
-    }
+    private val symbolForEquation = LinkedHashMap<Equation, Symbol>()
+    private val symbolForVariable = HashMap<ConstraintVariable, Symbol>()
 
     fun addConstraint(constraint: Constraint) {
         val errorItems = ArrayList<ConstraintItem>()
         constraint.constraintItems.forEach {
             try {
                 addEquation(it.equation)
-            } catch(_: UnsatisfiableConstraintEquationException) {
+            } catch(_: UnsatisfiableEquationException) {
                 errorItems.add(it)
             }
         }
@@ -63,235 +41,235 @@ internal class Solver {
     }
 
     fun addEquation(equation: Equation) {
-        if (tagForEquation.containsKey(equation)) {
-            return
+        val expression = createRow(equation)
+        if (!tryAddingDirectly(expression)) {
+            addWithArtificialVariable(expression)
         }
-
-        val (row, tag) = createRow(equation)
-        var subject = chooseSubject(row, tag)
-
-        if (subject == null && row.symbols.keys.all { it.type == Symbol.Type.dummy }) {
-            if (row.constant.isAlmostZero) {
-                subject = tag.marker
-            } else {
-                throw UnsatisfiableConstraintEquationException(equation)
-            }
-        }
-
-        if (subject != null) {
-            row.solveFor(subject)
-            substitute(subject, row)
-            rows[subject] = row
-        } else if (!addWithArtificialVariable(row)) {
-            throw UnsatisfiableConstraintEquationException(equation)
-        }
-
-        tagForEquation[equation] = tag
-        optimize(objective)
     }
 
     fun removeEquation(equation: Equation) {
-        val tag = tagForEquation[equation] ?: return
+        val marker = symbolForEquation.remove(equation) ?: return
 
-        tagForEquation.remove(equation)
-        removeConstraintEffects(equation, tag)
-
-        if (rows.containsKey(tag.marker)) {
-            rows.remove(tag.marker)
-        } else {
-            getMarkerLeavingSymbol(tag.marker)?.let { symbol ->
-                rows[symbol]?.let { row ->
-                    rows.remove(symbol)
-                    row.solveFor(symbol, tag.marker)
-                    substitute(tag.marker, row)
-                }
+        errorSymbols[equation]?.forEach {
+            val row = rows[it]
+            if (row != null) {
+                rows[objective]?.addExpression(row, -equation.priority.value.toDouble(), objective, this)
+            } else {
+                rows[objective]?.addVariable(it, -equation.priority.value.toDouble(), objective, this)
             }
         }
+
+        if (rows[marker] == null) {
+            columns[marker]?.let { column ->
+                var leaving: Symbol? = null
+                var minRatio = 0.0
+                column.forEach {
+                    if (it.isRestricted) {
+                        rows[it]?.let { row ->
+                            val coefficient = row.coefficientFor(marker)
+                            if (coefficient < 0.0) {
+                                val r = -row.constant / coefficient
+                                if (leaving == null || r < minRatio) {
+                                    minRatio = coefficient
+                                    leaving = it
+                                }
+                            }
+                        }
+                    }
+                }
+                if (leaving == null) {
+                    column.forEach {
+                        if (it.isRestricted) {
+                            rows[it]?.let { row ->
+                                val coefficient = row.coefficientFor(marker)
+                                val r = row.constant / coefficient
+                                if (leaving == null || r < minRatio) {
+                                    minRatio = coefficient
+                                    leaving = it
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (leaving == null) {
+                    if (column.size == 0) {
+                        removeColumn(marker)
+                    } else {
+                        leaving = column.first()
+                    }
+                }
+
+                leaving?.let { pivot(marker, it) }
+            }
+        }
+
+        removeRow(marker)
+
+        errorSymbols[equation]?.forEach {
+            if (it != marker) {
+                removeColumn(it)
+            }
+        }
+
+        errorSymbols.remove(equation)
+    }
+
+    fun solve() {
         optimize(objective)
     }
 
     fun getValueForVariable(variable: ConstraintVariable): Double {
-        return variables[variable]?.let { rows[it]?.constant } ?: 0.0
+        return symbolForVariable[variable]?.let { rows[it]?.constant } ?: 0.0
     }
 
-    private fun removeConstraintEffects(equation: Equation, tag: Tag) {
-        if (tag.marker.type == Symbol.Type.error) {
-            removeMarkerEffects(tag.marker, equation.priority)
-        } else if (tag.other?.type == Symbol.Type.error) {
-            removeMarkerEffects(tag.other, equation.priority)
-        }
-    }
+    private fun createRow(equation: Equation): Row {
+        val row = Row(-equation.constant)
 
-    private fun removeMarkerEffects(marker: Symbol, priority: ConstraintPriority) {
-        val equation = rows[marker]
-        if (equation != null) {
-            objective.insert(equation, (-priority.priority).toDouble())
-        } else {
-            objective.insert(marker, (-priority.priority).toDouble())
-        }
-    }
-
-    private fun getMarkerLeavingSymbol(marker: Symbol): Symbol? {
-        var r1 = Double.MAX_VALUE
-        var r2 = Double.MAX_VALUE
-
-        var first: Symbol? = null
-        var second: Symbol? = null
-        var third: Symbol? = null
-
-        rows.forEach { (symbol, row) ->
-            val coefficient = row.coefficientFor(marker)
-            if (coefficient != 0.0) {
-                if (symbol.type == Symbol.Type.external) {
-                    third = symbol
-                } else if (coefficient < 0.0) {
-                    val r = -row.constant / coefficient
-                    if (r < r1) {
-                        r1 = r
-                        first = symbol
-                    }
-                } else {
-                    val r = row.constant / coefficient
-                    if (r < r2) {
-                        r2 = r
-                        second = symbol
-                    }
-                }
-            }
-        }
-        return first ?: second ?: third
-    }
-
-    private fun createRow(equation: Equation): Pair<Row, Tag> {
-        val row = Row(equation.constant)
         equation.terms.forEach {
-            val symbol = getVarSymbol(it.variable)
+            val symbol = getSymbolForVariable(it.variable)
 
             val rowWithSymbol = rows[symbol]
             if (rowWithSymbol != null) {
-                row.insert(rowWithSymbol, it.coefficient)
+                row.addExpression(rowWithSymbol, it.coefficient)
             } else {
-                row.insert(symbol, it.coefficient)
+                row.addVariable(symbol, it.coefficient)
             }
         }
 
-        val marker: Symbol
-        var other: Symbol? = null
-        when (equation.operator) {
-            ConstraintOperator.lessOrEqual, ConstraintOperator.greaterOrEqual -> {
-                val coefficient = if (equation.operator == ConstraintOperator.lessOrEqual) 1.0 else -1.0
-                marker = Symbol(Symbol.Type.slack)
-                row.insert(marker, coefficient)
-                if (equation.priority.priority < ConstraintPriority.required.priority) {
-                    other = Symbol(Symbol.Type.error)
-                    row.insert(other, -coefficient)
-                    objective.insert(other, equation.priority.priority.toDouble())
+        if (equation.operator == ConstraintOperator.equal) {
+            if (equation.priority == ConstraintPriority.required) {
+                val symbol = Symbol(Symbol.Type.dummy)
+                row.addVariable(symbol, 1.0)
+                symbolForEquation.put(equation, symbol)
+            } else {
+                val slackPlus = Symbol(Symbol.Type.slack)
+                val slackMinus = Symbol(Symbol.Type.slack)
+
+                row.addVariable(slackPlus, -1.0)
+                row.addVariable(slackMinus, 1.0)
+                symbolForEquation.put(equation, slackPlus)
+                rows[objective]?.let {
+                    it.addVariable(slackPlus, equation.priority.value.toDouble())
+                    onSymbolAdded(slackPlus, objective)
+                    it.addVariable(slackMinus, equation.priority.value.toDouble())
+                    onSymbolAdded(slackMinus, objective)
+                    insertErrorSymbol(equation, slackMinus)
+                    insertErrorSymbol(equation, slackPlus)
                 }
             }
-            else -> {
-                if (equation.priority.priority < ConstraintPriority.required.priority) {
-                    marker = Symbol(Symbol.Type.error)
-                    other = Symbol(Symbol.Type.error)
-                    row.insert(marker, -1.0)
-                    row.insert(other, 1.0)
-                    objective.insert(marker, equation.priority.priority.toDouble())
-                    objective.insert(other, equation.priority.priority.toDouble())
-                } else {
-                    marker = Symbol(Symbol.Type.dummy)
-                    row.insert(marker)
-                }
+        } else {
+            if (equation.operator == ConstraintOperator.lessOrEqual) {
+                row.multiplyBy(-1.0)
+            }
+            val slack = Symbol(Symbol.Type.slack)
+            row.addVariable(slack, -1.0)
+            symbolForEquation.put(equation, slack)
+            if (equation.priority != ConstraintPriority.required) {
+                val slackMinus = Symbol(Symbol.Type.slack)
+                row.addVariable(slackMinus, 1.0)
+                rows[objective]?.addVariable(slackMinus, equation.priority.value.toDouble())
+                insertErrorSymbol(equation, slackMinus)
+                onSymbolAdded(slackMinus, objective)
             }
         }
 
-        if (row.constant < 0.0) {
-            row.reverseSign()
+        if (row.constant < 0) {
+            row.multiplyBy(-1.0)
         }
-        return Pair(row, Tag(marker, other))
+
+        return row
     }
 
-    private fun chooseSubject(row: Row, tag: Tag): Symbol? {
-        row.symbols.keys.firstOrNull { it.type == Symbol.Type.external }?.let { return it }
-
-        if ((tag.marker.type == Symbol.Type.slack || tag.marker.type == Symbol.Type.error) && row.coefficientFor(tag.marker) < 0.0) {
-            return tag.marker
+    private fun tryAddingDirectly(row: Row): Boolean {
+        val subject = chooseSubject(row) ?: return false
+        row.newSubject(subject)
+        if (columns.containsKey(subject)) {
+            substituteOut(subject, row)
         }
-        if ((tag.other?.type == Symbol.Type.slack || tag.other?.type == Symbol.Type.error) && row.coefficientFor(tag.other) < 0.0) {
-            return tag.other
-        }
-
-        return null
+        addRow(subject, row)
+        return true
     }
 
-    private fun addWithArtificialVariable(row: Row): Boolean {
+    private fun chooseSubject(row: Row): Symbol? {
+        row.symbols.keys.firstOrNull { !it.isRestricted }?.let { return it }
+
+        row.symbols.forEach { (symbol, value) ->
+            if (symbol.type != Symbol.Type.dummy && value < 0.0 && columns[symbol] == null) {
+                return symbol
+            }
+        }
+
+        var subject: Symbol? = null
+        var coefficient = 0.0
+        row.symbols.forEach { (symbol, value) ->
+            if (symbol.type != Symbol.Type.dummy) {
+                return null
+            } else if (!columns.containsKey(symbol)) {
+                subject = symbol
+                coefficient = value
+            }
+        }
+
+        // TODO Error
+
+        if (coefficient > 0.0) {
+            row.multiplyBy(-1.0)
+        }
+
+        return subject
+    }
+
+    private fun addWithArtificialVariable(row: Row) {
         val artificialVariable = Symbol(Symbol.Type.slack)
-        rows[artificialVariable] = row
-        artificialRow = Row(row)
-        artificialRow?.let { optimize(it) }
-        val success = artificialRow?.constant?.isAlmostZero == true
-        artificialRow = null
+        val objectiveVariable = Symbol(Symbol.Type.objective)
 
-        val artificialRow = rows[artificialVariable]
-        if (artificialRow != null) {
-            rows.remove(artificialVariable)
-            if (artificialRow.symbols.isEmpty()) {
-                return success
-            }
-            val entering = anyPivotableSymbol(artificialRow) ?: return false
-            artificialRow.solveFor(artificialVariable, entering)
-            substitute(entering, artificialRow)
-            rows[entering] = artificialRow
+        addRow(objectiveVariable, Row(row))
+        addRow(artificialVariable, row)
+
+        optimize(objectiveVariable)
+
+        rows[artificialVariable]?.let {
+            val entering = it.symbols.keys.firstOrNull { it.type == Symbol.Type.slack } ?: throw RuntimeException() // TODO UnsatisfiableEquationException
+            pivot(entering, artificialVariable)
         }
-
-        rows.values.forEach { it.remove(artificialVariable) }
-        objective.remove(artificialVariable)
-        return success
+        removeColumn(artificialVariable)
+        removeRow(objectiveVariable)
     }
 
-    private fun optimize(objective: Row) {
+    private fun optimize(symbol: Symbol) {
+        val row = rows[symbol] ?: return
+
         while (true) {
-            val entering = getEnteringSymbol(objective) ?: return
+            val entering = getEnteringSymbol(row) ?: return
             val leaving = getLeavingSymbol(entering) ?: return
-
-            rows[leaving]?.let { row ->
-                rows.remove(leaving)
-                row.solveFor(leaving, entering)
-                substitute(entering, row)
-                rows[entering] = row
-            }
+            pivot(entering, leaving)
         }
     }
 
-    private fun substitute(symbol: Symbol, row: Row) {
-        rows.forEach { it.value.substitute(symbol, row) }
-        objective.substitute(symbol, row)
-        artificialRow?.substitute(symbol, row)
-    }
-
-    private fun getEnteringSymbol(objective: Row): Symbol? {
-        objective.symbols.forEach { (symbol, value) ->
-            if (symbol.type != Symbol.Type.dummy && value < 0) {
+    private fun getEnteringSymbol(row: Row): Symbol? {
+        row.symbols.forEach { (symbol, value) ->
+            if (symbol.type == Symbol.Type.slack && value < 0) {
                 return symbol
             }
         }
         return null
     }
 
-    private fun anyPivotableSymbol(row: Row): Symbol? {
-        return row.symbols.keys.firstOrNull { it.type == Symbol.Type.slack || it.type == Symbol.Type.error }
-    }
-
     private fun getLeavingSymbol(entering: Symbol): Symbol? {
-        var ratio = Double.MAX_VALUE
+        var minRatio = java.lang.Double.MAX_VALUE
         var symbol: Symbol? = null
 
-        rows.forEach {
-            if (it.key.type != Symbol.Type.external) {
-                val temp = it.value.coefficientFor(entering)
-                if (temp < 0) {
-                    val temp_ratio = -it.value.constant / temp
-                    if (temp_ratio < ratio) {
-                        ratio = temp_ratio
-                        symbol = it.key
+        columns[entering]?.forEach {
+            if (it.type == Symbol.Type.slack) {
+                rows[it]?.let { row ->
+                    val coefficient = row.coefficientFor(entering)
+                    if (coefficient < 0.0) {
+                        val ratio = -row.constant / coefficient
+                        if (ratio < minRatio) {
+                            minRatio = ratio
+                            symbol = it
+                        }
                     }
                 }
             }
@@ -299,12 +277,71 @@ internal class Solver {
         return symbol
     }
 
-    private fun getVarSymbol(variable: ConstraintVariable): Symbol {
-        var symbol = variables[variable]
+    private fun pivot(entrySymbol: Symbol, exitSymbol: Symbol) {
+        removeRow(exitSymbol)?.let {
+            it.changeSubject(exitSymbol, entrySymbol)
+            substituteOut(entrySymbol, it)
+            addRow(entrySymbol, it)
+        }
+    }
+
+    private fun insertErrorSymbol(equation: Equation, symbol: Symbol) {
+        var symbols = errorSymbols[equation]
+        if (symbols == null) {
+            symbols = HashSet<Symbol>()
+            errorSymbols.put(equation, symbols)
+        }
+        symbols.add(symbol)
+    }
+
+    internal fun onSymbolRemoved(symbol: Symbol, subject: Symbol) {
+        columns[symbol]?.remove(subject)
+    }
+
+    internal fun onSymbolAdded(symbol: Symbol, subject: Symbol) {
+        insertColumnVariable(symbol, subject)
+    }
+
+    private fun insertColumnVariable(columnVariable: Symbol, rowVariable: Symbol) {
+        var rows = columns[columnVariable]
+        if (rows == null) {
+            rows = HashSet<Symbol>()
+            columns.put(columnVariable, rows)
+        }
+        rows.add(rowVariable)
+    }
+
+    private fun addRow(symbol: Symbol, row: Row) {
+        rows.put(symbol, row)
+
+        row.symbols.keys.forEach { insertColumnVariable(it, symbol) }
+    }
+
+    private fun removeColumn(symbol: Symbol) {
+        columns.remove(symbol)?.forEach { rows[it]?.symbols?.remove(symbol) }
+    }
+
+    private fun removeRow(symbol: Symbol): Row? {
+        val row = rows.remove(symbol)
+        row?.symbols?.keys?.forEach { columns[it]?.remove(symbol) }
+        return row
+    }
+
+    private fun substituteOut(oldSymbol: Symbol, row: Row) {
+        columns.remove(oldSymbol)?.forEach {
+            rows[it]?.substituteOut(oldSymbol, row, it, this)
+        }
+    }
+
+    private fun getSymbolForVariable(variable: ConstraintVariable): Symbol {
+        var symbol = symbolForVariable[variable]
         if (symbol == null) {
             symbol = Symbol(Symbol.Type.external)
-            variables[variable] = symbol
+            symbolForVariable[variable] = symbol
         }
         return symbol
     }
+
+    private val Symbol.isRestricted: Boolean
+        get() = type == Symbol.Type.slack || type == Symbol.Type.dummy
 }

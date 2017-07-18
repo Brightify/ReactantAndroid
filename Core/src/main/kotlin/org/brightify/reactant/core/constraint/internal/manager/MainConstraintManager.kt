@@ -17,7 +17,7 @@ import org.brightify.reactant.core.constraint.util.children
  */
 internal class MainConstraintManager : ConstraintManager {
 
-    private val solver = Solver()
+    val solver = Solver()
     private val equations = HashMap<View, List<Equation>>()
     private val constraints = HashMap<View, HashSet<Constraint>>()
     private val valueForVariable = HashMap<ConstraintVariable, Equation>()
@@ -68,10 +68,12 @@ internal class MainConstraintManager : ConstraintManager {
         val equations = DefaultEquationsProvider(view).equations
         this.equations[view] = equations
         equations.forEach { solver.addEquation(it) }
-        intrinsicSizes[view] = IntrinsicSize(view)
-        intrinsicSizes[view]?.constraints?.forEach {
-            it.initialized = true
-            addConstraint(it)
+        if (view !is AutoLayout) {
+            intrinsicSizes[view] = IntrinsicSize(view)
+            intrinsicSizes[view]?.constraints?.forEach {
+                it.initialized = true
+                addConstraint(it)
+            }
         }
     }
 
@@ -107,7 +109,7 @@ internal class MainConstraintManager : ConstraintManager {
         valueForVariable[variable]?.let {
             solver.removeEquation(it)
         }
-        val equation = Equation(-value.toDouble(), listOf(Term(variable)))
+        val equation = Equation(listOf(Term(variable)), constant = value.toDouble())
         solver.addEquation(equation)
         valueForVariable[variable] = equation
 
@@ -119,24 +121,25 @@ internal class MainConstraintManager : ConstraintManager {
         }
     }
 
-    override fun getViewIntrinsicSize(view: View): IntrinsicSize = intrinsicSizes[view]!!
+    override fun getViewIntrinsicSize(view: View): IntrinsicSize {
+        return intrinsicSizes[view] ?: throw RuntimeException("AutoLayout does not have IntrinsicSize") // TODO
+    }
 
     override fun addAllToManager(manager: ConstraintManager) {
         val mainManager = manager.mainConstraintManager
         equations.forEach { (view, equations) ->
             mainManager.equations[view] = equations
-            //            equations.forEach { mainManager.solver.addEquation(it) }
+                        equations.forEach { mainManager.solver.addEquation(it) }
         }
         constraints.flatMap { it.value }.forEach {
-            //            mainManager.addConstraint(it)
+                        mainManager.solver.addConstraint(it)
         }
         mainManager.constraints.putAll(constraints)
         valueForVariable.forEach { (variable, equation) ->
-            //            mainManager.solver.addEquation(equation)
+            mainManager.solver.addEquation(equation)
             mainManager.valueForVariable[variable] = equation
         }
         mainManager.intrinsicSizes.putAll(intrinsicSizes)
-        mainManager.solver.addAll(solver)
     }
 
     override fun splitToMainManagerForAutoLayout(layout: AutoLayout): MainConstraintManager {

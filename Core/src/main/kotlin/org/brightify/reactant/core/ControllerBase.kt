@@ -8,9 +8,6 @@ import io.reactivex.rxkotlin.addTo
 import org.brightify.reactant.core.component.Component
 import org.brightify.reactant.core.component.ComponentDelegate
 import org.brightify.reactant.core.component.ComponentWithDelegate
-import org.brightify.reactant.core.constraint.AutoLayout
-import org.brightify.reactant.core.constraint.ConstraintPriority
-import org.brightify.reactant.core.constraint.util.snp
 import kotlin.properties.Delegates
 
 /**
@@ -60,12 +57,6 @@ open class ControllerBase<STATE, ROOT, ROOT_ACTION>(private val rootViewFactory:
         title = title
         contentView = rootViewFactory(activity)
         rootView.action.subscribe { act(it) }.addTo(lifetimeDisposeBag)
-        (rootView as? AutoLayout)?.let {
-            it.snp.verticalContentCompressionResistancePriority = ConstraintPriority.required
-            it.snp.horizontalContentCompressionResistancePriority = ConstraintPriority.required
-            it.snp.verticalContentHuggingPriority = ConstraintPriority.required
-            it.snp.horizontalContentHuggingPriority = ConstraintPriority.required
-        }
 
         afterInit()
     }

@@ -3,9 +3,9 @@ package org.brightify.reactant.core.constraint
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
-class ConstraintPriority(priority: Int, val description: String = priority.toString()) {
+class ConstraintPriority(value: Int, val description: String = value.toString()) {
 
-    val priority: Int = minOf(1000, maxOf(0, priority))
+    val value: Int = minOf(1000, maxOf(0, value))
 
     companion object {
         val required = ConstraintPriority(1000, "required")
@@ -19,10 +19,10 @@ class ConstraintPriority(priority: Int, val description: String = priority.toStr
     }
 
     override fun equals(other: Any?): Boolean {
-        return priority == (other as? ConstraintPriority)?.priority ?: -1
+        return value == (other as? ConstraintPriority)?.value ?: -1
     }
 
     override fun hashCode(): Int {
-        return priority
+        return value
     }
 }

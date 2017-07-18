@@ -75,9 +75,14 @@ open class AutoLayout : ViewGroup {
             }
         }
 
+        constraintManager.mainConstraintManager.solver.solve()
+
         val dsl = snp
-        dsl.intrinsicWidth = getMeasuredSize(widthMeasureSpec, constraintManager.getValueForVariable(dsl.width))
-        dsl.intrinsicHeight = getMeasuredSize(heightMeasureSpec, constraintManager.getValueForVariable(dsl.height))
+        if (constraintManager is MainConstraintManager) {
+            constraintManager.setValueForVariable(dsl.width, getMeasuredSize(widthMeasureSpec, constraintManager.getValueForVariable(dsl.width)))
+            constraintManager.setValueForVariable(dsl.height, getMeasuredSize(heightMeasureSpec, constraintManager.getValueForVariable(dsl.height)))
+            constraintManager.mainConstraintManager.solver.solve()
+        }
 
         setMeasuredDimension(getValueForVariableInPx(dsl.width), getValueForVariableInPx(dsl.height))
 
