@@ -4,32 +4,29 @@ import android.view.View
 import org.brightify.reactant.core.constraint.AutoLayout
 import org.brightify.reactant.core.constraint.Constraint
 import org.brightify.reactant.core.constraint.ConstraintVariable
+import org.brightify.reactant.core.constraint.ContainerView
 import org.brightify.reactant.core.constraint.exception.ViewNotManagedByCommonAutoLayoutException
+import org.brightify.reactant.core.constraint.internal.ViewEquationsManager
+import org.brightify.reactant.core.constraint.internal.ViewEquationsManagerWithIntrinsicSize
 import org.brightify.reactant.core.constraint.internal.solver.Equation
 import org.brightify.reactant.core.constraint.internal.solver.Solver
 import org.brightify.reactant.core.constraint.internal.solver.Term
-import org.brightify.reactant.core.constraint.internal.util.DefaultEquationsProvider
-import org.brightify.reactant.core.constraint.internal.util.IntrinsicSize
-import org.brightify.reactant.core.constraint.util.children
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
+// TODO Exceptions
 internal class MainConstraintManager : ConstraintManager {
 
-    val solver = Solver()
-    private val equations = HashMap<View, List<Equation>>()
+    private val solver = Solver()
     private val constraints = HashMap<View, HashSet<Constraint>>()
     private val valueForVariable = HashMap<ConstraintVariable, Equation>()
-    private val intrinsicSizes = HashMap<View, IntrinsicSize>()
+    private val equationsManagers = HashMap<View, ViewEquationsManager>()
 
     private val managedViews: Set<View>
-        get() = equations.keys
+        get() = equationsManagers.keys
 
-    override val mainConstraintManager: MainConstraintManager
-        get() = this
-
-    override val allConstraints: List<Constraint>
+    val allConstraints: List<Constraint>
         get() = constraints.flatMap { it.value }
 
     override fun addConstraint(constraint: Constraint) {
@@ -60,117 +57,86 @@ internal class MainConstraintManager : ConstraintManager {
         constraint.isManaged = false
     }
 
-    override fun addManagedView(view: View) {
+    fun solve() {
+        solver.solve()
+    }
+
+    fun addManagedView(view: View) {
         if (managedViews.contains(view)) {
             return
         }
 
-        val equations = DefaultEquationsProvider(view).equations
-        this.equations[view] = equations
-        equations.forEach { solver.addEquation(it) }
-        if (view !is AutoLayout) {
-            intrinsicSizes[view] = IntrinsicSize(view)
-            intrinsicSizes[view]?.constraints?.forEach {
-                it.initialized = true
-                addConstraint(it)
-            }
-        }
+        val equationsManager = if (view is ContainerView || view is AutoLayout) ViewEquationsManager(
+                view) else ViewEquationsManagerWithIntrinsicSize(view)
+        equationsManager.addEquations(solver)
+        equationsManagers[view] = equationsManager
     }
 
-    override fun removeManagedView(view: View) {
+    fun removeManagedView(view: View) {
         if (!managedViews.contains(view)) {
             return
         }
-
-        equations[view]?.forEach { solver.removeEquation(it) }
-        equations.remove(view)
 
         constraints.flatMap { it.value }.filter { !verifyViewsUsedByConstraint(it) }.forEach { removeConstraint(it) }
         constraints.remove(view)
 
         valueForVariable.filter { it.key.view == view }.forEach { (variable, _) -> resetValueForVariable(variable) }
 
-        intrinsicSizes.remove(view)
+        equationsManagers.remove(view)?.removeEquations()
     }
 
-    override fun removeViewConstraintsCreatedByUser(view: View) {
-        constraints[view]
-                ?.minus(intrinsicSizes[view]?.constraints ?: emptyList())
-                ?.forEach { removeConstraint(it) }
+    fun addAll(containerConstraintManagers: Set<ContainerConstraintManager>) {
+        containerConstraintManagers.forEach {
+            it.equationsManagers.forEach {
+                if (!managedViews.contains(it.key)) {
+                    // TODO
+                }
+                equationsManagers[it.key]?.removeEquations()
+                it.value.addEquations(solver)
+                equationsManagers[it.key] = it.value
+            }
+        }
+        containerConstraintManagers.forEach { it.constraints.forEach { it.value.forEach { addConstraint(it) } } }
+    }
+
+    override fun removeViewConstraints(view: View) {
+        constraints[view]?.forEach { removeConstraint(it) }
     }
 
     override fun getValueForVariable(variable: ConstraintVariable): Double = solver.getValueForVariable(variable)
 
-    override fun setValueForVariable(variable: ConstraintVariable, value: Number) {
+    fun setValueForVariable(variable: ConstraintVariable, value: Number) {
         if (!managedViews.contains(variable.view)) {
             return
         }
 
-        valueForVariable[variable]?.let {
-            solver.removeEquation(it)
+        val oldEquation = valueForVariable[variable]
+        if (oldEquation?.constant == value) {
+            return
         }
+
+        oldEquation?.let { solver.removeEquation(it) }
         val equation = Equation(listOf(Term(variable)), constant = value.toDouble())
         solver.addEquation(equation)
         valueForVariable[variable] = equation
-
     }
 
-    override fun resetValueForVariable(variable: ConstraintVariable) {
-        valueForVariable.remove(variable)?.let {
-            solver.removeEquation(it)
-        }
+    fun resetValueForVariable(variable: ConstraintVariable) {
+        valueForVariable.remove(variable)?.let { solver.removeEquation(it) }
     }
 
-    override fun getViewIntrinsicSize(view: View): IntrinsicSize {
-        return intrinsicSizes[view] ?: throw RuntimeException("AutoLayout does not have IntrinsicSize") // TODO
-    }
-
-    override fun addAllToManager(manager: ConstraintManager) {
-        val mainManager = manager.mainConstraintManager
-        equations.forEach { (view, equations) ->
-            mainManager.equations[view] = equations
-                        equations.forEach { mainManager.solver.addEquation(it) }
-        }
-        constraints.flatMap { it.value }.forEach {
-                        mainManager.solver.addConstraint(it)
-        }
-        mainManager.constraints.putAll(constraints)
-        valueForVariable.forEach { (variable, equation) ->
-            mainManager.solver.addEquation(equation)
-            mainManager.valueForVariable[variable] = equation
-        }
-        mainManager.intrinsicSizes.putAll(intrinsicSizes)
-    }
-
-    override fun splitToMainManagerForAutoLayout(layout: AutoLayout): MainConstraintManager {
-        val disconnectedViews = HashSet<View>()
-        fun registerDisconnectedView(view: View) {
-            disconnectedViews.add(view)
-            if (view is AutoLayout) {
-                view.children.forEach { registerDisconnectedView(it) }
-            }
-        }
-        registerDisconnectedView(layout)
-
-        val mainManager = MainConstraintManager()
-        equations.filter { disconnectedViews.contains(it.key) }.forEach { (view, equations) ->
-            mainManager.equations[view] = equations
-            equations.forEach { mainManager.solver.addEquation(it) }
-        }
-        valueForVariable.filter { disconnectedViews.contains(it.key.view) }.forEach { (variable, equation) ->
-            mainManager.solver.addEquation(equation)
-            mainManager.valueForVariable[variable] = equation
-        }
-        mainManager.intrinsicSizes.putAll(intrinsicSizes.filter { disconnectedViews.contains(it.key) })
-
-        val constraintsOfDisconnectedViews = constraints.flatMap { it.value }.filter { verifyViewsUsedByConstraint(it, disconnectedViews) }
-        disconnectedViews.forEach { removeManagedView(it) }
-        constraintsOfDisconnectedViews.forEach { mainManager.addConstraint(it) }
-
-        return mainManager
-    }
+    // TODO WithIntrinsicSize
+    override fun getEquationsManager(view: View): ViewEquationsManager = equationsManagers[view] ?: throw RuntimeException(
+            "View is not managed.")
 
     private fun verifyViewsUsedByConstraint(constraint: Constraint, views: Set<View> = managedViews): Boolean {
-        return constraint.constraintItems.flatMap { it.equation.terms.map { it.variable.view } }.all { views.contains(it) }
+        constraint.constraintItems.forEach {
+            it.equation.terms.forEach {
+                if (!views.contains(it.variable.view)) {
+                    return false
+                }
+            }
+        }
+        return true
     }
 }

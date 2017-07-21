@@ -15,7 +15,7 @@ import org.brightify.reactant.core.TextView
 import org.brightify.reactant.core.ViewBase
 import org.brightify.reactant.core.ViewController
 import org.brightify.reactant.core.Wireframe
-import org.brightify.reactant.core.constraint.AutoLayout
+import org.brightify.reactant.core.constraint.ContainerView
 import org.brightify.reactant.core.constraint.util.children
 import org.brightify.reactant.core.constraint.util.snp
 import org.brightify.reactant.core.make
@@ -56,6 +56,7 @@ class InitialController(private val reactions: InitialController.Reactions) : Co
 
     override fun act(action: Unit) {
         reactions.onNext()
+//        rootView.requestLayout()
     }
 }
 
@@ -72,7 +73,7 @@ class CustomView(title: String, context: Context) : ViewBase<Int, Unit>(context)
 
     private val text = make(::TextView, title).apply(Styles.text)
     private val button = make(::Button, "Button")
-    private val container = make(::AutoLayout)
+    private val container = make(::ContainerView)
     private val view = make(::TextView).apply { setBackgroundColor(Color.rgb(0, 255, 0)) }
     private val view2 = make(::TextView).apply { setBackgroundColor(Color.rgb(0, 0, 255)) }
 
@@ -92,6 +93,7 @@ class CustomView(title: String, context: Context) : ViewBase<Int, Unit>(context)
             top.equalTo(50)
             left.equalTo(40)
         }
+
         button.snp.makeConstraints {
             centerX.equalTo(text)
             top.equalTo(text.snp.bottom).offset(30)
@@ -154,7 +156,7 @@ class AnotherView(context: Context) : ViewBase<Unit, Unit>(context) {
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(changed, left, top, right, bottom)
 
-        snp.debugValuesRecursive()
-        snp.debugConstraintsRecursive()
+//        snp.debugValuesRecursive()
+//        snp.debugConstraintsRecursive()
     }
 }

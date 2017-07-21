@@ -6,9 +6,7 @@ import android.support.design.widget.BottomNavigationView
 import android.view.Menu
 import android.view.ViewGroup
 import android.widget.FrameLayout
-import org.brightify.reactant.core.constraint.AutoLayout
-import org.brightify.reactant.core.constraint.ConstraintPriority
-import org.brightify.reactant.core.constraint.util.snp
+import android.widget.RelativeLayout
 
 /**
  *  @author <a href="mailto:matous@brightify.org">Matous Hybl</a>
@@ -22,29 +20,25 @@ open class TabBarController(private val controllers: List<ViewController>) : Vie
         get() = viewControllerWrapper.childFragmentManager
 
     override fun onCreate() {
-        super.onCreate()
-
-        fragmentContainer = FrameLayout(activity)
-        fragmentContainer.assignId()
-
-        tabBar = BottomNavigationView(activity)
-        val layout = AutoLayout(activity)
+        val layout = RelativeLayout(activity)
         contentView = layout
-        contentView.assignId()
-        contentView.layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+        fragmentContainer = FrameLayout(activity)
+        tabBar = BottomNavigationView(activity)
+
+        fragmentContainer.assignId()
+        tabBar.assignId()
+
         layout.addView(fragmentContainer)
         layout.addView(tabBar)
-        fragmentContainer.snp.makeConstraints {
-            left.right.top.equalToSuperview()
-            bottom.equalTo(tabBar.snp.top)
-        }
 
-        tabBar.snp.verticalContentHuggingPriority = ConstraintPriority.required
-        tabBar.snp.makeConstraints {
-            left.equalToSuperview()
-            right.equalToSuperview()
-            bottom.equalToSuperview()
-        }
+        val contentViewParams = RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+        contentViewParams.addRule(RelativeLayout.ABOVE, tabBar.id)
+        contentView.layoutParams = contentViewParams
+
+        val tabBarParams = RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        tabBarParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
+        tabBar.layoutParams = tabBarParams
+
     }
 
     override fun onActivityCreated() {

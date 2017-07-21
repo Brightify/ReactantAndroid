@@ -1,7 +1,5 @@
 package org.brightify.reactant.core.constraint.internal.solver
 
-import org.brightify.reactant.core.constraint.internal.util.isAlmostZero
-
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
@@ -56,4 +54,7 @@ internal class Row(var constant: Double = 0.0) {
     }
 
     fun coefficientFor(symbol: Symbol): Double = symbols[symbol] ?: 0.0
+
+    private val Double.isAlmostZero: Boolean
+        get() = Math.abs(this) < 1.0e-8
 }

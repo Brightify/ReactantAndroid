@@ -46,9 +46,9 @@ class Constraint internal constructor(internal val view: View, internal val cons
         set(value) {
             if (initialized) {
                 if (value) {
-                    view.snp.constraintManager.addConstraint(this)
+                    view.snp.addConstraint(this)
                 } else {
-                    view.snp.constraintManager.removeConstraint(this)
+                    view.snp.removeConstraint(this)
                 }
             }
 

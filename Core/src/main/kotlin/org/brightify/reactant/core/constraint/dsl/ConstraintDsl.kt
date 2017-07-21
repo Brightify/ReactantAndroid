@@ -2,14 +2,17 @@ package org.brightify.reactant.core.constraint.dsl
 
 import android.util.Log
 import android.view.View
+import android.view.ViewGroup
 import org.brightify.reactant.core.constraint.AutoLayout
 import org.brightify.reactant.core.constraint.Constraint
 import org.brightify.reactant.core.constraint.ConstraintPriority
 import org.brightify.reactant.core.constraint.ConstraintVariable
+import org.brightify.reactant.core.constraint.ContainerView
 import org.brightify.reactant.core.constraint.exception.AutoLayoutNotFoundException
 import org.brightify.reactant.core.constraint.internal.ConstraintType
+import org.brightify.reactant.core.constraint.internal.ViewEquationsManagerWithIntrinsicSize
 import org.brightify.reactant.core.constraint.internal.manager.ConstraintManager
-import org.brightify.reactant.core.constraint.internal.util.IntrinsicSize
+import org.brightify.reactant.core.constraint.internal.manager.MainConstraintManager
 import org.brightify.reactant.core.constraint.util.children
 import org.brightify.reactant.core.constraint.util.description
 import org.brightify.reactant.core.constraint.util.snp
@@ -51,46 +54,51 @@ class ConstraintDsl internal constructor(private val view: View) {
         get() = ConstraintVariable(ConstraintType.centerY)
 
     var horizontalContentHuggingPriority: ConstraintPriority
-        get() = intrinsicSize.horizontalContentHuggingPriority
+        get() = viewEquationsManagerWithIntrinsicSize.horizontalContentHuggingPriority
         set(value) {
-            intrinsicSize.horizontalContentHuggingPriority = value
+            viewEquationsManagerWithIntrinsicSize.horizontalContentHuggingPriority = value
         }
 
     var verticalContentHuggingPriority: ConstraintPriority
-        get() = intrinsicSize.verticalContentHuggingPriority
+        get() = viewEquationsManagerWithIntrinsicSize.verticalContentHuggingPriority
         set(value) {
-            intrinsicSize.verticalContentHuggingPriority = value
+            viewEquationsManagerWithIntrinsicSize.verticalContentHuggingPriority = value
         }
 
     var horizontalContentCompressionResistancePriority: ConstraintPriority
-        get() = intrinsicSize.horizontalContentCompressionResistancePriority
+        get() = viewEquationsManagerWithIntrinsicSize.horizontalContentCompressionResistancePriority
         set(value) {
-            intrinsicSize.horizontalContentCompressionResistancePriority = value
+            viewEquationsManagerWithIntrinsicSize.horizontalContentCompressionResistancePriority = value
         }
 
     var verticalContentCompressionResistancePriority: ConstraintPriority
-        get() = intrinsicSize.verticalContentCompressionResistancePriority
+        get() = viewEquationsManagerWithIntrinsicSize.verticalContentCompressionResistancePriority
         set(value) {
-            intrinsicSize.verticalContentCompressionResistancePriority = value
+            viewEquationsManagerWithIntrinsicSize.verticalContentCompressionResistancePriority = value
         }
 
     internal var intrinsicWidth: Double
-        get() = intrinsicSize.intrinsicWidth
+        get() = viewEquationsManagerWithIntrinsicSize.intrinsicWidth
         set(value) {
-            intrinsicSize.intrinsicWidth = value
+            viewEquationsManagerWithIntrinsicSize.intrinsicWidth = value
         }
 
     internal var intrinsicHeight: Double
-        get() = intrinsicSize.intrinsicHeight
+        get() = viewEquationsManagerWithIntrinsicSize.intrinsicHeight
         set(value) {
-            intrinsicSize.intrinsicHeight = value
+            viewEquationsManagerWithIntrinsicSize.intrinsicHeight = value
         }
 
-    internal val constraintManager: ConstraintManager =
-            (view as? AutoLayout ?: view.parent as? AutoLayout)?.constraintManager ?: throw AutoLayoutNotFoundException(view)
+    // TODO
+    private val constraintManager: ConstraintManager by lazy {
+        val containerViewConstraintManager = (view.parent as? ContainerView ?: view as? ContainerView)?.constraintManager
+        val autoLayoutConstraintManager = (view.parent as? AutoLayout ?: view as? AutoLayout)?.constraintManager
+        containerViewConstraintManager ?: autoLayoutConstraintManager ?: throw AutoLayoutNotFoundException(view)
+    }
 
-    private val intrinsicSize: IntrinsicSize by lazy {
-        constraintManager.getViewIntrinsicSize(view)
+    private val viewEquationsManagerWithIntrinsicSize: ViewEquationsManagerWithIntrinsicSize by lazy {
+        constraintManager.getEquationsManager(view) as? ViewEquationsManagerWithIntrinsicSize ?: throw RuntimeException(
+                "${view.description} does not have intrinsic size.")
     }
 
     fun makeConstraints(closure: ConstraintMakerProvider.() -> Unit) {
@@ -105,13 +113,13 @@ class ConstraintDsl internal constructor(private val view: View) {
     }
 
     fun remakeConstraints(closure: ConstraintMakerProvider.() -> Unit) {
-        constraintManager.removeViewConstraintsCreatedByUser(view)
+        constraintManager.removeViewConstraints(view)
         makeConstraints(closure)
     }
 
     fun debugValues() {
-
-        val otherValues = if (view !is AutoLayout) "\nintrinsicWidth = $intrinsicWidth\n" +
+        val otherValues = if ((constraintManager as MainConstraintManager).getEquationsManager(
+                view) is ViewEquationsManagerWithIntrinsicSize) "\nintrinsicWidth = $intrinsicWidth\n" +
                 "intrinsicHeight = $intrinsicHeight\n" +
                 "horizontalContentHuggingPriority = $horizontalContentHuggingPriority\n" +
                 "verticalContentHuggingPriority = $verticalContentHuggingPriority\n" +
@@ -128,13 +136,13 @@ class ConstraintDsl internal constructor(private val view: View) {
 
     fun debugValuesRecursive() {
         debugValues()
-        if (view is AutoLayout) {
-            view.children.forEach { it.snp.debugValuesRecursive() }
+        if (view is ContainerView || view is AutoLayout) {
+            (view as ViewGroup).children.forEach { it.snp.debugValuesRecursive() }
         }
     }
 
     fun debugConstraints() {
-        constraintManager.allConstraints
+        (constraintManager as MainConstraintManager).allConstraints
                 .flatMap { it.constraintItems }
                 .filter { it.leftVariable.view == view || it.rightVariable?.view == view }
                 .map { it.toString() }
@@ -143,9 +151,17 @@ class ConstraintDsl internal constructor(private val view: View) {
 
     fun debugConstraintsRecursive() {
         debugConstraints()
-        if (view is AutoLayout) {
-            view.children.forEach { it.snp.debugConstraintsRecursive() }
+        if (view is ContainerView || view is AutoLayout) {
+            (view as ViewGroup).children.forEach { it.snp.debugConstraintsRecursive() }
         }
+    }
+
+    internal fun addConstraint(constraint: Constraint) {
+        constraintManager.addConstraint(constraint)
+    }
+
+    internal fun removeConstraint(constraint: Constraint) {
+        constraintManager.removeConstraint(constraint)
     }
 
     private fun ConstraintVariable(type: ConstraintType): ConstraintVariable = ConstraintVariable(view, type)

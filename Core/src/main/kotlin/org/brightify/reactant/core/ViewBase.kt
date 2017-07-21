@@ -5,12 +5,12 @@ import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
 import org.brightify.reactant.core.component.ComponentDelegate
 import org.brightify.reactant.core.component.ComponentWithDelegate
-import org.brightify.reactant.core.constraint.AutoLayout
+import org.brightify.reactant.core.constraint.ContainerView
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
-open class ViewBase<STATE, ACTION>(context: Context) : AutoLayout(context), ComponentWithDelegate<STATE, ACTION> {
+open class ViewBase<STATE, ACTION>(context: Context) : ContainerView(context), ComponentWithDelegate<STATE, ACTION> {
 
     override val lifetimeDisposeBag = CompositeDisposable()
 
