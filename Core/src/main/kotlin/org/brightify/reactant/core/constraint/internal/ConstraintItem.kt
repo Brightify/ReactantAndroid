@@ -48,8 +48,11 @@ internal class ConstraintItem(val leftVariable: ConstraintVariable, val operator
     }
 
     private fun createEquation(): Equation {
-        val terms = mutableListOf(Term(leftVariable))
-        rightVariable?.let { terms.add(Term(-multiplier.toDouble(), it)) }
+        val terms = ArrayList<Term>()
+        terms.addAll(ConstraintType.termsForVariable(leftVariable, 1.0))
+        rightVariable?.let {
+            terms.addAll(ConstraintType.termsForVariable(it, -multiplier.toDouble()))
+        }
         return Equation(terms, operator, offset.toDouble(), priority)
     }
 }

@@ -50,16 +50,16 @@ internal open class ViewEquationsManager(val view: View) {
 
     open fun addEquations(solver: Solver) {
         this.solver = solver
-        solver.addEquation(width)
-        solver.addEquation(height)
-        solver.addEquation(centerX)
-        solver.addEquation(centerY)
+//        solver.addEquation(width)
+//        solver.addEquation(height)
+//        solver.addEquation(centerX)
+//        solver.addEquation(centerY)
     }
 
     open fun removeEquations() {
-        solver?.removeEquation(width)
-        solver?.removeEquation(height)
-        solver?.removeEquation(centerX)
-        solver?.removeEquation(centerY)
+//        solver?.removeEquation(width)
+//        solver?.removeEquation(height)
+//        solver?.removeEquation(centerX)
+//        solver?.removeEquation(centerY)
     }
 }

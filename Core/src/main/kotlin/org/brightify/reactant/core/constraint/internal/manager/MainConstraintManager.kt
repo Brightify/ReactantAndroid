@@ -6,11 +6,11 @@ import org.brightify.reactant.core.constraint.Constraint
 import org.brightify.reactant.core.constraint.ConstraintVariable
 import org.brightify.reactant.core.constraint.ContainerView
 import org.brightify.reactant.core.constraint.exception.ViewNotManagedByCommonAutoLayoutException
+import org.brightify.reactant.core.constraint.internal.ConstraintType
 import org.brightify.reactant.core.constraint.internal.ViewEquationsManager
 import org.brightify.reactant.core.constraint.internal.ViewEquationsManagerWithIntrinsicSize
 import org.brightify.reactant.core.constraint.internal.solver.Equation
 import org.brightify.reactant.core.constraint.internal.solver.Solver
-import org.brightify.reactant.core.constraint.internal.solver.Term
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
@@ -103,7 +103,9 @@ internal class MainConstraintManager : ConstraintManager {
         constraints[view]?.forEach { removeConstraint(it) }
     }
 
-    override fun getValueForVariable(variable: ConstraintVariable): Double = solver.getValueForVariable(variable)
+    override fun getValueForVariable(variable: ConstraintVariable): Double {
+        return ConstraintType.termsForVariable(variable, 1.0).map { it.coefficient * solver.getValueForVariable(it.variable) }.reduce { acc, term -> acc + term }
+    }
 
     fun setValueForVariable(variable: ConstraintVariable, value: Number) {
         if (!managedViews.contains(variable.view)) {
@@ -116,7 +118,7 @@ internal class MainConstraintManager : ConstraintManager {
         }
 
         oldEquation?.let { solver.removeEquation(it) }
-        val equation = Equation(listOf(Term(variable)), constant = value.toDouble())
+        val equation = Equation(ConstraintType.termsForVariable(variable, 1.0), constant = value.toDouble())
         solver.addEquation(equation)
         valueForVariable[variable] = equation
     }

@@ -22,6 +22,9 @@ internal class Solver {
     private val symbolForEquation = LinkedHashMap<Equation, Symbol>()
     private val symbolForVariable = HashMap<ConstraintVariable, Symbol>()
 
+    private val equationsToAdd = HashSet<Equation>()
+    private val equationsToRemove = HashSet<Equation>()
+
     fun addConstraint(constraint: Constraint) {
         val errorItems = ArrayList<ConstraintItem>()
         constraint.constraintItems.forEach {
@@ -41,71 +44,40 @@ internal class Solver {
     }
 
     fun addEquation(equation: Equation) {
+        equationsToAdd.add(equation)
+    }
+
+    fun removeEquation(equation: Equation) {
+        if (!equationsToAdd.remove(equation)) {
+            equationsToRemove.add(equation)
+        }
+    }
+
+    fun solve() {
+        equationsToRemove.forEach { removeEquationImmediately(it) }
+        equationsToAdd.forEach { addEquationImmediately(it) }
+        equationsToAdd.clear()
+        equationsToRemove.clear()
+        optimize(objective)
+    }
+
+    fun getValueForVariable(variable: ConstraintVariable): Double {
+        return symbolForVariable[variable]?.let { rows[it]?.constant } ?: 0.0
+    }
+
+    private fun addEquationImmediately(equation: Equation) {
         val expression = createRow(equation)
         if (!tryAddingDirectly(expression)) {
             addWithArtificialVariable(expression)
         }
     }
 
-    fun removeEquation(equation: Equation) {
+    private fun removeEquationImmediately(equation: Equation) {
         val marker = symbolForEquation.remove(equation) ?: return
 
-        errorSymbols[equation]?.forEach {
-            val row = rows[it]
-            if (row != null) {
-                rows[objective]?.addExpression(row, -equation.priority.value.toDouble(), objective, this)
-            } else {
-                rows[objective]?.addVariable(it, -equation.priority.value.toDouble(), objective, this)
-            }
-        }
-
-        if (rows[marker] == null) {
-            columns[marker]?.let { column ->
-                var leaving: Symbol? = null
-                var minRatio = 0.0
-                column.forEach {
-                    if (it.isRestricted) {
-                        rows[it]?.let { row ->
-                            val coefficient = row.coefficientFor(marker)
-                            if (coefficient < 0.0) {
-                                val r = -row.constant / coefficient
-                                if (leaving == null || r < minRatio) {
-                                    minRatio = coefficient
-                                    leaving = it
-                                }
-                            }
-                        }
-                    }
-                }
-                if (leaving == null) {
-                    column.forEach {
-                        if (it.isRestricted) {
-                            rows[it]?.let { row ->
-                                val coefficient = row.coefficientFor(marker)
-                                val r = row.constant / coefficient
-                                if (leaving == null || r < minRatio) {
-                                    minRatio = coefficient
-                                    leaving = it
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if (leaving == null) {
-                    if (column.size == 0) {
-                        removeColumn(marker)
-                    } else {
-                        leaving = column.first()
-                    }
-                }
-
-                leaving?.let { pivot(marker, it) }
-            }
-        }
+        removeEquationEffects(equation, marker)
 
         removeRow(marker)
-
         errorSymbols[equation]?.forEach {
             if (it != marker) {
                 removeColumn(it)
@@ -113,14 +85,6 @@ internal class Solver {
         }
 
         errorSymbols.remove(equation)
-    }
-
-    fun solve() {
-        optimize(objective)
-    }
-
-    fun getValueForVariable(variable: ConstraintVariable): Double {
-        return symbolForVariable[variable]?.let { rows[it]?.constant } ?: 0.0
     }
 
     private fun createRow(equation: Equation): Row {
@@ -179,6 +143,63 @@ internal class Solver {
         }
 
         return row
+    }
+
+    private fun removeEquationEffects(equation: Equation, marker: Symbol) {
+        errorSymbols[equation]?.forEach {
+            val row = rows[it]
+            if (row != null) {
+                rows[objective]?.addExpression(row, -equation.priority.value.toDouble(), objective, this)
+            } else {
+                rows[objective]?.addVariable(it, -equation.priority.value.toDouble(), objective, this)
+            }
+        }
+
+        if (rows[marker] == null) {
+            columns[marker]?.let { column ->
+                var leaving: Symbol? = null
+                var minRatio = 0.0
+                column.forEach {
+                    if (it.isRestricted) {
+                        rows[it]?.let { row ->
+                            val coefficient = row.coefficientFor(marker)
+                            if (coefficient < 0.0) {
+                                val r = -row.constant / coefficient
+                                if (leaving == null || r < minRatio) {
+                                    minRatio = coefficient
+                                    leaving = it
+                                }
+                            }
+                        }
+                    }
+                }
+                if (leaving == null) {
+                    column.forEach {
+                        if (it.isRestricted) {
+                            rows[it]?.let { row ->
+                                val coefficient = row.coefficientFor(marker)
+                                val r = row.constant / coefficient
+                                if (leaving == null || r < minRatio) {
+                                    minRatio = coefficient
+                                    leaving = it
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (leaving == null) {
+                    if (column.size == 0) {
+                        removeColumn(marker)
+                    } else {
+                        leaving = column.first()
+                    }
+                }
+
+                leaving?.let { pivot(marker, it) }
+            }
+        }
+
     }
 
     private fun tryAddingDirectly(row: Row): Boolean {

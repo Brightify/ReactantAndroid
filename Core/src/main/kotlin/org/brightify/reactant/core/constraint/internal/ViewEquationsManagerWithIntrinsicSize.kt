@@ -4,7 +4,6 @@ import android.view.View
 import org.brightify.reactant.core.constraint.ConstraintPriority
 import org.brightify.reactant.core.constraint.internal.solver.Equation
 import org.brightify.reactant.core.constraint.internal.solver.Solver
-import org.brightify.reactant.core.constraint.internal.solver.Term
 import org.brightify.reactant.core.util.onChange
 
 /**
@@ -15,70 +14,132 @@ internal class ViewEquationsManagerWithIntrinsicSize(view: View) : ViewEquations
     //    private val intrinsicWidthVariable = ConstraintVariable(view, ConstraintType.intrinsicWidth)
     //    private val intrinsicHeightVariable = ConstraintVariable(view, ConstraintType.intrinsicHeight)
 
-    var intrinsicWidth: Double by onChange(0.0) { _, _, _ ->
+    var intrinsicWidth: Double by onChange(-1.0) { _, _, _ ->
         //        solver?.removeEquation(intrinsicWidthEquation)
         //        intrinsicWidthEquation = Equation(intrinsicWidthEquation.terms, constant = intrinsicWidth)
         //        solver?.addEquation(intrinsicWidthEquation)
+        solver?.removeEquation(intrinsicWidthEquation)
         solver?.removeEquation(horizontalContentHuggingEquation)
         solver?.removeEquation(horizontalContentCompressionResistanceEquation)
+        intrinsicWidthEquation = Equation(intrinsicWidthEquation, intrinsicWidth)
         horizontalContentHuggingEquation = Equation(horizontalContentHuggingEquation, intrinsicWidth)
         horizontalContentCompressionResistanceEquation = Equation(horizontalContentCompressionResistanceEquation, intrinsicWidth)
-        solver?.addEquation(horizontalContentHuggingEquation)
-        solver?.addEquation(horizontalContentCompressionResistanceEquation)
+        if (horizontalContentHuggingPriority == horizontalContentCompressionResistancePriority) {
+            solver?.addEquation(intrinsicWidthEquation)
+        } else {
+            solver?.addEquation(horizontalContentHuggingEquation)
+            solver?.addEquation(horizontalContentCompressionResistanceEquation)
+        }
     }
 
-    var intrinsicHeight: Double by onChange(0.0) { _, _, _ ->
+    var intrinsicHeight: Double by onChange(-1.0) { _, _, _ ->
         //        solver?.removeEquation(intrinsicHeightEquation)
         //        intrinsicHeightEquation = Equation(intrinsicHeightEquation.terms, constant = intrinsicHeight)
         //        solver?.addEquation(intrinsicHeightEquation)
+        solver?.removeEquation(intrinsicHeightEquation)
         solver?.removeEquation(verticalContentHuggingEquation)
         solver?.removeEquation(verticalContentCompressionResistanceEquation)
+        intrinsicHeightEquation = Equation(intrinsicHeightEquation, intrinsicHeight)
         verticalContentHuggingEquation = Equation(verticalContentHuggingEquation, intrinsicHeight)
         verticalContentCompressionResistanceEquation = Equation(verticalContentCompressionResistanceEquation, intrinsicHeight)
-        solver?.addEquation(verticalContentHuggingEquation)
-        solver?.addEquation(verticalContentCompressionResistanceEquation)
+        if (verticalContentHuggingPriority == verticalContentCompressionResistancePriority) {
+            solver?.addEquation(intrinsicHeightEquation)
+        } else {
+            solver?.addEquation(verticalContentHuggingEquation)
+            solver?.addEquation(verticalContentCompressionResistanceEquation)
+        }
     }
 
-    var horizontalContentHuggingPriority: ConstraintPriority by onChange(ConstraintPriority.low) { _, _, _ ->
-        solver?.removeEquation(horizontalContentHuggingEquation)
+    var horizontalContentHuggingPriority: ConstraintPriority by onChange(ConstraintPriority.low) { _, oldValue, _ ->
+        if (oldValue == horizontalContentCompressionResistancePriority) {
+            solver?.removeEquation(intrinsicWidthEquation)
+        } else {
+            solver?.removeEquation(horizontalContentHuggingEquation)
+        }
+        intrinsicWidthEquation = Equation(intrinsicWidthEquation, horizontalContentHuggingPriority)
         horizontalContentHuggingEquation = Equation(horizontalContentHuggingEquation, horizontalContentHuggingPriority)
-        solver?.addEquation(horizontalContentHuggingEquation)
+        if (horizontalContentHuggingPriority == horizontalContentCompressionResistancePriority) {
+            solver?.addEquation(intrinsicWidthEquation)
+        } else {
+            solver?.addEquation(horizontalContentHuggingEquation)
+            if (oldValue == horizontalContentCompressionResistancePriority) {
+                solver?.addEquation(horizontalContentCompressionResistanceEquation)
+            }
+        }
     }
 
-    var verticalContentHuggingPriority: ConstraintPriority by onChange(ConstraintPriority.low) { _, _, _ ->
-        solver?.removeEquation(verticalContentHuggingEquation)
+    var verticalContentHuggingPriority: ConstraintPriority by onChange(ConstraintPriority.low) { _, oldValue, _ ->
+        if (oldValue == verticalContentCompressionResistancePriority) {
+            solver?.removeEquation(intrinsicHeightEquation)
+        } else {
+            solver?.removeEquation(verticalContentHuggingEquation)
+        }
+        intrinsicHeightEquation = Equation(intrinsicHeightEquation, verticalContentHuggingPriority)
         verticalContentHuggingEquation = Equation(verticalContentHuggingEquation, verticalContentHuggingPriority)
-        solver?.addEquation(verticalContentHuggingEquation)
+        if (verticalContentHuggingPriority == verticalContentCompressionResistancePriority) {
+            solver?.addEquation(intrinsicHeightEquation)
+        } else {
+            solver?.addEquation(verticalContentHuggingEquation)
+            if (oldValue == verticalContentCompressionResistancePriority) {
+                solver?.addEquation(verticalContentCompressionResistanceEquation)
+            }
+        }
     }
 
-    var horizontalContentCompressionResistancePriority: ConstraintPriority by onChange(ConstraintPriority.low) { _, _, _ ->
-        solver?.removeEquation(horizontalContentCompressionResistanceEquation)
+    var horizontalContentCompressionResistancePriority: ConstraintPriority by onChange(ConstraintPriority.low) { _, oldValue, _ ->
+        if (oldValue == horizontalContentHuggingPriority) {
+            solver?.removeEquation(intrinsicWidthEquation)
+        } else {
+            solver?.removeEquation(horizontalContentCompressionResistanceEquation)
+        }
+        intrinsicWidthEquation = Equation(intrinsicWidthEquation, horizontalContentCompressionResistancePriority)
         horizontalContentCompressionResistanceEquation = Equation(horizontalContentCompressionResistanceEquation,
                 horizontalContentCompressionResistancePriority)
-        solver?.addEquation(horizontalContentCompressionResistanceEquation)
+        if (horizontalContentHuggingPriority == horizontalContentCompressionResistancePriority) {
+            solver?.addEquation(intrinsicWidthEquation)
+        } else {
+            solver?.addEquation(horizontalContentCompressionResistanceEquation)
+            if (oldValue == horizontalContentHuggingPriority) {
+                solver?.addEquation(horizontalContentHuggingEquation)
+            }
+        }
     }
 
-    var verticalContentCompressionResistancePriority: ConstraintPriority by onChange(ConstraintPriority.low) { _, _, _ ->
-        solver?.removeEquation(verticalContentCompressionResistanceEquation)
+    var verticalContentCompressionResistancePriority: ConstraintPriority by onChange(ConstraintPriority.low) { _, oldValue, _ ->
+        if (oldValue == verticalContentHuggingPriority) {
+            solver?.removeEquation(intrinsicHeightEquation)
+        } else {
+            solver?.removeEquation(verticalContentCompressionResistanceEquation)
+        }
+        intrinsicHeightEquation = Equation(intrinsicHeightEquation, verticalContentCompressionResistancePriority)
         verticalContentCompressionResistanceEquation = Equation(verticalContentCompressionResistanceEquation,
                 verticalContentCompressionResistancePriority)
-        solver?.addEquation(verticalContentCompressionResistanceEquation)
+        if (verticalContentHuggingPriority == verticalContentCompressionResistancePriority) {
+            solver?.addEquation(intrinsicHeightEquation)
+        } else {
+            solver?.addEquation(verticalContentCompressionResistanceEquation)
+            if (oldValue == verticalContentHuggingPriority) {
+                solver?.addEquation(verticalContentHuggingEquation)
+            }
+        }
     }
 
-    //    private var intrinsicWidthEquation = Equation(listOf(Term(intrinsicWidthVariable)))
-    //
-    //    private var intrinsicHeightEquation = Equation(listOf(Term(intrinsicHeightVariable)))
+        private var intrinsicWidthEquation = Equation(ConstraintType.termsForVariable(widthVariable, 1.0),
+                operator = ConstraintOperator.equal, priority = ConstraintPriority.low)
 
-    private var horizontalContentHuggingEquation = Equation(listOf(Term(widthVariable)),
+        private var intrinsicHeightEquation = Equation(ConstraintType.termsForVariable(heightVariable, 1.0),
+                operator = ConstraintOperator.equal, priority = ConstraintPriority.low)
+
+    private var horizontalContentHuggingEquation = Equation(ConstraintType.termsForVariable(widthVariable, 1.0),
             operator = ConstraintOperator.lessOrEqual, priority = ConstraintPriority.low)
 
-    private var verticalContentHuggingEquation = Equation(listOf(Term(heightVariable)),
+    private var verticalContentHuggingEquation = Equation(ConstraintType.termsForVariable(heightVariable, 1.0),
             operator = ConstraintOperator.lessOrEqual, priority = ConstraintPriority.low)
 
-    private var horizontalContentCompressionResistanceEquation = Equation(listOf(Term(widthVariable)),
+    private var horizontalContentCompressionResistanceEquation = Equation(ConstraintType.termsForVariable(widthVariable, 1.0),
             operator = ConstraintOperator.greaterOrEqual, priority = ConstraintPriority.low)
 
-    private var verticalContentCompressionResistanceEquation = Equation(listOf(Term(heightVariable)),
+    private var verticalContentCompressionResistanceEquation = Equation(ConstraintType.termsForVariable(heightVariable, 1.0),
             operator = ConstraintOperator.greaterOrEqual, priority = ConstraintPriority.low)
 
     override fun addEquations(solver: Solver) {
@@ -86,10 +147,10 @@ internal class ViewEquationsManagerWithIntrinsicSize(view: View) : ViewEquations
 
         //        solver.addEquation(intrinsicWidthEquation)
         //        solver.addEquation(intrinsicHeightEquation)
-        solver.addEquation(horizontalContentHuggingEquation)
-        solver.addEquation(verticalContentHuggingEquation)
-        solver.addEquation(horizontalContentCompressionResistanceEquation)
-        solver.addEquation(verticalContentCompressionResistanceEquation)
+//        solver.addEquation(horizontalContentHuggingEquation)
+//        solver.addEquation(verticalContentHuggingEquation)
+//        solver.addEquation(horizontalContentCompressionResistanceEquation)
+//        solver.addEquation(verticalContentCompressionResistanceEquation)
     }
 
     override fun removeEquations() {
@@ -97,6 +158,8 @@ internal class ViewEquationsManagerWithIntrinsicSize(view: View) : ViewEquations
 
         //        solver?.removeEquation(intrinsicWidthEquation)
         //        solver?.removeEquation(intrinsicHeightEquation)
+        solver?.removeEquation(intrinsicWidthEquation)
+        solver?.removeEquation(intrinsicHeightEquation)
         solver?.removeEquation(horizontalContentHuggingEquation)
         solver?.removeEquation(verticalContentHuggingEquation)
         solver?.removeEquation(horizontalContentCompressionResistanceEquation)

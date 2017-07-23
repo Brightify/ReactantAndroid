@@ -113,7 +113,7 @@ open class ContainerView : ViewGroup {
             val child = getChildAt(it)
             if (child is ContainerView) {
                 child.autoLayoutMeasure()
-            } else {
+            } else if (child !is ViewGroup || child.layoutParams.width != LayoutParams.MATCH_PARENT || child.layoutParams.height != LayoutParams.MATCH_PARENT) {
                 child.measure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED)
 
                 val itDsl = child.snp
