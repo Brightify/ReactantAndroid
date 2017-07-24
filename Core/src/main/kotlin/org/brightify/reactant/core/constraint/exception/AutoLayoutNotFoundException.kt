@@ -6,4 +6,4 @@ import org.brightify.reactant.core.constraint.util.description
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
-class AutoLayoutNotFoundException(view: View) : RuntimeException("View (${view.description} must be ContainerView or child of ContainerView.")
+class AutoLayoutNotFoundException(view: View) : RuntimeException("View (${view.description} must be AutoLayout or child of AutoLayout.")

@@ -28,6 +28,7 @@ internal class ConstraintItem(val leftVariable: ConstraintVariable, val operator
         get() = leftVariable.type
 
     var equation = createEquation()
+        private set
 
     override fun toString(): String {
         val rightVariable = rightVariable?.let { Term(multiplier.toDouble(), rightVariable).toString() + " " } ?: ""

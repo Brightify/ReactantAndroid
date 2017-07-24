@@ -199,7 +199,6 @@ internal class Solver {
                 leaving?.let { pivot(marker, it) }
             }
         }
-
     }
 
     private fun tryAddingDirectly(row: Row): Boolean {

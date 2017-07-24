@@ -9,6 +9,12 @@ import android.view.ViewGroup
 val ViewGroup.children: List<View>
     get() = (0 until childCount).map { getChildAt(it) }
 
+inline fun ViewGroup.forEachChildren(action: (View) -> Unit) {
+    (0 until childCount).forEach {
+        action(getChildAt(it))
+    }
+}
+
 fun <T : ViewGroup> T.children(vararg children: View): T {
     children.forEach(this::addView)
     return this

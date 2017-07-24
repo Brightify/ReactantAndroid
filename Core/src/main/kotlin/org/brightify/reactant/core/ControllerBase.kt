@@ -8,9 +8,6 @@ import io.reactivex.rxkotlin.addTo
 import org.brightify.reactant.core.component.Component
 import org.brightify.reactant.core.component.ComponentDelegate
 import org.brightify.reactant.core.component.ComponentWithDelegate
-import org.brightify.reactant.core.constraint.AutoLayout
-import org.brightify.reactant.core.constraint.util.children
-import org.brightify.reactant.core.constraint.util.snp
 import kotlin.properties.Delegates
 
 /**
@@ -31,8 +28,9 @@ open class ControllerBase<STATE, ROOT, ROOT_ACTION>(private val rootViewFactory:
         (activity as? SupportActivity)?.title = title
     }
 
-    lateinit var rootView: ROOT
-        private set
+    @Suppress("UNCHECKED_CAST")
+    val rootView: ROOT
+        get() = contentView as ROOT
 
     private val castRootView: RootView?
         get() = rootView as? RootView
@@ -57,14 +55,7 @@ open class ControllerBase<STATE, ROOT, ROOT_ACTION>(private val rootViewFactory:
         super.onCreate()
 
         title = title
-        val autoLayout = AutoLayout(activity)
-        contentView = autoLayout
-        rootView = rootViewFactory(activity)
-        autoLayout.children(rootView)
-        rootView.snp.makeConstraints {
-            edges.equalToSuperview()
-        }
-
+        contentView = rootViewFactory(activity)
         rootView.action.subscribe { act(it) }.addTo(lifetimeDisposeBag)
 
         afterInit()

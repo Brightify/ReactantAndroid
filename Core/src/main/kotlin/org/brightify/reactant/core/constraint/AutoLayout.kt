@@ -6,28 +6,22 @@ import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import org.brightify.reactant.core.assignId
-import org.brightify.reactant.core.constraint.dsl.ConstraintDsl
-import org.brightify.reactant.core.constraint.internal.manager.ConstraintManager
-import org.brightify.reactant.core.constraint.internal.manager.ContainerConstraintManager
-import org.brightify.reactant.core.constraint.internal.manager.MainConstraintManager
+import org.brightify.reactant.core.constraint.internal.AutoLayoutConstraints
+import org.brightify.reactant.core.constraint.internal.ConstraintManager
 import org.brightify.reactant.core.constraint.util.description
+import org.brightify.reactant.core.constraint.util.forEachChildren
 import org.brightify.reactant.core.constraint.util.snp
 import org.brightify.reactant.core.util.printTimes
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
-class AutoLayout : ViewGroup {
+open class AutoLayout : ViewGroup {
 
-    internal var constraintManager = MainConstraintManager()
+    internal var constraintManager = ConstraintManager()
         private set
 
-    private var lastWidth = -1
-    private var lastHeight = -1
-    private var lastMeasuredWidth = -1
-    private var lastMeasuredHeight = -1
-
-    private val dsl = ConstraintDsl(this)
+    private lateinit var autoLayoutConstraints: AutoLayoutConstraints
 
     private val density: Double
         get() = resources.displayMetrics.density.toDouble()
@@ -53,70 +47,45 @@ class AutoLayout : ViewGroup {
         assignId()
 
         constraintManager.addManagedView(this)
-
-        constraintManager.setValueForVariable(dsl.top, 0)
-        constraintManager.setValueForVariable(dsl.left, 0)
+        autoLayoutConstraints = AutoLayoutConstraints(this)
+        autoLayoutConstraints.isActive = true
     }
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
-        val offsetTop = constraintManager.getValueForVariable(dsl.top)
-        val offsetLeft = constraintManager.getValueForVariable(dsl.left)
+        val offsetTop = constraintManager.getValueForVariable(snp.top)
+        val offsetLeft = constraintManager.getValueForVariable(snp.left)
 
-        (0 until childCount).forEach {
-            val child = getChildAt(it)
-            val itDsl = child.snp
-            child.layout(
-                    getChildPosition(itDsl.left, offsetLeft),
-                    getChildPosition(itDsl.top, offsetTop),
-                    getChildPosition(itDsl.right, offsetLeft),
-                    getChildPosition(itDsl.bottom, offsetTop)
+        forEachChildren {
+            it.layout(
+                    getChildPosition(it.snp.left, offsetLeft),
+                    getChildPosition(it.snp.top, offsetTop),
+                    getChildPosition(it.snp.right, offsetLeft),
+                    getChildPosition(it.snp.bottom, offsetTop)
             )
         }
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        val currentMeasuredWidth = MeasureSpec.getSize(widthMeasureSpec)
-        val currentMeasuredHeight = MeasureSpec.getSize(heightMeasureSpec)
-//        if (lastMeasuredWidth == currentMeasuredWidth && lastMeasuredHeight == currentMeasuredHeight) {
-//            setMeasuredDimension(lastWidth, lastHeight)
-//            return
-//        } else {
-            lastMeasuredWidth = currentMeasuredWidth
-            lastMeasuredHeight = currentMeasuredHeight
-//        }
-
         val begin = System.currentTimeMillis()
 
-        (0 until childCount).forEach {
-            val child = getChildAt(it)
-            if (child is ContainerView) {
-                child.autoLayoutMeasure()
-            } else if (child !is ViewGroup || child.layoutParams.width != LayoutParams.MATCH_PARENT || child.layoutParams.height != LayoutParams.MATCH_PARENT) {
-                child.measure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED)
-
-                val itDsl = child.snp
-                itDsl.intrinsicWidth = child.measuredWidth / density
-                itDsl.intrinsicHeight = child.measuredHeight / density
-            }
-        }
+        measureIntrinsicSizes()
 
         val childrenMeasured = System.currentTimeMillis()
 
-        if (MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.UNSPECIFIED || MeasureSpec.getMode(heightMeasureSpec) == MeasureSpec.UNSPECIFIED) {
+        if (MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.UNSPECIFIED || MeasureSpec.getMode(
+                heightMeasureSpec) == MeasureSpec.UNSPECIFIED) {
             constraintManager.solve()
         }
 
         val firstSolve = System.currentTimeMillis()
 
-        val measuredWidth = getMeasuredSize(widthMeasureSpec, dsl.width)
-        val measuredHeight = getMeasuredSize(heightMeasureSpec, dsl.height)
+        val measuredWidth = getMeasuredSize(widthMeasureSpec, snp.width)
+        val measuredHeight = getMeasuredSize(heightMeasureSpec, snp.height)
 
-        constraintManager.setValueForVariable(dsl.width, measuredWidth)
-        constraintManager.setValueForVariable(dsl.height, measuredHeight)
+        autoLayoutConstraints.width = measuredWidth
+        autoLayoutConstraints.height = measuredHeight
 
-        lastWidth = (measuredWidth * density).toInt()
-        lastHeight = (measuredHeight * density).toInt()
-        setMeasuredDimension(lastWidth, lastHeight)
+        setMeasuredDimension((measuredWidth * density).toInt(), (measuredHeight * density).toInt())
 
         val measuredDimensionSet = System.currentTimeMillis()
 
@@ -124,12 +93,7 @@ class AutoLayout : ViewGroup {
 
         val secondSolve = System.currentTimeMillis()
 
-        (0 until childCount).forEach {
-            val child = getChildAt(it)
-            val itDsl = child.snp
-            child.measure(MeasureSpec.makeMeasureSpec(getValueForVariableInPx(itDsl.width), MeasureSpec.EXACTLY),
-                    MeasureSpec.makeMeasureSpec(getValueForVariableInPx(itDsl.height), MeasureSpec.EXACTLY))
-        }
+        measureRealSizes()
 
         val afterMeasure = System.currentTimeMillis()
 
@@ -142,16 +106,14 @@ class AutoLayout : ViewGroup {
                 toSeconds(secondSolve, afterMeasure)
         )
 
-        if (constraintManager is ConstraintManager) {
-            val wMode = MeasureSpec.getMode(widthMeasureSpec) shr 30
-            val wSize = MeasureSpec.getSize(widthMeasureSpec)
-            val hMode = MeasureSpec.getMode(heightMeasureSpec) shr 30
-            val hSize = MeasureSpec.getSize(heightMeasureSpec)
+        val wMode = MeasureSpec.getMode(widthMeasureSpec) shr 30
+        val wSize = MeasureSpec.getSize(widthMeasureSpec)
+        val hMode = MeasureSpec.getMode(heightMeasureSpec) shr 30
+        val hSize = MeasureSpec.getSize(heightMeasureSpec)
 
-            Log.d("ContainerView.onMeasure", "($description) Took ${toSeconds(begin,
-                    System.currentTimeMillis())}s totally where width: $wMode / $wSize and height: $hMode / $hSize. Timings: $timings\n\n")
-            printTimes()
-        }
+        Log.d("ContainerView.onMeasure", "($description) Took ${toSeconds(begin,
+                System.currentTimeMillis())}s totally where width: $wMode / $wSize and height: $hMode / $hSize. Timings: $timings\n\n")
+        printTimes()
     }
 
     override fun shouldDelayChildPressedState() = false
@@ -162,22 +124,12 @@ class AutoLayout : ViewGroup {
         child?.let {
             it.assignId()
 
-            if (it is AutoLayout) {
-                throw RuntimeException("")
+            if (child is AutoLayout) {
+                constraintManager.join(child.constraintManager)
+                setConstraintManagerRecursive(child, constraintManager)
+                child.autoLayoutConstraints.isActive = false
             } else {
-                val managersToAdd = HashSet<ContainerConstraintManager>()
-                fun addViewRecursive(view: View) {
-                    constraintManager.addManagedView(view)
-                    if (view is ContainerView) {
-                        (view.constraintManager as? ContainerConstraintManager)?.let { managersToAdd.add(it) }
-                        view.constraintManager = constraintManager
-                        (0 until view.childCount).forEach {
-                            addViewRecursive(view.getChildAt(it))
-                        }
-                    }
-                }
-                addViewRecursive(it)
-                constraintManager.addAll(managersToAdd)
+                constraintManager.addManagedView(child)
             }
         }
     }
@@ -186,17 +138,36 @@ class AutoLayout : ViewGroup {
         super.onViewRemoved(child)
 
         child?.let {
-            fun removeViewRecursive(view: View) {
-                constraintManager.removeManagedView(view)
-                if (view is ContainerView) {
-                    view.constraintManager = ContainerConstraintManager()
-                    (0 until view.childCount).forEach {
-                        removeViewRecursive(view.getChildAt(it))
-                    }
-                }
+            if (child is AutoLayout) {
+                setConstraintManagerRecursive(child, constraintManager.split(child))
+                child.autoLayoutConstraints.isActive = true
+            } else {
+                constraintManager.removeManagedView(child)
             }
+        }
+    }
 
-            removeViewRecursive(it)
+    private fun measureIntrinsicSizes() {
+        forEachChildren {
+            if (it is AutoLayout) {
+                it.measureIntrinsicSizes()
+            } else {
+                it.measure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED)
+
+                it.snp.intrinsicWidth = it.measuredWidth / density
+                it.snp.intrinsicHeight = it.measuredHeight / density
+            }
+        }
+    }
+
+    private fun measureRealSizes() {
+        forEachChildren {
+            if (it is AutoLayout) {
+                it.measureRealSizes()
+            } else {
+                it.measure(MeasureSpec.makeMeasureSpec(getValueForVariableInPx(it.snp.width), MeasureSpec.EXACTLY),
+                        MeasureSpec.makeMeasureSpec(getValueForVariableInPx(it.snp.height), MeasureSpec.EXACTLY))
+            }
         }
     }
 
@@ -208,12 +179,20 @@ class AutoLayout : ViewGroup {
     private fun getMeasuredSize(measureSpec: Int, currentSize: ConstraintVariable): Double {
         return when (MeasureSpec.getMode(measureSpec)) {
             MeasureSpec.EXACTLY, MeasureSpec.AT_MOST -> MeasureSpec.getSize(measureSpec) / density
-//            MeasureSpec.AT_MOST -> Math.min(currentSize, MeasureSpec.getSize(measureSpec) / density)
             else -> constraintManager.getValueForVariable(currentSize)
         }
     }
 
     private fun getValueForVariableInPx(variable: ConstraintVariable): Int {
         return (constraintManager.getValueForVariable(variable) * density).toInt()
+    }
+
+    private fun setConstraintManagerRecursive(view: AutoLayout, constraintManager: ConstraintManager) {
+        view.constraintManager = constraintManager
+        view.forEachChildren {
+            if (it is AutoLayout) {
+                setConstraintManagerRecursive(it, constraintManager)
+            }
+        }
     }
 }

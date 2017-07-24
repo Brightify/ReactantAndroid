@@ -18,9 +18,6 @@ internal class ConstraintType private constructor(private val description: Strin
         val centerX = ConstraintType("centerX")
         val centerY = ConstraintType("centerY")
 
-        val intrinsicWidth = ConstraintType("intrinsicWidth")
-        val intrinsicHeight = ConstraintType("intrinsicHeight")
-
         fun termsForVariable(variable: ConstraintVariable, coefficient: Double): List<Term> {
             return when (variable.type) {
                 width -> listOf(Term(coefficient, ConstraintVariable(variable.view, right)),
