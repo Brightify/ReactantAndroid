@@ -51,7 +51,7 @@ class NavigationController() : ViewController() {
     fun push(controller: ViewController, animated: Boolean = true) {
         transaction {
             val transaction = childFragmentManager.beginTransaction()
-            transaction.replace(contentView.id, ViewControllerWrapper(controller))
+            transaction.replace(contentView.id, controller.viewControllerWrapper)
             transaction.addToBackStack(null)
             transaction.setTransition(if (animated) FragmentTransaction.TRANSIT_FRAGMENT_OPEN else FragmentTransaction.TRANSIT_NONE)
             transaction.commit()

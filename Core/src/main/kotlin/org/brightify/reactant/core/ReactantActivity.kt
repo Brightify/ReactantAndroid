@@ -25,7 +25,7 @@ open class ReactantActivity(private val wireframeFactory: (ReactantActivity) -> 
 
         if (savedInstanceState == null) {
             val transaction = fragmentManager.beginTransaction()
-            transaction.replace(android.R.id.content, ViewControllerWrapper(wireframeFactory(this).entryPoint()), RootFragmentTag)
+            transaction.replace(android.R.id.content, wireframeFactory(this).entryPoint().viewControllerWrapper, RootFragmentTag)
             transaction.commit()
         }
     }
@@ -49,7 +49,7 @@ open class ReactantActivity(private val wireframeFactory: (ReactantActivity) -> 
     fun present(controller: ViewController, animated: Boolean = true) {
         val transaction = fragmentManager.beginTransaction()
         transaction.addToBackStack(null)
-        transaction.replace(android.R.id.content, ViewControllerWrapper(controller))
+        transaction.replace(android.R.id.content, controller.viewControllerWrapper)
         transaction.commit()
     }
 

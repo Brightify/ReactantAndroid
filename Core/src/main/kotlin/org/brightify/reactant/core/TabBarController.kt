@@ -21,6 +21,8 @@ open class TabBarController(private val controllers: List<ViewController>) : Vie
     private val childFragmentManager: FragmentManager
         get() = viewControllerWrapper.childFragmentManager
 
+    private var selectedController: ViewController? = null
+
     override fun onCreate() {
         fragmentContainer = FrameLayout(activity)
         fragmentContainer.assignId()
@@ -44,10 +46,6 @@ open class TabBarController(private val controllers: List<ViewController>) : Vie
             right.equalToSuperview()
             bottom.equalToSuperview()
         }
-    }
-
-    override fun onActivityCreated() {
-        super.onActivityCreated()
 
         controllers.forEachIndexed { index, controller ->
             val text = controller.tabBarItem?.titleRes?.let { activity.resources.getString(it) } ?: "Undefined"
@@ -65,24 +63,23 @@ open class TabBarController(private val controllers: List<ViewController>) : Vie
                 return@setOnMenuItemClickListener false
             }
         }
-        val controller = controllers.firstOrNull()
-        if (controller != null) {
-            displayController(controller)
-        }
+        selectedController = controllers.firstOrNull()
     }
 
-    override fun onResume() {
-        super.onResume()
+    override fun onActivityCreated() {
+        super.onActivityCreated()
 
+        selectedController?.let { displayController(it) }
     }
 
     private fun displayController(controller: ViewController, animated: Boolean = false) {
         val transaction = childFragmentManager.beginTransaction()
-        transaction.replace(fragmentContainer.id, ViewControllerWrapper(controller))
+        transaction.replace(fragmentContainer.id, controller.viewControllerWrapper)
         transaction.addToBackStack(null)
         transaction.setTransition(if (animated) FragmentTransaction.TRANSIT_FRAGMENT_OPEN else FragmentTransaction.TRANSIT_NONE)
         transaction.commit()
         controller.tabBarController = this
+        selectedController = controller
     }
 }
 

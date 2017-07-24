@@ -21,7 +21,6 @@ internal class ViewControllerWrapper() : Fragment() {
 
     constructor(viewController: ViewController) : this() {
         this.viewController = viewController
-        viewController.viewControllerWrapper = this
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

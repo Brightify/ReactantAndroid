@@ -44,7 +44,8 @@ open class ViewController {
     lateinit var contentView: View
         internal set
 
-    internal lateinit var viewControllerWrapper: ViewControllerWrapper
+    @Suppress("LeakingThis")
+    internal var viewControllerWrapper = ViewControllerWrapper(this)
 
     private val lifetimeDisposeBag = CompositeDisposable()
 
