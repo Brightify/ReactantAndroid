@@ -50,9 +50,9 @@ internal class ConstraintItem(val leftVariable: ConstraintVariable, val operator
 
     private fun createEquation(): Equation {
         val terms = ArrayList<Term>()
-        terms.addAll(ConstraintType.termsForVariable(leftVariable, 1.0))
+        terms.addAll(Term(leftVariable).baseTerms)
         rightVariable?.let {
-            terms.addAll(ConstraintType.termsForVariable(it, -multiplier.toDouble()))
+            terms.addAll(Term(-multiplier.toDouble(), it).baseTerms)
         }
         return Equation(terms, operator, offset.toDouble(), priority)
     }

@@ -151,11 +151,15 @@ open class AutoLayout : ViewGroup {
         forEachChildren {
             if (it is AutoLayout) {
                 it.measureIntrinsicSizes()
-            } else {
-                it.measure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED)
+            } else if (constraintManager.getIntrinsicSizeManager(it) != null) {
+                val needsWidth = constraintManager.needsIntrinsicWidth(it)
+                val needsHeight = constraintManager.needsIntrinsicHeight(it)
+                if (needsWidth || needsHeight) {
+                    it.measure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED)
+                }
 
-                it.snp.intrinsicWidth = it.measuredWidth / density
-                it.snp.intrinsicHeight = it.measuredHeight / density
+                it.snp.intrinsicWidth = if (needsWidth) it.measuredWidth / density else -1.0
+                it.snp.intrinsicHeight = if (needsHeight) it.measuredHeight / density else -1.0
             }
         }
     }

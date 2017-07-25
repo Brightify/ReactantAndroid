@@ -1,11 +1,27 @@
 package org.brightify.reactant.core.constraint.internal.solver
 
 import org.brightify.reactant.core.constraint.ConstraintVariable
+import org.brightify.reactant.core.constraint.internal.ConstraintType
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
 internal class Term(val coefficient: Double, val variable: ConstraintVariable) {
+
+    val baseTerms: List<Term>
+        get() {
+            return when (variable.type) {
+                ConstraintType.width -> listOf(Term(coefficient, ConstraintVariable(variable.view, ConstraintType.right)),
+                        Term(-coefficient, ConstraintVariable(variable.view, ConstraintType.left)))
+                ConstraintType.height -> listOf(Term(coefficient, ConstraintVariable(variable.view, ConstraintType.bottom)),
+                        Term(-coefficient, ConstraintVariable(variable.view, ConstraintType.top)))
+                ConstraintType.centerX -> listOf(Term(0.5 * coefficient, ConstraintVariable(variable.view, ConstraintType.left)),
+                        Term(0.5 * coefficient, ConstraintVariable(variable.view, ConstraintType.right)))
+                ConstraintType.centerY -> listOf(Term(0.5 * coefficient, ConstraintVariable(variable.view, ConstraintType.top)),
+                        Term(0.5 * coefficient, ConstraintVariable(variable.view, ConstraintType.bottom)))
+                else -> listOf(Term(coefficient, variable))
+            }
+        }
 
     constructor(variable: ConstraintVariable) : this(1.0, variable)
 

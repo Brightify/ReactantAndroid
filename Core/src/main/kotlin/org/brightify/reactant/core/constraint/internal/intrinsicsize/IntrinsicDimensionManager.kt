@@ -3,9 +3,9 @@ package org.brightify.reactant.core.constraint.internal.intrinsicsize
 import org.brightify.reactant.core.constraint.ConstraintPriority
 import org.brightify.reactant.core.constraint.ConstraintVariable
 import org.brightify.reactant.core.constraint.internal.ConstraintOperator
-import org.brightify.reactant.core.constraint.internal.ConstraintType
 import org.brightify.reactant.core.constraint.internal.solver.Equation
 import org.brightify.reactant.core.constraint.internal.solver.Solver
+import org.brightify.reactant.core.constraint.internal.solver.Term
 import org.brightify.reactant.core.util.onChange
 
 /**
@@ -25,7 +25,7 @@ internal class IntrinsicDimensionManager(var solver: Solver, dimensionVariable: 
         updateEquations()
     }
 
-    private val terms = ConstraintType.termsForVariable(dimensionVariable, 1.0)
+    private val terms = Term(dimensionVariable).baseTerms
 
     private var equalEquation: Equation? = null
     private var contentHuggingEquation: Equation? = null

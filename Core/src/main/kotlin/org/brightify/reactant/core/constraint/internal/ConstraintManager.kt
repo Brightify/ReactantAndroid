@@ -6,7 +6,9 @@ import org.brightify.reactant.core.constraint.Constraint
 import org.brightify.reactant.core.constraint.ConstraintVariable
 import org.brightify.reactant.core.constraint.exception.ViewNotManagedByCommonAutoLayoutException
 import org.brightify.reactant.core.constraint.internal.intrinsicsize.IntrinsicSizeManager
+import org.brightify.reactant.core.constraint.internal.intrinsicsize.IntrinsicSizeNecessityDecider
 import org.brightify.reactant.core.constraint.internal.solver.Solver
+import org.brightify.reactant.core.constraint.internal.solver.Term
 import org.brightify.reactant.core.constraint.util.children
 
 /**
@@ -18,6 +20,7 @@ internal class ConstraintManager {
     private val solver = Solver()
     private val constraints = HashMap<View, HashSet<Constraint>>()
     private val intrinsicSizeManagers = HashMap<View, IntrinsicSizeManager>()
+    private val intrinsicSizeNecessityDecider = IntrinsicSizeNecessityDecider()
 
     private val managedViews: Set<View>
         get() = constraints.keys
@@ -34,6 +37,7 @@ internal class ConstraintManager {
             solver.addConstraint(constraint)
             constraint.isManaged = true
             constraints[constraint.view]?.add(constraint)
+            intrinsicSizeNecessityDecider.addConstraint(constraint)
         } else {
             throw ViewNotManagedByCommonAutoLayoutException(constraint.view,
                     constraint.constraintItems.mapNotNull { it.rightVariable?.view }.first { !managedViews.contains(it) })
@@ -47,6 +51,7 @@ internal class ConstraintManager {
 
         solver.removeConstraint(constraint)
         constraint.isManaged = false
+        intrinsicSizeNecessityDecider.removeConstraint(constraint)
     }
 
     fun solve() {
@@ -80,6 +85,7 @@ internal class ConstraintManager {
         constraintManager.constraints.forEach {
             it.value.forEach { constraint ->
                 solver.addConstraint(constraint)
+                intrinsicSizeNecessityDecider.addConstraint(constraint)
             }
         }
         intrinsicSizeManagers.putAll(constraintManager.intrinsicSizeManagers)
@@ -136,15 +142,29 @@ internal class ConstraintManager {
         constraints[view]?.forEach { removeConstraint(it) }
     }
 
-    // TODO Rewrite
     fun getValueForVariable(variable: ConstraintVariable): Double {
-        return ConstraintType.termsForVariable(variable, 1.0).map {
-            it.coefficient * solver.getValueForVariable(it.variable)
-        }.reduce { acc, term -> acc + term }
+        var result = 0.0
+        Term(variable).baseTerms.forEach {
+            result += it.coefficient * solver.getValueForVariable(it.variable)
+        }
+        return result
     }
 
-    fun getIntrinsicSizeManager(view: View): IntrinsicSizeManager = intrinsicSizeManagers[view] ?: throw RuntimeException(
-            "View is not managed.")
+    fun getIntrinsicSizeManager(view: View): IntrinsicSizeManager? {
+        if (!managedViews.contains(view)) {
+            throw RuntimeException("View is not managed.")
+        }
+
+        return intrinsicSizeManagers[view]
+    }
+
+    fun disableIntrinsicSize(view: View) {
+        intrinsicSizeManagers.remove(view)?.removeEquations()
+    }
+
+    fun needsIntrinsicWidth(view: View): Boolean = intrinsicSizeNecessityDecider.needsIntrinsicWidth(view)
+
+    fun needsIntrinsicHeight(view: View): Boolean = intrinsicSizeNecessityDecider.needsIntrinsicHeight(view)
 
     private fun verifyViewsUsedByConstraint(constraint: Constraint): Boolean {
         return constraint.constraintItems.all {

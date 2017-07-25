@@ -32,13 +32,13 @@ open class TabBarController(private val controllers: List<ViewController>) : Vie
         contentView = layout
         contentView.assignId()
         contentView.layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-        fragmentContainer.layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
         layout.addView(fragmentContainer)
         layout.addView(tabBar)
         fragmentContainer.snp.makeConstraints {
             left.right.top.equalToSuperview()
             bottom.equalTo(tabBar.snp.top)
         }
+        fragmentContainer.snp.disableIntrinsicSize()
 
         tabBar.snp.verticalContentHuggingPriority = ConstraintPriority.required
         tabBar.snp.makeConstraints {

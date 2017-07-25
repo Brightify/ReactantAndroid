@@ -90,7 +90,7 @@ class ConstraintDsl internal constructor(private val view: View) {
     private val constraintManager: ConstraintManager = (view.parent as? AutoLayout ?: view as? AutoLayout)?.constraintManager ?: throw AutoLayoutNotFoundException(view)
 
     private val intrinsicSizeManager: IntrinsicSizeManager by lazy {
-        constraintManager.getIntrinsicSizeManager(view)
+        constraintManager.getIntrinsicSizeManager(view) ?: throw RuntimeException("View does not have intrinsic size.")
     }
 
     fun makeConstraints(closure: ConstraintMakerProvider.() -> Unit) {
@@ -107,6 +107,10 @@ class ConstraintDsl internal constructor(private val view: View) {
     fun remakeConstraints(closure: ConstraintMakerProvider.() -> Unit) {
         constraintManager.removeViewConstraints(view)
         makeConstraints(closure)
+    }
+
+    fun disableIntrinsicSize() {
+        constraintManager.disableIntrinsicSize(view)
     }
 
     fun debugValues() {
