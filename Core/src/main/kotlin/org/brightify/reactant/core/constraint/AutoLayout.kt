@@ -68,6 +68,17 @@ open class AutoLayout : ViewGroup {
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val begin = System.currentTimeMillis()
 
+        if (MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.UNSPECIFIED) {
+            autoLayoutConstraints.width = -1.0
+        } else {
+            autoLayoutConstraints.width = getMeasuredSize(widthMeasureSpec, snp.width)
+        }
+        if (MeasureSpec.getMode(heightMeasureSpec) == MeasureSpec.UNSPECIFIED) {
+            autoLayoutConstraints.height = -1.0
+        } else {
+            autoLayoutConstraints.height = getMeasuredSize(heightMeasureSpec, snp.height)
+        }
+
         measureIntrinsicSizes()
 
         val childrenMeasured = System.currentTimeMillis()
@@ -77,15 +88,11 @@ open class AutoLayout : ViewGroup {
             constraintManager.solve()
         }
 
+        setMeasuredSize(widthMeasureSpec, heightMeasureSpec)
+
         val firstSolve = System.currentTimeMillis()
 
-        val measuredWidth = getMeasuredSize(widthMeasureSpec, snp.width)
-        val measuredHeight = getMeasuredSize(heightMeasureSpec, snp.height)
-
-        autoLayoutConstraints.width = measuredWidth
-        autoLayoutConstraints.height = measuredHeight
-
-        setMeasuredDimension((measuredWidth * density).toInt(), (measuredHeight * density).toInt())
+        setMeasuredSize(widthMeasureSpec, heightMeasureSpec)
 
         val measuredDimensionSet = System.currentTimeMillis()
 
@@ -178,6 +185,16 @@ open class AutoLayout : ViewGroup {
     private fun getChildPosition(variable: ConstraintVariable, offset: Double): Int {
         val positionInDpi = constraintManager.getValueForVariable(variable) - offset
         return (positionInDpi * density).toInt()
+    }
+
+    private fun setMeasuredSize(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        val measuredWidth = getMeasuredSize(widthMeasureSpec, snp.width)
+        val measuredHeight = getMeasuredSize(heightMeasureSpec, snp.height)
+
+        autoLayoutConstraints.width = measuredWidth
+        autoLayoutConstraints.height = measuredHeight
+
+        setMeasuredDimension((measuredWidth * density).toInt(), (measuredHeight * density).toInt())
     }
 
     private fun getMeasuredSize(measureSpec: Int, currentSize: ConstraintVariable): Double {

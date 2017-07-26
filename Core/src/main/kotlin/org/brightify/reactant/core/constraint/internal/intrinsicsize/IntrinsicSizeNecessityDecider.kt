@@ -7,7 +7,6 @@ import org.brightify.reactant.core.constraint.ConstraintVariable
 import org.brightify.reactant.core.constraint.internal.ConstraintItem
 import org.brightify.reactant.core.constraint.internal.ConstraintOperator
 import org.brightify.reactant.core.constraint.internal.ConstraintType
-import org.brightify.reactant.core.util.measure
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
@@ -49,14 +48,12 @@ internal class IntrinsicSizeNecessityDecider {
 
     private fun invalidate() {
         if (!constraintsToAdd.isEmpty() || !constraintsToRemove.isEmpty()) {
-            measure("intrinsic size invalidate") {
-                fixedVariables.clear()
-                activeConstraints.removeAll(constraintsToRemove)
-                activeConstraints.addAll(constraintsToAdd)
-                constraintsToRemove.clear()
-                constraintsToAdd.clear()
-                solve()
-            }
+            fixedVariables.clear()
+            activeConstraints.removeAll(constraintsToRemove)
+            activeConstraints.addAll(constraintsToAdd)
+            constraintsToRemove.clear()
+            constraintsToAdd.clear()
+            solve()
         }
     }
 
