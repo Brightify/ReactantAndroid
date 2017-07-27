@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import org.brightify.reactant.core.assignId
 import org.brightify.reactant.core.constraint.internal.AutoLayoutConstraints
 import org.brightify.reactant.core.constraint.internal.ConstraintManager
+import org.brightify.reactant.core.constraint.internal.util.isAlmostZero
 import org.brightify.reactant.core.constraint.util.description
 import org.brightify.reactant.core.constraint.util.forEachChildren
 import org.brightify.reactant.core.constraint.util.snp
@@ -87,8 +88,6 @@ open class AutoLayout : ViewGroup {
                 heightMeasureSpec) == MeasureSpec.UNSPECIFIED) {
             constraintManager.solve()
         }
-
-        setMeasuredSize(widthMeasureSpec, heightMeasureSpec)
 
         val firstSolve = System.currentTimeMillis()
 
@@ -171,15 +170,34 @@ open class AutoLayout : ViewGroup {
         }
     }
 
-    private fun measureRealSizes() {
+    private fun measureRealSizes(recalculatesHeight: Boolean = true): Boolean {
+        var needsToRecalculateHeight = false
         forEachChildren {
             if (it is AutoLayout) {
-                it.measureRealSizes()
+                needsToRecalculateHeight = needsToRecalculateHeight or it.measureRealSizes(recalculatesHeight)
+            } else if (recalculatesHeight && constraintManager.needsIntrinsicHeight(it)
+                    && constraintManager.getIntrinsicSizeManager(it) != null
+                    && !(constraintManager.getValueForVariable(it.snp.width) - it.snp.intrinsicWidth).isAlmostZero) {
+                it.measure(MeasureSpec.makeMeasureSpec(getValueForVariableInPx(it.snp.width), MeasureSpec.EXACTLY),
+                        MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED))
+                val measuredHeight = it.measuredHeight / density
+                if (!(it.snp.intrinsicHeight - measuredHeight).isAlmostZero) {
+                    needsToRecalculateHeight = true
+                    it.snp.intrinsicHeight = measuredHeight
+                } else {
+                    it.measure(MeasureSpec.makeMeasureSpec(getValueForVariableInPx(it.snp.width), MeasureSpec.EXACTLY),
+                            MeasureSpec.makeMeasureSpec(getValueForVariableInPx(it.snp.height), MeasureSpec.EXACTLY))
+                }
             } else {
                 it.measure(MeasureSpec.makeMeasureSpec(getValueForVariableInPx(it.snp.width), MeasureSpec.EXACTLY),
                         MeasureSpec.makeMeasureSpec(getValueForVariableInPx(it.snp.height), MeasureSpec.EXACTLY))
             }
         }
+        if (needsToRecalculateHeight && parent !is AutoLayout) {
+            constraintManager.solve()
+            measureRealSizes(false)
+        }
+        return needsToRecalculateHeight
     }
 
     private fun getChildPosition(variable: ConstraintVariable, offset: Double): Int {
