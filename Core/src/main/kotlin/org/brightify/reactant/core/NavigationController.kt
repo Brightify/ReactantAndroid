@@ -37,10 +37,14 @@ class NavigationController(private val initialController: ViewController?) : Vie
         contentView.layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
     }
 
-    override fun onActivityCreated() {
+    override fun onResume() {
         initialized = true
         transactionsMadeBeforeInitialization.forEach { it() }
         transactionsMadeBeforeInitialization.clear()
+    }
+
+    override fun onPause() {
+        initialized = false
     }
 
     override fun onBackPressed(): Boolean {
