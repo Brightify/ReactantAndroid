@@ -13,18 +13,23 @@ import io.reactivex.subjects.ReplaySubject
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
-class NavigationController() : ViewController() {
-
-    constructor(initalController: ViewController) : this() {
-        push(initalController, animated = false)
-    }
+class NavigationController(private val initialController: ViewController?) : ViewController() {
 
     private val lifetimeDisposeBag = CompositeDisposable()
     private val transactionsMadeBeforeInitialization = ArrayList<() -> Unit>()
     private var initialized = false
 
+    override val tabBarItem: TabBarItem?
+        get() = initialController?.tabBarItem
+
     private val childFragmentManager: FragmentManager
         get() = viewControllerWrapper.childFragmentManager
+
+    init {
+        initialController?.let { push(it, animated = false) }
+    }
+
+    constructor() : this(null)
 
     override fun onCreate() {
         contentView = FrameLayout(activity)
