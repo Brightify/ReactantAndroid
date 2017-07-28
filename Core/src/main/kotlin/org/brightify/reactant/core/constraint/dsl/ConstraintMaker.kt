@@ -6,7 +6,7 @@ import org.brightify.reactant.core.constraint.Constraint
 import org.brightify.reactant.core.constraint.ConstraintVariable
 import org.brightify.reactant.core.constraint.exception.WrongParentException
 import org.brightify.reactant.core.constraint.internal.ConstraintItem
-import org.brightify.reactant.core.constraint.internal.ConstraintOperator
+import org.brightify.reactant.core.constraint.ConstraintOperator
 import org.brightify.reactant.core.constraint.internal.ConstraintType
 
 /**

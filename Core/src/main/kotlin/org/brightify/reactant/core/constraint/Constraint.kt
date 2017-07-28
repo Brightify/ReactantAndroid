@@ -21,6 +21,16 @@ class Constraint internal constructor(internal val view: View, internal val cons
             }
         }
 
+    var operator: ConstraintOperator
+        get() = constraintItems.first().operator
+        set(value) {
+            if (operator != value) {
+                updateConstraint {
+                    constraintItems.forEach { it.operator = value }
+                }
+            }
+        }
+
     var offset: Number
         get() = constraintItems.first().offset
         set(value) {

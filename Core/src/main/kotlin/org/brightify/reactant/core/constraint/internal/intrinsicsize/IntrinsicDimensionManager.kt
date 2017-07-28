@@ -2,7 +2,7 @@ package org.brightify.reactant.core.constraint.internal.intrinsicsize
 
 import org.brightify.reactant.core.constraint.ConstraintPriority
 import org.brightify.reactant.core.constraint.ConstraintVariable
-import org.brightify.reactant.core.constraint.internal.ConstraintOperator
+import org.brightify.reactant.core.constraint.ConstraintOperator
 import org.brightify.reactant.core.constraint.internal.solver.Equation
 import org.brightify.reactant.core.constraint.internal.solver.Solver
 import org.brightify.reactant.core.constraint.internal.solver.Term

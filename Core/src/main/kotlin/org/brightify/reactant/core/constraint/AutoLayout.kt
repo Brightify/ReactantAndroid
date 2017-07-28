@@ -73,27 +73,19 @@ open class AutoLayout : ViewGroup {
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val begin = System.nanoTime()
 
-        if (MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.UNSPECIFIED) {
-            autoLayoutConstraints.width = -1.0
-        } else {
-            autoLayoutConstraints.width = getMeasuredSize(widthMeasureSpec, snp.width)
-        }
-        if (MeasureSpec.getMode(heightMeasureSpec) == MeasureSpec.UNSPECIFIED) {
-            autoLayoutConstraints.height = -1.0
-        } else {
-            autoLayoutConstraints.height = getMeasuredSize(heightMeasureSpec, snp.height)
-        }
-
+        initializeAutoLayoutConstraints(widthMeasureSpec, heightMeasureSpec)
         measureIntrinsicSizes()
-
-        if (MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.UNSPECIFIED || MeasureSpec.getMode(
-                heightMeasureSpec) == MeasureSpec.UNSPECIFIED) {
-            constraintManager.solve()
-        }
-
         setMeasuredSize(widthMeasureSpec, heightMeasureSpec)
 
         constraintManager.solve()
+
+        if (measureIntrinsicHeights()) {
+            if (MeasureSpec.getMode(widthMeasureSpec) != MeasureSpec.EXACTLY || MeasureSpec.getMode(heightMeasureSpec) != MeasureSpec.EXACTLY) {
+                setMeasuredSize(widthMeasureSpec, heightMeasureSpec)
+            } else {
+                constraintManager.solve()
+            }
+        }
 
         measureRealSizes()
 
@@ -105,7 +97,8 @@ open class AutoLayout : ViewGroup {
             val hMode = MeasureSpec.getMode(heightMeasureSpec) shr 30
             val hSize = MeasureSpec.getSize(heightMeasureSpec)
 
-            Log.d("AutoLayout.onMeasure", "($description) Took $time s totally where width: $wMode / $wSize and height: $hMode / $hSize.\n\n")
+            Log.d("AutoLayout.onMeasure",
+                    "($description) Took $time s totally where width: $wMode / $wSize and height: $hMode / $hSize.\n\n")
         }
     }
 
@@ -141,6 +134,21 @@ open class AutoLayout : ViewGroup {
         }
     }
 
+    private fun initializeAutoLayoutConstraints(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        autoLayoutConstraints.widthIsAtMost = MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.AT_MOST
+        if (MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.UNSPECIFIED) {
+            autoLayoutConstraints.width = -1.0
+        } else {
+            autoLayoutConstraints.width = MeasureSpec.getSize(widthMeasureSpec) / density
+        }
+        autoLayoutConstraints.heightIsAtMost = MeasureSpec.getMode(heightMeasureSpec) == MeasureSpec.AT_MOST
+        if (MeasureSpec.getMode(heightMeasureSpec) == MeasureSpec.UNSPECIFIED) {
+            autoLayoutConstraints.height = -1.0
+        } else {
+            autoLayoutConstraints.height = MeasureSpec.getSize(heightMeasureSpec) / density
+        }
+    }
+
     private fun measureIntrinsicSizes() {
         forEachChildren {
             if (it is AutoLayout) {
@@ -158,12 +166,12 @@ open class AutoLayout : ViewGroup {
         }
     }
 
-    private fun measureRealSizes(recalculatesHeight: Boolean = true): Boolean {
+    private fun measureIntrinsicHeights(): Boolean {
         var needsToRecalculateHeight = false
         forEachChildren {
             if (it is AutoLayout) {
-                needsToRecalculateHeight = needsToRecalculateHeight or it.measureRealSizes(recalculatesHeight)
-            } else if (recalculatesHeight && constraintManager.needsIntrinsicHeight(it)
+                needsToRecalculateHeight = needsToRecalculateHeight or it.measureIntrinsicHeights()
+            } else if (constraintManager.needsIntrinsicHeight(it)
                     && constraintManager.getIntrinsicSizeManager(it) != null
                     && !(constraintManager.getValueForVariable(it.snp.width) - it.snp.intrinsicWidth).isAlmostZero) {
                 it.measure(MeasureSpec.makeMeasureSpec(getValueForVariableInPx(it.snp.width), MeasureSpec.EXACTLY),
@@ -172,20 +180,21 @@ open class AutoLayout : ViewGroup {
                 if (!(it.snp.intrinsicHeight - measuredHeight).isAlmostZero) {
                     needsToRecalculateHeight = true
                     it.snp.intrinsicHeight = measuredHeight
-                } else {
-                    it.measure(MeasureSpec.makeMeasureSpec(getValueForVariableInPx(it.snp.width), MeasureSpec.EXACTLY),
-                            MeasureSpec.makeMeasureSpec(getValueForVariableInPx(it.snp.height), MeasureSpec.EXACTLY))
                 }
+            }
+        }
+        return needsToRecalculateHeight
+    }
+
+    private fun measureRealSizes() {
+        forEachChildren {
+            if (it is AutoLayout) {
+                it.measureRealSizes()
             } else {
                 it.measure(MeasureSpec.makeMeasureSpec(getValueForVariableInPx(it.snp.width), MeasureSpec.EXACTLY),
                         MeasureSpec.makeMeasureSpec(getValueForVariableInPx(it.snp.height), MeasureSpec.EXACTLY))
             }
         }
-        if (needsToRecalculateHeight && parent !is AutoLayout) {
-            constraintManager.solve()
-            measureRealSizes(false)
-        }
-        return needsToRecalculateHeight
     }
 
     private fun getChildPosition(variable: ConstraintVariable, offset: Double): Int {
@@ -194,20 +203,19 @@ open class AutoLayout : ViewGroup {
     }
 
     private fun setMeasuredSize(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        val measuredWidth = getMeasuredSize(widthMeasureSpec, snp.width)
-        val measuredHeight = getMeasuredSize(heightMeasureSpec, snp.height)
-
-        autoLayoutConstraints.width = measuredWidth
-        autoLayoutConstraints.height = measuredHeight
-
-        setMeasuredDimension((measuredWidth * density).toInt(), (measuredHeight * density).toInt())
-    }
-
-    private fun getMeasuredSize(measureSpec: Int, currentSize: ConstraintVariable): Double {
-        return when (MeasureSpec.getMode(measureSpec)) {
-            MeasureSpec.EXACTLY, MeasureSpec.AT_MOST -> MeasureSpec.getSize(measureSpec) / density
-            else -> constraintManager.getValueForVariable(currentSize)
+        fun getMeasuredSize(measureSpec: Int, currentSize: ConstraintVariable): Int {
+            return when (MeasureSpec.getMode(measureSpec)) {
+                MeasureSpec.EXACTLY -> MeasureSpec.getSize(measureSpec)
+                MeasureSpec.UNSPECIFIED -> getValueForVariableInPx(currentSize)
+                else -> Math.min(MeasureSpec.getSize(measureSpec), getValueForVariableInPx(currentSize))
+            }
         }
+
+        if (MeasureSpec.getMode(widthMeasureSpec) != MeasureSpec.EXACTLY || MeasureSpec.getMode(heightMeasureSpec) != MeasureSpec.EXACTLY) {
+            constraintManager.solve()
+        }
+
+        setMeasuredDimension(getMeasuredSize(widthMeasureSpec, snp.width), getMeasuredSize(heightMeasureSpec, snp.height))
     }
 
     private fun getValueForVariableInPx(variable: ConstraintVariable): Int {

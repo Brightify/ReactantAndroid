@@ -1,5 +1,6 @@
 package org.brightify.reactant.core.constraint.internal
 
+import org.brightify.reactant.core.constraint.ConstraintOperator
 import org.brightify.reactant.core.constraint.ConstraintPriority
 import org.brightify.reactant.core.constraint.ConstraintVariable
 import org.brightify.reactant.core.constraint.internal.solver.Equation
@@ -9,10 +10,14 @@ import org.brightify.reactant.core.util.onChange
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
-internal class ConstraintItem(val leftVariable: ConstraintVariable, val operator: ConstraintOperator,
+internal class ConstraintItem(val leftVariable: ConstraintVariable, operator: ConstraintOperator,
                               val rightVariable: ConstraintVariable? = null, offset: Number = 0) {
 
     var multiplier: Number by onChange(1 as Number) { _, _, _ ->
+        equation = createEquation()
+    }
+
+    var operator: ConstraintOperator by onChange(operator) { _, _, _ ->
         equation = createEquation()
     }
 

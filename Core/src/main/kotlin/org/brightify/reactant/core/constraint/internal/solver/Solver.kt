@@ -5,7 +5,7 @@ import org.brightify.reactant.core.constraint.ConstraintPriority
 import org.brightify.reactant.core.constraint.ConstraintVariable
 import org.brightify.reactant.core.constraint.exception.UnsatisfiableConstraintException
 import org.brightify.reactant.core.constraint.internal.ConstraintItem
-import org.brightify.reactant.core.constraint.internal.ConstraintOperator
+import org.brightify.reactant.core.constraint.ConstraintOperator
 import org.brightify.reactant.core.constraint.internal.util.isAlmostZero
 import java.util.HashSet
 

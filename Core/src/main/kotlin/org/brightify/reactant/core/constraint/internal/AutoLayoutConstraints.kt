@@ -2,6 +2,7 @@ package org.brightify.reactant.core.constraint.internal
 
 import org.brightify.reactant.core.constraint.AutoLayout
 import org.brightify.reactant.core.constraint.Constraint
+import org.brightify.reactant.core.constraint.ConstraintOperator
 import org.brightify.reactant.core.constraint.ConstraintVariable
 import org.brightify.reactant.core.util.onChange
 
@@ -24,6 +25,14 @@ internal class AutoLayoutConstraints(autoLayout: AutoLayout) {
     var height: Double by onChange(-1.0) { _, _, _ ->
         heightConstraint.offset = height
         heightConstraint.isActive = isActive && height >= 0
+    }
+
+    var widthIsAtMost: Boolean by onChange(false) { _, _, _ ->
+        widthConstraint.operator = if (widthIsAtMost) ConstraintOperator.lessOrEqual else ConstraintOperator.equal
+    }
+
+    var heightIsAtMost: Boolean by onChange(false) { _, _, _ ->
+        heightConstraint.operator = if (heightIsAtMost) ConstraintOperator.lessOrEqual else ConstraintOperator.equal
     }
 
     private val widthConstraint = Constraint(autoLayout,

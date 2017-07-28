@@ -1,9 +1,9 @@
-package org.brightify.reactant.core.constraint.internal
+package org.brightify.reactant.core.constraint
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
-internal enum class ConstraintOperator {
+enum class ConstraintOperator {
     equal, lessOrEqual, greaterOrEqual;
 
     override fun toString(): String {
