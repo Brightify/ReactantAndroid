@@ -12,12 +12,16 @@ import org.brightify.reactant.core.constraint.internal.util.isAlmostZero
 import org.brightify.reactant.core.constraint.util.description
 import org.brightify.reactant.core.constraint.util.forEachChildren
 import org.brightify.reactant.core.constraint.util.snp
-import org.brightify.reactant.core.util.printTimes
+import kotlin.properties.Delegates
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
 open class AutoLayout : ViewGroup {
+
+    var measureTime: Boolean by Delegates.observable(false) { _, _, _ ->
+        (parent as? AutoLayout)?.measureTime = measureTime
+    }
 
     internal var constraintManager = ConstraintManager()
         private set
@@ -67,7 +71,7 @@ open class AutoLayout : ViewGroup {
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        val begin = System.currentTimeMillis()
+        val begin = System.nanoTime()
 
         if (MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.UNSPECIFIED) {
             autoLayoutConstraints.width = -1.0
@@ -82,44 +86,27 @@ open class AutoLayout : ViewGroup {
 
         measureIntrinsicSizes()
 
-        val childrenMeasured = System.currentTimeMillis()
-
         if (MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.UNSPECIFIED || MeasureSpec.getMode(
                 heightMeasureSpec) == MeasureSpec.UNSPECIFIED) {
             constraintManager.solve()
         }
 
-        val firstSolve = System.currentTimeMillis()
-
         setMeasuredSize(widthMeasureSpec, heightMeasureSpec)
-
-        val measuredDimensionSet = System.currentTimeMillis()
 
         constraintManager.solve()
 
-        val secondSolve = System.currentTimeMillis()
-
         measureRealSizes()
 
-        val afterMeasure = System.currentTimeMillis()
+        if (measureTime) {
+            val time = (System.nanoTime() - begin) / 1e9
 
-        fun toSeconds(from: Long, to: Long): Double = (to - from).toDouble() / 1000F
-        val timings = arrayListOf<Double>(
-                toSeconds(begin, childrenMeasured),
-                toSeconds(childrenMeasured, firstSolve),
-                toSeconds(firstSolve, measuredDimensionSet),
-                toSeconds(measuredDimensionSet, secondSolve),
-                toSeconds(secondSolve, afterMeasure)
-        )
+            val wMode = MeasureSpec.getMode(widthMeasureSpec) shr 30
+            val wSize = MeasureSpec.getSize(widthMeasureSpec)
+            val hMode = MeasureSpec.getMode(heightMeasureSpec) shr 30
+            val hSize = MeasureSpec.getSize(heightMeasureSpec)
 
-        val wMode = MeasureSpec.getMode(widthMeasureSpec) shr 30
-        val wSize = MeasureSpec.getSize(widthMeasureSpec)
-        val hMode = MeasureSpec.getMode(heightMeasureSpec) shr 30
-        val hSize = MeasureSpec.getSize(heightMeasureSpec)
-
-        Log.d("ContainerView.onMeasure", "($description) Took ${toSeconds(begin,
-                System.currentTimeMillis())}s totally where width: $wMode / $wSize and height: $hMode / $hSize. Timings: $timings\n\n")
-        printTimes()
+            Log.d("AutoLayout.onMeasure", "($description) Took $time s totally where width: $wMode / $wSize and height: $hMode / $hSize.\n\n")
+        }
     }
 
     override fun shouldDelayChildPressedState() = false
@@ -134,6 +121,7 @@ open class AutoLayout : ViewGroup {
                 constraintManager.join(child.constraintManager)
                 setConstraintManagerRecursive(child, constraintManager)
                 child.autoLayoutConstraints.isActive = false
+                measureTime = measureTime or child.measureTime
             } else {
                 constraintManager.addManagedView(child)
             }

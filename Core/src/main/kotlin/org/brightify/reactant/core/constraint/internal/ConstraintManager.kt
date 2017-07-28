@@ -14,7 +14,6 @@ import org.brightify.reactant.core.constraint.util.children
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
-// TODO Exceptions
 internal class ConstraintManager {
 
     private val solver = Solver()
@@ -150,13 +149,7 @@ internal class ConstraintManager {
         return result
     }
 
-    fun getIntrinsicSizeManager(view: View): IntrinsicSizeManager? {
-        if (!managedViews.contains(view)) {
-            throw RuntimeException("View is not managed.")
-        }
-
-        return intrinsicSizeManagers[view]
-    }
+    fun getIntrinsicSizeManager(view: View): IntrinsicSizeManager? = intrinsicSizeManagers[view]
 
     fun disableIntrinsicSize(view: View) {
         intrinsicSizeManagers.remove(view)?.removeEquations()

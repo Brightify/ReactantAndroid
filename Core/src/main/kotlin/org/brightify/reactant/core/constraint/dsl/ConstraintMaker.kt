@@ -1,9 +1,10 @@
 package org.brightify.reactant.core.constraint.dsl
 
 import android.view.View
+import org.brightify.reactant.core.constraint.AutoLayout
 import org.brightify.reactant.core.constraint.Constraint
 import org.brightify.reactant.core.constraint.ConstraintVariable
-import org.brightify.reactant.core.constraint.exception.MissingParentException
+import org.brightify.reactant.core.constraint.exception.WrongParentException
 import org.brightify.reactant.core.constraint.internal.ConstraintItem
 import org.brightify.reactant.core.constraint.internal.ConstraintOperator
 import org.brightify.reactant.core.constraint.internal.ConstraintType
@@ -14,8 +15,8 @@ import org.brightify.reactant.core.constraint.internal.ConstraintType
 class ConstraintMaker internal constructor(view: View, createdConstraints: MutableList<Constraint>,
                                            private val types: List<ConstraintType>) : ConstraintMakerProvider(view, createdConstraints) {
 
-    private val parentViewOrError: View
-        get() = view.parent as? View ?: throw MissingParentException(view)
+    private val parentViewOrError: AutoLayout
+        get() = view.parent as? AutoLayout ?: throw WrongParentException(view)
 
     fun equalTo(variable: ConstraintVariable): Constraint {
         return Constraint(variable, ConstraintOperator.equal)

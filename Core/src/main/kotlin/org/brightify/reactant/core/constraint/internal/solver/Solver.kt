@@ -6,6 +6,7 @@ import org.brightify.reactant.core.constraint.ConstraintVariable
 import org.brightify.reactant.core.constraint.exception.UnsatisfiableConstraintException
 import org.brightify.reactant.core.constraint.internal.ConstraintItem
 import org.brightify.reactant.core.constraint.internal.ConstraintOperator
+import org.brightify.reactant.core.constraint.internal.util.isAlmostZero
 import java.util.HashSet
 
 /**
@@ -22,21 +23,11 @@ internal class Solver {
     private val symbolForEquation = LinkedHashMap<Equation, Symbol>()
     private val symbolForVariable = HashMap<ConstraintVariable, Symbol>()
 
-    private val equationsToAdd = HashSet<Equation>()
+    private val equationsToAdd = LinkedHashMap<Equation, ConstraintItem?>()
     private val equationsToRemove = HashSet<Equation>()
 
     fun addConstraint(constraint: Constraint) {
-        val errorItems = ArrayList<ConstraintItem>()
-        constraint.constraintItems.forEach {
-            try {
-                addEquation(it.equation)
-            } catch(_: UnsatisfiableEquationException) {
-                errorItems.add(it)
-            }
-        }
-        if (!errorItems.isEmpty()) {
-            throw UnsatisfiableConstraintException(Constraint(constraint.view, errorItems))
-        }
+        constraint.constraintItems.forEach { equationsToAdd[it.equation] = it }
     }
 
     fun removeConstraint(constraint: Constraint) {
@@ -44,18 +35,26 @@ internal class Solver {
     }
 
     fun addEquation(equation: Equation) {
-        equationsToAdd.add(equation)
+        equationsToAdd[equation] = null
     }
 
     fun removeEquation(equation: Equation) {
-        if (!equationsToAdd.remove(equation)) {
+        if (equationsToAdd.containsKey(equation)) {
+            equationsToAdd.remove(equation)
+        } else {
             equationsToRemove.add(equation)
         }
     }
 
     fun solve() {
         equationsToRemove.forEach { removeEquationImmediately(it) }
-        equationsToAdd.forEach { addEquationImmediately(it) }
+        equationsToAdd.forEach {
+            try {
+                addEquationImmediately(it.key)
+            } catch(_: InternalSolverError) {
+                throw it.value?.let { UnsatisfiableConstraintException(it) } ?: UnsatisfiableEquationException(it.key)
+            }
+        }
         equationsToAdd.clear()
         equationsToRemove.clear()
         optimize(objective)
@@ -231,7 +230,9 @@ internal class Solver {
             }
         }
 
-        // TODO Error
+        if (!row.constant.isAlmostZero) {
+            throw InternalSolverError()
+        }
 
         if (coefficient > 0.0) {
             row.multiplyBy(-1.0)
@@ -249,8 +250,12 @@ internal class Solver {
 
         optimize(objectiveVariable)
 
+        if (rows[objectiveVariable]?.constant?.isAlmostZero != true) {
+            throw InternalSolverError()
+        }
+
         rows[artificialVariable]?.let {
-            val entering = it.symbols.keys.firstOrNull { it.type == Symbol.Type.slack } ?: throw RuntimeException() // TODO UnsatisfiableEquationException
+            val entering = it.symbols.keys.first { it.type == Symbol.Type.slack }
             pivot(entering, artificialVariable)
         }
         removeColumn(artificialVariable)

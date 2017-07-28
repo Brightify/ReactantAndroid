@@ -8,6 +8,7 @@ import org.brightify.reactant.core.constraint.Constraint
 import org.brightify.reactant.core.constraint.ConstraintPriority
 import org.brightify.reactant.core.constraint.ConstraintVariable
 import org.brightify.reactant.core.constraint.exception.AutoLayoutNotFoundException
+import org.brightify.reactant.core.constraint.exception.NoIntrinsicSizeException
 import org.brightify.reactant.core.constraint.internal.ConstraintManager
 import org.brightify.reactant.core.constraint.internal.ConstraintType
 import org.brightify.reactant.core.constraint.internal.intrinsicsize.IntrinsicSizeManager
@@ -87,10 +88,11 @@ class ConstraintDsl internal constructor(private val view: View) {
             intrinsicSizeManager.height.size = value
         }
 
-    private val constraintManager: ConstraintManager = (view.parent as? AutoLayout ?: view as? AutoLayout)?.constraintManager ?: throw AutoLayoutNotFoundException(view)
+    private val constraintManager: ConstraintManager = (view.parent as? AutoLayout ?: view as? AutoLayout)?.constraintManager
+            ?: throw AutoLayoutNotFoundException(view)
 
     private val intrinsicSizeManager: IntrinsicSizeManager by lazy {
-        constraintManager.getIntrinsicSizeManager(view) ?: throw RuntimeException("View does not have intrinsic size.")
+        constraintManager.getIntrinsicSizeManager(view) ?: throw NoIntrinsicSizeException(view)
     }
 
     fun makeConstraints(closure: ConstraintMakerProvider.() -> Unit) {
