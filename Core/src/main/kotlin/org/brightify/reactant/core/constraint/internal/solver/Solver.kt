@@ -1,11 +1,11 @@
 package org.brightify.reactant.core.constraint.internal.solver
 
 import org.brightify.reactant.core.constraint.Constraint
+import org.brightify.reactant.core.constraint.ConstraintOperator
 import org.brightify.reactant.core.constraint.ConstraintPriority
 import org.brightify.reactant.core.constraint.ConstraintVariable
 import org.brightify.reactant.core.constraint.exception.UnsatisfiableConstraintException
 import org.brightify.reactant.core.constraint.internal.ConstraintItem
-import org.brightify.reactant.core.constraint.ConstraintOperator
 import org.brightify.reactant.core.constraint.internal.util.isAlmostZero
 import java.util.HashSet
 
@@ -23,7 +23,7 @@ internal class Solver {
     private val symbolForEquation = LinkedHashMap<Equation, Symbol>()
     private val symbolForVariable = HashMap<ConstraintVariable, Symbol>()
 
-    private val equationsToAdd = LinkedHashMap<Equation, ConstraintItem?>()
+    private val equationsToAdd = LinkedHashMap<Equation, ConstraintItem>()
     private val equationsToRemove = HashSet<Equation>()
 
     fun addConstraint(constraint: Constraint) {
@@ -31,18 +31,12 @@ internal class Solver {
     }
 
     fun removeConstraint(constraint: Constraint) {
-        constraint.constraintItems.forEach { removeEquation(it.equation) }
-    }
-
-    fun addEquation(equation: Equation) {
-        equationsToAdd[equation] = null
-    }
-
-    fun removeEquation(equation: Equation) {
-        if (equationsToAdd.containsKey(equation)) {
-            equationsToAdd.remove(equation)
-        } else {
-            equationsToRemove.add(equation)
+        constraint.constraintItems.forEach {
+            if (equationsToAdd.containsKey(it.equation)) {
+                equationsToAdd.remove(it.equation)
+            } else {
+                equationsToRemove.add(it.equation)
+            }
         }
     }
 
@@ -52,7 +46,7 @@ internal class Solver {
             try {
                 addEquationImmediately(it.key)
             } catch(_: InternalSolverError) {
-                throw it.value?.let { UnsatisfiableConstraintException(it) } ?: UnsatisfiableEquationException(it.key)
+                throw UnsatisfiableConstraintException(it.value)
             }
         }
         equationsToAdd.clear()

@@ -1,11 +1,11 @@
-package org.brightify.reactant.core.constraint.internal.intrinsicsize
+package org.brightify.reactant.core.constraint.internal.view
 
 import android.view.View
 import org.brightify.reactant.core.constraint.Constraint
+import org.brightify.reactant.core.constraint.ConstraintOperator
 import org.brightify.reactant.core.constraint.ConstraintPriority
 import org.brightify.reactant.core.constraint.ConstraintVariable
 import org.brightify.reactant.core.constraint.internal.ConstraintItem
-import org.brightify.reactant.core.constraint.ConstraintOperator
 import org.brightify.reactant.core.constraint.internal.ConstraintType
 
 /**
@@ -123,5 +123,6 @@ internal class IntrinsicSizeNecessityDecider {
         get() = fixedVariables[view]?.contains(type) == true
 
     private val Constraint.isFixing: Boolean
-        get() = priority == ConstraintPriority.required && constraintItems.all { it.operator == ConstraintOperator.equal }
+        get() = !ignoreInNecessityDecider &&
+                priority == ConstraintPriority.required && constraintItems.all { it.operator == ConstraintOperator.equal }
 }

@@ -74,19 +74,17 @@ open class AutoLayout : ViewGroup {
         val begin = System.nanoTime()
 
         initializeAutoLayoutConstraints(widthMeasureSpec, heightMeasureSpec)
+        resetVisibility()
         measureIntrinsicSizes()
         setMeasuredSize(widthMeasureSpec, heightMeasureSpec)
-
         constraintManager.solve()
-
-        if (measureIntrinsicHeights()) {
-            if (MeasureSpec.getMode(widthMeasureSpec) != MeasureSpec.EXACTLY || MeasureSpec.getMode(heightMeasureSpec) != MeasureSpec.EXACTLY) {
-                setMeasuredSize(widthMeasureSpec, heightMeasureSpec)
-            } else {
-                constraintManager.solve()
-            }
+        measureIntrinsicHeights()
+        updateVisibility()
+        if (MeasureSpec.getMode(widthMeasureSpec) != MeasureSpec.EXACTLY || MeasureSpec.getMode(heightMeasureSpec) != MeasureSpec.EXACTLY) {
+            setMeasuredSize(widthMeasureSpec, heightMeasureSpec)
+        } else {
+            constraintManager.solve()
         }
-
         measureRealSizes()
 
         if (measureTime) {
@@ -149,6 +147,13 @@ open class AutoLayout : ViewGroup {
         }
     }
 
+    private fun resetVisibility() {
+        constraintManager.getVisibilityManager(this).visibility = View.VISIBLE
+        forEachChildren {
+            constraintManager.getVisibilityManager(it).visibility = View.VISIBLE
+        }
+    }
+
     private fun measureIntrinsicSizes() {
         forEachChildren {
             if (it is AutoLayout) {
@@ -166,11 +171,10 @@ open class AutoLayout : ViewGroup {
         }
     }
 
-    private fun measureIntrinsicHeights(): Boolean {
-        var needsToRecalculateHeight = false
+    private fun measureIntrinsicHeights() {
         forEachChildren {
             if (it is AutoLayout) {
-                needsToRecalculateHeight = needsToRecalculateHeight or it.measureIntrinsicHeights()
+                it.measureIntrinsicHeights()
             } else if (constraintManager.needsIntrinsicHeight(it)
                     && constraintManager.getIntrinsicSizeManager(it) != null
                     && !(constraintManager.getValueForVariable(it.snp.width) - it.snp.intrinsicWidth).isAlmostZero) {
@@ -178,12 +182,17 @@ open class AutoLayout : ViewGroup {
                         MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED))
                 val measuredHeight = it.measuredHeight / density
                 if (!(it.snp.intrinsicHeight - measuredHeight).isAlmostZero) {
-                    needsToRecalculateHeight = true
                     it.snp.intrinsicHeight = measuredHeight
                 }
             }
         }
-        return needsToRecalculateHeight
+    }
+
+    private fun updateVisibility() {
+        constraintManager.getVisibilityManager(this).visibility = visibility
+        forEachChildren {
+            constraintManager.getVisibilityManager(it).visibility = it.visibility
+        }
     }
 
     private fun measureRealSizes() {

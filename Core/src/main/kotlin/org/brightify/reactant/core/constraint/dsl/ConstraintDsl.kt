@@ -4,6 +4,7 @@ import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import org.brightify.reactant.core.constraint.AutoLayout
+import org.brightify.reactant.core.constraint.CollapseAxis
 import org.brightify.reactant.core.constraint.Constraint
 import org.brightify.reactant.core.constraint.ConstraintPriority
 import org.brightify.reactant.core.constraint.ConstraintVariable
@@ -11,7 +12,8 @@ import org.brightify.reactant.core.constraint.exception.AutoLayoutNotFoundExcept
 import org.brightify.reactant.core.constraint.exception.NoIntrinsicSizeException
 import org.brightify.reactant.core.constraint.internal.ConstraintManager
 import org.brightify.reactant.core.constraint.internal.ConstraintType
-import org.brightify.reactant.core.constraint.internal.intrinsicsize.IntrinsicSizeManager
+import org.brightify.reactant.core.constraint.internal.view.VisibilityManager
+import org.brightify.reactant.core.constraint.internal.view.IntrinsicSizeManager
 import org.brightify.reactant.core.constraint.util.children
 import org.brightify.reactant.core.constraint.util.description
 import org.brightify.reactant.core.constraint.util.snp
@@ -52,6 +54,12 @@ class ConstraintDsl internal constructor(private val view: View) {
     val centerY: ConstraintVariable
         get() = ConstraintVariable(ConstraintType.centerY)
 
+    var collapsaAxis: CollapseAxis
+        get() = visibilityManager.collapseAxis
+        set(value) {
+            visibilityManager.collapseAxis = value
+        }
+
     var horizontalContentHuggingPriority: ConstraintPriority
         get() = intrinsicSizeManager.width.contentHuggingPriority
         set(value) {
@@ -91,9 +99,11 @@ class ConstraintDsl internal constructor(private val view: View) {
     private val constraintManager: ConstraintManager = (view.parent as? AutoLayout ?: view as? AutoLayout)?.constraintManager
             ?: throw AutoLayoutNotFoundException(view)
 
-    private val intrinsicSizeManager: IntrinsicSizeManager by lazy {
-        constraintManager.getIntrinsicSizeManager(view) ?: throw NoIntrinsicSizeException(view)
-    }
+    private val intrinsicSizeManager: IntrinsicSizeManager
+        get() = constraintManager.getIntrinsicSizeManager(view) ?: throw NoIntrinsicSizeException(view)
+
+    private val visibilityManager: VisibilityManager
+        get() = constraintManager.getVisibilityManager(view)
 
     fun makeConstraints(closure: ConstraintMakerProvider.() -> Unit) {
         val createdConstraints = ArrayList<Constraint>()

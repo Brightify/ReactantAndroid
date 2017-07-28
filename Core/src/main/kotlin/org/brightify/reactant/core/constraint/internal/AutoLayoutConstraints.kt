@@ -46,6 +46,9 @@ internal class AutoLayoutConstraints(autoLayout: AutoLayout) {
             ))
 
     init {
+        widthConstraint.deactivate()
+        heightConstraint.deactivate()
+        cornerConstraint.deactivate()
         widthConstraint.initialized = true
         heightConstraint.initialized = true
         cornerConstraint.initialized = true

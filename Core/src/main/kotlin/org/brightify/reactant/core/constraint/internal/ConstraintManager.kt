@@ -4,11 +4,14 @@ import android.view.View
 import org.brightify.reactant.core.constraint.AutoLayout
 import org.brightify.reactant.core.constraint.Constraint
 import org.brightify.reactant.core.constraint.ConstraintVariable
+import org.brightify.reactant.core.constraint.exception.AutoLayoutNotFoundException
 import org.brightify.reactant.core.constraint.exception.ViewNotManagedByCommonAutoLayoutException
-import org.brightify.reactant.core.constraint.internal.intrinsicsize.IntrinsicSizeManager
-import org.brightify.reactant.core.constraint.internal.intrinsicsize.IntrinsicSizeNecessityDecider
 import org.brightify.reactant.core.constraint.internal.solver.Solver
 import org.brightify.reactant.core.constraint.internal.solver.Term
+import org.brightify.reactant.core.constraint.internal.view.IntrinsicSizeManager
+import org.brightify.reactant.core.constraint.internal.view.IntrinsicSizeNecessityDecider
+import org.brightify.reactant.core.constraint.internal.view.ViewConstraints
+import org.brightify.reactant.core.constraint.internal.view.VisibilityManager
 import org.brightify.reactant.core.constraint.util.children
 
 /**
@@ -18,11 +21,11 @@ internal class ConstraintManager {
 
     private val solver = Solver()
     private val constraints = HashMap<View, HashSet<Constraint>>()
-    private val intrinsicSizeManagers = HashMap<View, IntrinsicSizeManager>()
+    private val viewConstraints = HashMap<View, ViewConstraints>()
     private val intrinsicSizeNecessityDecider = IntrinsicSizeNecessityDecider()
 
     private val managedViews: Set<View>
-        get() = constraints.keys
+        get() = viewConstraints.keys
 
     val allConstraints: List<Constraint>
         get() = constraints.flatMap { it.value }
@@ -63,8 +66,10 @@ internal class ConstraintManager {
         }
 
         constraints[view] = HashSet()
+        val constraints = ViewConstraints(view)
+        viewConstraints[view] = constraints
         if (view !is AutoLayout) {
-            intrinsicSizeManagers[view] = IntrinsicSizeManager(view, solver)
+            constraints.intrinsicSizeManager = IntrinsicSizeManager(view)
         }
     }
 
@@ -76,7 +81,7 @@ internal class ConstraintManager {
         constraints.remove(view)?.forEach { removeConstraint(it) }
         normalizeConstraints()
 
-        intrinsicSizeManagers.remove(view)?.removeEquations()
+        viewConstraints.remove(view)
     }
 
     fun join(constraintManager: ConstraintManager) {
@@ -87,11 +92,7 @@ internal class ConstraintManager {
                 intrinsicSizeNecessityDecider.addConstraint(constraint)
             }
         }
-        intrinsicSizeManagers.putAll(constraintManager.intrinsicSizeManagers)
-        constraintManager.intrinsicSizeManagers.forEach {
-            it.value.solver = solver
-            it.value.addEquations()
-        }
+        viewConstraints.putAll(constraintManager.viewConstraints)
     }
 
     fun split(view: View): ConstraintManager {
@@ -107,6 +108,10 @@ internal class ConstraintManager {
         addRecursive(view)
 
         val newConstraintManager = ConstraintManager()
+
+        val leavingSizeManagers = viewConstraints.filterKeys { leavingViews.contains(it) }
+        newConstraintManager.viewConstraints.putAll(leavingSizeManagers)
+        leavingSizeManagers.forEach { viewConstraints.remove(it.key) }
 
         val leavingConstraints = constraints.filterKeys { leavingViews.contains(it) }
         newConstraintManager.constraints.putAll(leavingConstraints)
@@ -125,15 +130,6 @@ internal class ConstraintManager {
         }
         normalizeConstraints()
 
-        val leavingSizeManagers = intrinsicSizeManagers.filterKeys { leavingViews.contains(it) }
-        newConstraintManager.intrinsicSizeManagers.putAll(leavingSizeManagers)
-        leavingSizeManagers.forEach {
-            intrinsicSizeManagers.remove(it.key)
-            it.value.removeEquations()
-            it.value.solver = newConstraintManager.solver
-            it.value.addEquations()
-        }
-
         return newConstraintManager
     }
 
@@ -149,10 +145,14 @@ internal class ConstraintManager {
         return result
     }
 
-    fun getIntrinsicSizeManager(view: View): IntrinsicSizeManager? = intrinsicSizeManagers[view]
+    fun getVisibilityManager(view: View): VisibilityManager
+            = viewConstraints[view]?.visibilityManager ?: throw AutoLayoutNotFoundException(view)
+
+    fun getIntrinsicSizeManager(view: View): IntrinsicSizeManager? = viewConstraints[view]?.intrinsicSizeManager
 
     fun disableIntrinsicSize(view: View) {
-        intrinsicSizeManagers.remove(view)?.removeEquations()
+        viewConstraints[view]?.intrinsicSizeManager?.deactivateConstraints()
+        viewConstraints[view]?.intrinsicSizeManager = null
     }
 
     fun needsIntrinsicWidth(view: View): Boolean = intrinsicSizeNecessityDecider.needsIntrinsicWidth(view)
