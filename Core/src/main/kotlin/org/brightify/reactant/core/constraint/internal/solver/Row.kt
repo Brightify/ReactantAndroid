@@ -22,7 +22,7 @@ internal class Row(var constant: Double = 0.0) {
     fun addExpression(row: Row, coefficient: Double, subject: Symbol? = null, solver: Solver? = null) {
         constant += coefficient * row.constant
 
-        row.symbols.keys.forEach { clv -> row.symbols[clv]?.let { addVariable(clv, it * coefficient, subject, solver) } }
+        row.symbols.forEach { addVariable(it.key, it.value * coefficient, subject, solver) }
     }
 
     fun addVariable(symbol: Symbol, coefficient: Double, subject: Symbol? = null, solver: Solver? = null) {

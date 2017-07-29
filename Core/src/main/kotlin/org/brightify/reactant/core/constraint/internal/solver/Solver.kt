@@ -1,10 +1,10 @@
 package org.brightify.reactant.core.constraint.internal.solver
 
+import android.util.Log
 import org.brightify.reactant.core.constraint.Constraint
 import org.brightify.reactant.core.constraint.ConstraintOperator
 import org.brightify.reactant.core.constraint.ConstraintPriority
 import org.brightify.reactant.core.constraint.ConstraintVariable
-import org.brightify.reactant.core.constraint.exception.UnsatisfiableConstraintException
 import org.brightify.reactant.core.constraint.internal.ConstraintItem
 import org.brightify.reactant.core.constraint.internal.util.isAlmostZero
 import java.util.HashSet
@@ -46,7 +46,7 @@ internal class Solver {
             try {
                 addEquationImmediately(it.key)
             } catch(_: InternalSolverError) {
-                throw UnsatisfiableConstraintException(it.value)
+                Log.e("AutoLayout", "Constraint (${it.value}) cannot be satisfied and will be ignored.")
             }
         }
         equationsToAdd.clear()
@@ -60,8 +60,13 @@ internal class Solver {
 
     private fun addEquationImmediately(equation: Equation) {
         val expression = createRow(equation)
-        if (!tryAddingDirectly(expression)) {
-            addWithArtificialVariable(expression)
+        try {
+            if (!tryAddingDirectly(expression)) {
+                addWithArtificialVariable(expression)
+            }
+        } catch(e: InternalSolverError) {
+            removeEquationImmediately(equation)
+            throw e
         }
     }
 
@@ -245,6 +250,8 @@ internal class Solver {
         optimize(objectiveVariable)
 
         if (rows[objectiveVariable]?.constant?.isAlmostZero != true) {
+            removeRow(objectiveVariable)
+            removeColumn(artificialVariable)
             throw InternalSolverError()
         }
 
