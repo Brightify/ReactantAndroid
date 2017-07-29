@@ -13,6 +13,7 @@ import org.brightify.reactant.core.constraint.internal.view.IntrinsicSizeNecessi
 import org.brightify.reactant.core.constraint.internal.view.ViewConstraints
 import org.brightify.reactant.core.constraint.internal.view.VisibilityManager
 import org.brightify.reactant.core.constraint.util.children
+import org.brightify.reactant.core.constraint.util.description
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
@@ -40,6 +41,8 @@ internal class ConstraintManager {
             constraint.isManaged = true
             constraints[constraint.view]?.add(constraint)
             intrinsicSizeNecessityDecider.addConstraint(constraint)
+        } else if (!managedViews.contains(constraint.view)) {
+            throw IllegalStateException("View ${constraint.view.description} is not managed by correct ConstraintManager.")
         } else {
             throw ViewNotManagedByCommonAutoLayoutException(constraint.view,
                     constraint.constraintItems.mapNotNull { it.rightVariable?.view }.first { !managedViews.contains(it) })

@@ -16,7 +16,7 @@ internal class Row(var constant: Double = 0.0) {
     fun multiplyBy(coefficient: Double) {
         constant *= coefficient
 
-        symbols.keys.forEach { symbols[it] = (symbols[it] ?: 0.0) * coefficient }
+        symbols.forEach { symbols[it.key] = it.value * coefficient }
     }
 
     fun addExpression(row: Row, coefficient: Double, subject: Symbol? = null, solver: Solver? = null) {
