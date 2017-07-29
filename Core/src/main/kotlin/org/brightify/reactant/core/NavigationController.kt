@@ -2,6 +2,7 @@ package org.brightify.reactant.core
 
 import android.app.FragmentManager
 import android.app.FragmentTransaction
+import android.support.v7.widget.Toolbar
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import io.reactivex.Observable
@@ -9,6 +10,11 @@ import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.addTo
 import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.subjects.ReplaySubject
+import org.brightify.reactant.core.constraint.AutoLayout
+import org.brightify.reactant.core.constraint.Constraint
+import org.brightify.reactant.core.constraint.ConstraintPriority
+import org.brightify.reactant.core.constraint.util.children
+import org.brightify.reactant.core.constraint.util.snp
 import org.brightify.reactant.core.util.push
 
 /**
@@ -26,6 +32,13 @@ class NavigationController(private val initialController: ViewController?) : Vie
     private val childFragmentManager: FragmentManager
         get() = viewControllerWrapper.childFragmentManager
 
+    private val toolbarHeight: Int
+        get() = 56 // FIXME get correct value
+
+    lateinit var toolbar: Toolbar
+    private lateinit var frameLayout: FrameLayout
+    private lateinit var toolbarHeightConstraint: Constraint
+
     init {
         initialController?.let { push(it, animated = false) }
     }
@@ -33,15 +46,30 @@ class NavigationController(private val initialController: ViewController?) : Vie
     constructor() : this(null)
 
     override fun onCreate() {
-        contentView = FrameLayout(activity)
-        contentView.assignId()
+        frameLayout = FrameLayout(activity)
+        frameLayout.assignId()
+        toolbar = Toolbar(activity)
+
+        contentView = AutoLayout(activity).children(toolbar, frameLayout)
         contentView.layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+
+        toolbar.snp.makeConstraints {
+            top.left.right.equalToSuperview()
+            toolbarHeightConstraint = height.equalTo(toolbarHeight).priority(ConstraintPriority.high)
+        }
+        toolbar.snp.disableIntrinsicSize()
+        frameLayout.snp.makeConstraints {
+            top.equalTo(toolbar.snp.bottom)
+            bottom.left.right.equalToSuperview()
+        }
+        frameLayout.snp.disableIntrinsicSize()
     }
 
     override fun onResume() {
         initialized = true
         transactionsMadeBeforeInitialization.forEach { it() }
         transactionsMadeBeforeInitialization.clear()
+        toolbarHeightConstraint.offset(toolbarHeight)
     }
 
     override fun onPause() {
@@ -66,7 +94,7 @@ class NavigationController(private val initialController: ViewController?) : Vie
     fun push(controller: ViewController, animated: Boolean = true) {
         transaction {
             val transaction = childFragmentManager.beginTransaction()
-            transaction.push(contentView.id, controller.viewControllerWrapper)
+            transaction.push(frameLayout.id, controller.viewControllerWrapper)
             transaction.setTransition(if (animated) FragmentTransaction.TRANSIT_FRAGMENT_OPEN else FragmentTransaction.TRANSIT_NONE)
             transaction.commit()
             controller.navigationController = this
