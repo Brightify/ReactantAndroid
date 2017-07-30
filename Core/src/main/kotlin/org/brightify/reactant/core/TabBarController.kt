@@ -9,6 +9,7 @@ import android.widget.FrameLayout
 import org.brightify.reactant.core.constraint.AutoLayout
 import org.brightify.reactant.core.constraint.ConstraintPriority
 import org.brightify.reactant.core.constraint.util.snp
+import org.brightify.reactant.core.util.push
 
 /**
  *  @author <a href="mailto:matous@brightify.org">Matous Hybl</a>
@@ -72,10 +73,28 @@ open class TabBarController(private val controllers: List<ViewController>) : Vie
         selectedController?.let { displayController(it) }
     }
 
+    override fun onBackPressed(): Boolean {
+        if (childFragmentManager.top?.viewController?.onBackPressed() == true) {
+            return true
+        }
+
+        val stackSize = childFragmentManager.backStackEntryCount
+        if (stackSize > 1) {
+            childFragmentManager.popBackStackImmediate()
+            childFragmentManager.top?.viewController?.let {
+                it.tabBarController = this
+                selectedController = it
+                tabBar.menu.findItem(controllers.indexOf(it)).setChecked(true)
+            }
+            return true
+        } else {
+            return false
+        }
+    }
+
     private fun displayController(controller: ViewController, animated: Boolean = false) {
         val transaction = childFragmentManager.beginTransaction()
-        transaction.replace(fragmentContainer.id, controller.viewControllerWrapper)
-        transaction.addToBackStack(null)
+        transaction.push(fragmentContainer.id, controller.viewControllerWrapper)
         transaction.setTransition(if (animated) FragmentTransaction.TRANSIT_FRAGMENT_OPEN else FragmentTransaction.TRANSIT_NONE)
         transaction.commit()
         controller.tabBarController = this

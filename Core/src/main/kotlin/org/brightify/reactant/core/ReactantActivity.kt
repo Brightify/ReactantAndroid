@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import io.reactivex.Observable
 import io.reactivex.subjects.PublishSubject
+import org.brightify.reactant.core.util.push
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
@@ -16,8 +17,6 @@ open class ReactantActivity(private val wireframeFactory: (ReactantActivity) -> 
     val resumed: Observable<Unit>
         get() = onResumeSubject
 
-    private val RootFragmentTag = "RootFragment"
-
     constructor(wireframe: Wireframe) : this({ wireframe })
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -25,18 +24,21 @@ open class ReactantActivity(private val wireframeFactory: (ReactantActivity) -> 
 
         if (savedInstanceState == null) {
             val transaction = fragmentManager.beginTransaction()
-            transaction.replace(android.R.id.content, wireframeFactory(this).entryPoint().viewControllerWrapper, RootFragmentTag)
+            transaction.push(android.R.id.content, wireframeFactory(this).entryPoint().viewControllerWrapper)
             transaction.commit()
         }
     }
 
     override fun onBackPressed() {
-        if ((fragmentManager.top ?: fragmentManager.findFragmentByTag(
-                RootFragmentTag) as? ViewControllerWrapper)?.viewController?.onBackPressed() != true) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                finishAfterTransition()
+        if (fragmentManager.top?.viewController?.onBackPressed() != true) {
+            if (fragmentManager.backStackEntryCount > 1) {
+                fragmentManager.popBackStack()
             } else {
-                finish()
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    finishAfterTransition()
+                } else {
+                    finish()
+                }
             }
         }
     }
@@ -48,8 +50,7 @@ open class ReactantActivity(private val wireframeFactory: (ReactantActivity) -> 
 
     fun present(controller: ViewController, animated: Boolean = true) {
         val transaction = fragmentManager.beginTransaction()
-        transaction.addToBackStack(null)
-        transaction.replace(android.R.id.content, controller.viewControllerWrapper)
+        transaction.push(android.R.id.content, controller.viewControllerWrapper)
         transaction.commit()
     }
 

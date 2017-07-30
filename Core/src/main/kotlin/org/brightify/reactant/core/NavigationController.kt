@@ -9,6 +9,7 @@ import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.addTo
 import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.subjects.ReplaySubject
+import org.brightify.reactant.core.util.push
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
@@ -53,15 +54,19 @@ class NavigationController(private val initialController: ViewController?) : Vie
         }
 
         val stackSize = childFragmentManager.backStackEntryCount
-        childFragmentManager.popBackStack()
-        return stackSize > 1
+        if (stackSize > 1) {
+            childFragmentManager.popBackStackImmediate()
+            childFragmentManager.top?.viewController?.navigationController = this
+            return true
+        } else {
+            return false
+        }
     }
 
     fun push(controller: ViewController, animated: Boolean = true) {
         transaction {
             val transaction = childFragmentManager.beginTransaction()
-            transaction.replace(contentView.id, controller.viewControllerWrapper)
-            transaction.addToBackStack(null)
+            transaction.push(contentView.id, controller.viewControllerWrapper)
             transaction.setTransition(if (animated) FragmentTransaction.TRANSIT_FRAGMENT_OPEN else FragmentTransaction.TRANSIT_NONE)
             transaction.commit()
             controller.navigationController = this
