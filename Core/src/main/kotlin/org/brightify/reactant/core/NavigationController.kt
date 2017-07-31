@@ -3,6 +3,7 @@ package org.brightify.reactant.core
 import android.app.FragmentManager
 import android.app.FragmentTransaction
 import android.support.v7.widget.Toolbar
+import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import io.reactivex.Observable
@@ -84,7 +85,10 @@ class NavigationController(private val initialController: ViewController?) : Vie
         val stackSize = childFragmentManager.backStackEntryCount
         if (stackSize > 1) {
             childFragmentManager.popBackStackImmediate()
-            childFragmentManager.top?.viewController?.navigationController = this
+            childFragmentManager.top?.viewController?.let {
+                navigationController = this
+                invalidateToolbarVisibility(it)
+            }
             return true
         } else {
             return false
@@ -98,12 +102,27 @@ class NavigationController(private val initialController: ViewController?) : Vie
             transaction.setTransition(if (animated) FragmentTransaction.TRANSIT_FRAGMENT_OPEN else FragmentTransaction.TRANSIT_NONE)
             transaction.commit()
             controller.navigationController = this
+            invalidateToolbarVisibility(controller)
+        }
+    }
+
+    private fun invalidateToolbarVisibility(controller: ViewController) {
+        if (controller.prefersHiddenToolbar) {
+            toolbar.visibility = View.GONE
+        } else {
+            toolbar.visibility = View.VISIBLE
         }
     }
 
     fun pop(animated: Boolean = true): ViewController? {
         return transaction {
-            childFragmentManager.top.also { childFragmentManager.popBackStackImmediate() }?.viewController
+            val previousController = childFragmentManager.top.also { childFragmentManager.popBackStackImmediate() }?.viewController
+
+            childFragmentManager.top?.viewController?.let {
+                invalidateToolbarVisibility(it)
+            }
+
+            return@transaction previousController
         }
     }
 
