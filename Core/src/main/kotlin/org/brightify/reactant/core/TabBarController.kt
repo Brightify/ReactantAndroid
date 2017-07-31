@@ -22,8 +22,6 @@ open class TabBarController(private val controllers: List<ViewController>) : Vie
     private val childFragmentManager: FragmentManager
         get() = viewControllerWrapper.childFragmentManager
 
-    private var selectedController: ViewController? = null
-
     override fun onCreate() {
         fragmentContainer = FrameLayout(activity)
         fragmentContainer.assignId()
@@ -56,21 +54,13 @@ open class TabBarController(private val controllers: List<ViewController>) : Vie
                 item.icon = activity.resources.getDrawable(imageRes)
             }
             item.setOnMenuItemClickListener {
-                if(tabBar.selectedItemId != item.itemId) {
+                if (tabBar.selectedItemId != item.itemId) {
                     displayController(controller)
-                } else {
-                    // FIXME pop backstack - check guidelines for correct behavior
                 }
                 return@setOnMenuItemClickListener false
             }
         }
-        selectedController = controllers.firstOrNull()
-    }
-
-    override fun onActivityCreated() {
-        super.onActivityCreated()
-
-        selectedController?.let { displayController(it) }
+        controllers.firstOrNull()?.let { displayController(it) }
     }
 
     override fun onBackPressed(): Boolean {
@@ -83,7 +73,6 @@ open class TabBarController(private val controllers: List<ViewController>) : Vie
             childFragmentManager.popBackStackImmediate()
             childFragmentManager.top?.viewController?.let {
                 it.tabBarController = this
-                selectedController = it
                 tabBar.menu.findItem(controllers.indexOf(it)).setChecked(true)
             }
             return true
@@ -98,7 +87,6 @@ open class TabBarController(private val controllers: List<ViewController>) : Vie
         transaction.setTransition(if (animated) FragmentTransaction.TRANSIT_FRAGMENT_OPEN else FragmentTransaction.TRANSIT_NONE)
         transaction.commit()
         controller.tabBarController = this
-        selectedController = controller
     }
 }
 
