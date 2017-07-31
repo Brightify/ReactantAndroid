@@ -49,14 +49,6 @@ open class ViewController {
 
     private val lifetimeDisposeBag = CompositeDisposable()
 
-//    var actionBarHidden: Boolean by Delegates.observable(false) { _, _, _ ->
-//        if (actionBarHidden) {
-//            activity.supportActionBar?.hide()
-//        } else {
-//            activity.supportActionBar?.show()
-//        }
-//    }
-
     var statusBarTranslucent: Boolean by Delegates.observable(false) { _, _, _ ->
         if (statusBarTranslucent) {
             activity.window.addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)

@@ -7,6 +7,7 @@ import io.reactivex.Observable
 import io.reactivex.subjects.PublishSubject
 import org.brightify.reactant.core.util.push
 import org.brightify.reactant.core.util.pushModal
+import org.brightify.reactant.core.util.top
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>

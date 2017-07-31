@@ -17,7 +17,9 @@ import org.brightify.reactant.core.constraint.Constraint
 import org.brightify.reactant.core.constraint.ConstraintPriority
 import org.brightify.reactant.core.constraint.util.children
 import org.brightify.reactant.core.constraint.util.snp
+import org.brightify.reactant.core.util.getFragmentAtIndex
 import org.brightify.reactant.core.util.push
+import org.brightify.reactant.core.util.top
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
@@ -50,7 +52,14 @@ class NavigationController(private val initialController: ViewController?) : Vie
     override fun onCreate() {
         frameLayout = FrameLayout(activity)
         frameLayout.assignId()
+
         toolbar = Toolbar(activity)
+        toolbar.navigationIcon = activity.resources.getDrawable(R.drawable.abc_ic_ab_back_material)
+        toolbar.setNavigationOnClickListener {
+            if (childFragmentManager.backStackEntryCount > 1) {
+                pop()
+            }
+        }
 
         contentView = AutoLayout(activity).children(toolbar, frameLayout)
         contentView.layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
@@ -65,6 +74,10 @@ class NavigationController(private val initialController: ViewController?) : Vie
             bottom.left.right.equalToSuperview()
         }
         frameLayout.snp.disableIntrinsicSize()
+
+        childFragmentManager.addOnBackStackChangedListener {
+            invalidateToolbar()
+        }
     }
 
     override fun onResume() {
@@ -75,7 +88,7 @@ class NavigationController(private val initialController: ViewController?) : Vie
 
         childFragmentManager.top?.viewController?.let {
             navigationController = this
-            invalidateToolbar(it)
+            invalidateToolbar()
         }
     }
 
@@ -90,11 +103,7 @@ class NavigationController(private val initialController: ViewController?) : Vie
 
         val stackSize = childFragmentManager.backStackEntryCount
         if (stackSize > 1) {
-            childFragmentManager.popBackStackImmediate()
-            childFragmentManager.top?.viewController?.let {
-                navigationController = this
-                invalidateToolbar(it)
-            }
+            pop()
             return true
         } else {
             return false
@@ -103,39 +112,19 @@ class NavigationController(private val initialController: ViewController?) : Vie
 
     fun push(controller: ViewController, animated: Boolean = true) {
         transaction {
+            controller.navigationController = this
             val transaction = childFragmentManager.beginTransaction()
             transaction.push(frameLayout.id, controller.viewControllerWrapper)
             transaction.setTransition(if (animated) FragmentTransaction.TRANSIT_FRAGMENT_OPEN else FragmentTransaction.TRANSIT_NONE)
             transaction.commit()
-            controller.navigationController = this
-            invalidateToolbar(controller)
-        }
-    }
-
-    private fun invalidateToolbar(controller: ViewController) {
-        if (controller.prefersHiddenToolbar) {
-            toolbar.visibility = View.GONE
-        } else {
-            toolbar.visibility = View.VISIBLE
-        }
-
-        toolbar.navigationIcon = activity.resources.getDrawable(R.drawable.abc_ic_ab_back_material)
-        if (childFragmentManager.backStackEntryCount > 0) {
-            toolbar.setNavigationOnClickListener {
-                pop()
-            }
         }
     }
 
     fun pop(animated: Boolean = true): ViewController? {
         return transaction {
-            val previousController = childFragmentManager.top.also { childFragmentManager.popBackStackImmediate() }?.viewController
-
-            childFragmentManager.top?.viewController?.let {
-                invalidateToolbar(it)
-            }
-
-            return@transaction previousController
+            childFragmentManager.getFragmentAtIndex(
+                    childFragmentManager.backStackEntryCount - 2)?.viewController?.navigationController = this
+            childFragmentManager.top.also { childFragmentManager.popBackStackImmediate() }?.viewController
         }
     }
 
@@ -199,6 +188,18 @@ class NavigationController(private val initialController: ViewController?) : Vie
         return oldControllers
     }
 
+    fun <C : ViewController, T> push(controller: Observable<ControllerWithResult<C, T>>, animated: Boolean = true): Observable<T> {
+        val sharedController = controller.replay(1).refCount()
+
+        sharedController.map { it.controller }
+                .subscribeBy(
+                        onNext = { push(controller = it, animated = animated) }
+                )
+                .addTo(lifetimeDisposeBag)
+
+        return sharedController.flatMap { it.result }
+    }
+
     private fun <T> transaction(transaction: () -> T?): T? {
         if (initialized) {
             return transaction()
@@ -206,5 +207,10 @@ class NavigationController(private val initialController: ViewController?) : Vie
             transactionsMadeBeforeInitialization.add({ transaction() })
             return null
         }
+    }
+
+    private fun invalidateToolbar() {
+        toolbar.visibility = if (childFragmentManager.top?.viewController?.prefersHiddenToolbar == false) View.VISIBLE else View.GONE
+        toolbar.menu.clear()
     }
 }
