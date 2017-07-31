@@ -76,7 +76,7 @@ class NavigationController(private val initialController: ViewController?) : Vie
         frameLayout.snp.disableIntrinsicSize()
 
         childFragmentManager.addOnBackStackChangedListener {
-            invalidateToolbar()
+            invalidateToolbarVisibility(childFragmentManager.top?.viewController)
         }
     }
 
@@ -88,7 +88,8 @@ class NavigationController(private val initialController: ViewController?) : Vie
 
         childFragmentManager.top?.viewController?.let {
             navigationController = this
-            invalidateToolbar()
+            invalidateToolbarVisibility(childFragmentManager.top?.viewController)
+            toolbar.menu.clear()
         }
     }
 
@@ -113,6 +114,7 @@ class NavigationController(private val initialController: ViewController?) : Vie
     fun push(controller: ViewController, animated: Boolean = true) {
         transaction {
             controller.navigationController = this
+            toolbar.menu.clear()
             val transaction = childFragmentManager.beginTransaction()
             transaction.push(frameLayout.id, controller.viewControllerWrapper)
             transaction.setTransition(if (animated) FragmentTransaction.TRANSIT_FRAGMENT_OPEN else FragmentTransaction.TRANSIT_NONE)
@@ -122,8 +124,8 @@ class NavigationController(private val initialController: ViewController?) : Vie
 
     fun pop(animated: Boolean = true): ViewController? {
         return transaction {
-            childFragmentManager.getFragmentAtIndex(
-                    childFragmentManager.backStackEntryCount - 2)?.viewController?.navigationController = this
+            childFragmentManager.getFragmentAtIndex(childFragmentManager.backStackEntryCount - 2)?.viewController?.navigationController = this
+            toolbar.menu.clear()
             childFragmentManager.top.also { childFragmentManager.popBackStackImmediate() }?.viewController
         }
     }
@@ -209,8 +211,7 @@ class NavigationController(private val initialController: ViewController?) : Vie
         }
     }
 
-    private fun invalidateToolbar() {
-        toolbar.visibility = if (childFragmentManager.top?.viewController?.prefersHiddenToolbar == false) View.VISIBLE else View.GONE
-        toolbar.menu.clear()
+    private fun invalidateToolbarVisibility(controller: ViewController?) {
+        toolbar.visibility = if (controller?.prefersHiddenToolbar == false) View.VISIBLE else View.GONE
     }
 }
