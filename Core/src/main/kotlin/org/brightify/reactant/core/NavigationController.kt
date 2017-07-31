@@ -11,6 +11,7 @@ import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.addTo
 import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.subjects.ReplaySubject
+import org.brightify.reactant.R
 import org.brightify.reactant.core.constraint.AutoLayout
 import org.brightify.reactant.core.constraint.Constraint
 import org.brightify.reactant.core.constraint.ConstraintPriority
@@ -71,6 +72,11 @@ class NavigationController(private val initialController: ViewController?) : Vie
         transactionsMadeBeforeInitialization.forEach { it() }
         transactionsMadeBeforeInitialization.clear()
         toolbarHeightConstraint.offset(toolbarHeight)
+
+        childFragmentManager.top?.viewController?.let {
+            navigationController = this
+            invalidateToolbar(it)
+        }
     }
 
     override fun onPause() {
@@ -87,7 +93,7 @@ class NavigationController(private val initialController: ViewController?) : Vie
             childFragmentManager.popBackStackImmediate()
             childFragmentManager.top?.viewController?.let {
                 navigationController = this
-                invalidateToolbarVisibility(it)
+                invalidateToolbar(it)
             }
             return true
         } else {
@@ -102,15 +108,22 @@ class NavigationController(private val initialController: ViewController?) : Vie
             transaction.setTransition(if (animated) FragmentTransaction.TRANSIT_FRAGMENT_OPEN else FragmentTransaction.TRANSIT_NONE)
             transaction.commit()
             controller.navigationController = this
-            invalidateToolbarVisibility(controller)
+            invalidateToolbar(controller)
         }
     }
 
-    private fun invalidateToolbarVisibility(controller: ViewController) {
+    private fun invalidateToolbar(controller: ViewController) {
         if (controller.prefersHiddenToolbar) {
             toolbar.visibility = View.GONE
         } else {
             toolbar.visibility = View.VISIBLE
+        }
+
+        toolbar.navigationIcon = activity.resources.getDrawable(R.drawable.abc_ic_ab_back_material)
+        if (childFragmentManager.backStackEntryCount > 0) {
+            toolbar.setNavigationOnClickListener {
+                pop()
+            }
         }
     }
 
@@ -119,7 +132,7 @@ class NavigationController(private val initialController: ViewController?) : Vie
             val previousController = childFragmentManager.top.also { childFragmentManager.popBackStackImmediate() }?.viewController
 
             childFragmentManager.top?.viewController?.let {
-                invalidateToolbarVisibility(it)
+                invalidateToolbar(it)
             }
 
             return@transaction previousController

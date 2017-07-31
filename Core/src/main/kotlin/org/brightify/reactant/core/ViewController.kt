@@ -85,7 +85,6 @@ open class ViewController {
     }
 
     open fun onResume() {
-//        actionBarHidden = actionBarHidden
         statusBarTranslucent = statusBarTranslucent
     }
 
