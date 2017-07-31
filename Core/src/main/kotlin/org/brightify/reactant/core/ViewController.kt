@@ -58,6 +58,7 @@ open class ViewController {
     }
 
     open val prefersHiddenToolbar: Boolean = false
+    open val hidesBottomBarWhenPushed: Boolean = false
 
     /**
      * Returns true if event is handled.

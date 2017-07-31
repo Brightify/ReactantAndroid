@@ -4,10 +4,10 @@ import android.app.FragmentManager
 import android.app.FragmentTransaction
 import android.support.design.widget.BottomNavigationView
 import android.view.Menu
+import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import org.brightify.reactant.core.constraint.AutoLayout
-import org.brightify.reactant.core.constraint.ConstraintPriority
 import org.brightify.reactant.core.constraint.util.snp
 import org.brightify.reactant.core.util.getFragmentAtIndex
 import org.brightify.reactant.core.util.push
@@ -20,6 +20,14 @@ open class TabBarController(private val controllers: List<ViewController>) : Vie
 
     lateinit var fragmentContainer: FrameLayout
     lateinit var tabBar: BottomNavigationView
+
+    private val backStackChangeListener = {
+        val viewController = childFragmentManager.top?.viewController
+        if (viewController !is NavigationController) {
+            tabBarController?.tabBar?.visibility =
+                    if (viewController?.hidesBottomBarWhenPushed == true) View.GONE else View.VISIBLE
+        }
+    }
 
     private val childFragmentManager: FragmentManager
         get() = viewControllerWrapper.childFragmentManager
@@ -41,7 +49,6 @@ open class TabBarController(private val controllers: List<ViewController>) : Vie
         }
         fragmentContainer.snp.disableIntrinsicSize()
 
-        tabBar.snp.verticalContentHuggingPriority = ConstraintPriority.required
         tabBar.snp.makeConstraints {
             left.equalToSuperview()
             right.equalToSuperview()
@@ -63,6 +70,14 @@ open class TabBarController(private val controllers: List<ViewController>) : Vie
             }
         }
         controllers.firstOrNull()?.let { displayController(it) }
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        childFragmentManager.removeOnBackStackChangedListener(backStackChangeListener)
+        childFragmentManager.addOnBackStackChangedListener(backStackChangeListener)
+        controllers[tabBar.selectedItemId].tabBarController = this
     }
 
     override fun onBackPressed(): Boolean {

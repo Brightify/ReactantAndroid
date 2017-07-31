@@ -43,6 +43,8 @@ class NavigationController(private val initialController: ViewController?) : Vie
     private lateinit var frameLayout: FrameLayout
     private lateinit var toolbarHeightConstraint: Constraint
 
+    private val backStackChangeListener = { invalidateBarsVisibility(childFragmentManager.top?.viewController) }
+
     init {
         initialController?.let { push(it, animated = false) }
     }
@@ -74,13 +76,14 @@ class NavigationController(private val initialController: ViewController?) : Vie
             bottom.left.right.equalToSuperview()
         }
         frameLayout.snp.disableIntrinsicSize()
-
-        childFragmentManager.addOnBackStackChangedListener {
-            invalidateToolbarVisibility(childFragmentManager.top?.viewController)
-        }
     }
 
     override fun onResume() {
+        super.onResume()
+
+        childFragmentManager.removeOnBackStackChangedListener(backStackChangeListener)
+        childFragmentManager.addOnBackStackChangedListener(backStackChangeListener)
+
         initialized = true
         transactionsMadeBeforeInitialization.forEach { it() }
         transactionsMadeBeforeInitialization.clear()
@@ -88,7 +91,7 @@ class NavigationController(private val initialController: ViewController?) : Vie
 
         childFragmentManager.top?.viewController?.let {
             navigationController = this
-            invalidateToolbarVisibility(childFragmentManager.top?.viewController)
+            invalidateBarsVisibility(it)
             toolbar.menu.clear()
         }
     }
@@ -124,7 +127,8 @@ class NavigationController(private val initialController: ViewController?) : Vie
 
     fun pop(animated: Boolean = true): ViewController? {
         return transaction {
-            childFragmentManager.getFragmentAtIndex(childFragmentManager.backStackEntryCount - 2)?.viewController?.navigationController = this
+            childFragmentManager.getFragmentAtIndex(
+                    childFragmentManager.backStackEntryCount - 2)?.viewController?.navigationController = this
             toolbar.menu.clear()
             childFragmentManager.top.also { childFragmentManager.popBackStackImmediate() }?.viewController
         }
@@ -211,7 +215,8 @@ class NavigationController(private val initialController: ViewController?) : Vie
         }
     }
 
-    private fun invalidateToolbarVisibility(controller: ViewController?) {
+    private fun invalidateBarsVisibility(controller: ViewController?) {
         toolbar.visibility = if (controller?.prefersHiddenToolbar == false) View.VISIBLE else View.GONE
+        tabBarController?.tabBar?.visibility = if (controller?.hidesBottomBarWhenPushed == true) View.GONE else View.VISIBLE
     }
 }
