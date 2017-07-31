@@ -6,6 +6,7 @@ import android.support.v7.app.AppCompatActivity
 import io.reactivex.Observable
 import io.reactivex.subjects.PublishSubject
 import org.brightify.reactant.core.util.push
+import org.brightify.reactant.core.util.pushModal
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
@@ -31,15 +32,7 @@ open class ReactantActivity(private val wireframeFactory: (ReactantActivity) -> 
 
     override fun onBackPressed() {
         if (fragmentManager.top?.viewController?.onBackPressed() != true) {
-            if (fragmentManager.backStackEntryCount > 1) {
-                fragmentManager.popBackStack()
-            } else {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    finishAfterTransition()
-                } else {
-                    finish()
-                }
-            }
+            dismissOrFinish()
         }
     }
 
@@ -50,11 +43,23 @@ open class ReactantActivity(private val wireframeFactory: (ReactantActivity) -> 
 
     fun present(controller: ViewController, animated: Boolean = true) {
         val transaction = fragmentManager.beginTransaction()
-        transaction.push(android.R.id.content, controller.viewControllerWrapper)
+        transaction.pushModal(android.R.id.content, controller.viewControllerWrapper)
         transaction.commit()
     }
 
     fun dismiss(animated: Boolean = true) {
-        fragmentManager.popBackStackImmediate()
+        dismissOrFinish()
+    }
+
+    private fun dismissOrFinish() {
+        if (fragmentManager.backStackEntryCount > 1) {
+            fragmentManager.popBackStack()
+        } else {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                finishAfterTransition()
+            } else {
+                finish()
+            }
+        }
     }
 }

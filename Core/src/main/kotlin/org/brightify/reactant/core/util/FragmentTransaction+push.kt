@@ -12,3 +12,9 @@ fun FragmentTransaction.push(contentViewId: Int, fragment: Fragment) {
     addToBackStack(tag)
     replace(contentViewId, fragment, tag)
 }
+
+fun FragmentTransaction.pushModal(contentViewId: Int, fragment: Fragment) {
+    val tag = fragment.tag ?: UUID.randomUUID().toString()
+    addToBackStack(tag)
+    add(contentViewId, fragment, tag)
+}

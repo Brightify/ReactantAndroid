@@ -12,26 +12,24 @@ abstract class Wireframe {
     abstract fun entryPoint(): ViewController
 }
 
-class FutureControllerProvider<T: ViewController> {
+class FutureControllerProvider<T : ViewController> {
 
     var controller: T? = null
 
     val navigation: NavigationController?
-        get() {
-            return controller?.navigationController
-        }
+        get() = controller?.navigationController
 }
 
-fun <T: ViewController>Wireframe.create(factory: (FutureControllerProvider<T>) -> T): T {
+fun <T : ViewController> Wireframe.create(factory: (FutureControllerProvider<T>) -> T): T {
     val futureControllerProvider = FutureControllerProvider<T>()
     val controller = factory(futureControllerProvider)
     futureControllerProvider.controller = controller
     return controller
 }
 
-data class ControllerWithResult<T: ViewController, U>(val controller: T, val result: Observable<U>)
+data class ControllerWithResult<T : ViewController, U>(val controller: T, val result: Observable<U>)
 
-fun <T: ViewController, U>Wireframe.create(factory: (FutureControllerProvider<T>, Observer<U>) -> T): ControllerWithResult<T, U> {
+fun <T : ViewController, U> Wireframe.create(factory: (FutureControllerProvider<T>, Observer<U>) -> T): ControllerWithResult<T, U> {
     val futureControllerProvider = FutureControllerProvider<T>()
     val subject: PublishSubject<U> = PublishSubject.create()
     val controller = factory(futureControllerProvider, subject)
