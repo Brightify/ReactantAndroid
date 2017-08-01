@@ -9,7 +9,6 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import org.brightify.reactant.core.constraint.AutoLayout
 import org.brightify.reactant.core.constraint.util.snp
-import org.brightify.reactant.core.util.getFragmentAtIndex
 import org.brightify.reactant.core.util.push
 import org.brightify.reactant.core.util.top
 
@@ -81,21 +80,7 @@ open class TabBarController(private val controllers: List<ViewController>) : Vie
     }
 
     override fun onBackPressed(): Boolean {
-        if (childFragmentManager.top?.viewController?.onBackPressed() == true) {
-            return true
-        }
-
-        val stackSize = childFragmentManager.backStackEntryCount
-        if (stackSize > 1) {
-            childFragmentManager.getFragmentAtIndex(childFragmentManager.backStackEntryCount - 2)?.viewController?.tabBarController = this
-            childFragmentManager.popBackStackImmediate()
-            childFragmentManager.top?.viewController?.let {
-                tabBar.menu.findItem(controllers.indexOf(it)).setChecked(true)
-            }
-            return true
-        } else {
-            return false
-        }
+        return childFragmentManager.top?.viewController?.onBackPressed() == true
     }
 
     private fun displayController(controller: ViewController, animated: Boolean = false) {
