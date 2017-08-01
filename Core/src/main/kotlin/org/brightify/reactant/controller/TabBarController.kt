@@ -16,12 +16,10 @@ open class TabBarController(private val viewControllers: List<ViewController>) :
 
     val tabBar = BottomNavigationView(ReactantActivity.globalContext)
 
-    // TODO
-    internal var hideTabBar = false
+    var isTabBarHidden = false // TODO onChange
 
     private val layoutContent = FrameLayout(ReactantActivity.globalContext)
     private val layout = AutoLayout(ReactantActivity.globalContext)
-
     private var displayedViewController: ViewController? = null
 
     init {
@@ -44,6 +42,7 @@ open class TabBarController(private val viewControllers: List<ViewController>) :
             left.right.bottom.equalToSuperview()
         }
 
+        viewControllers.forEach { it.loadViewIfNeeded() }
         updateTabBarItems()
     }
 
@@ -72,8 +71,7 @@ open class TabBarController(private val viewControllers: List<ViewController>) :
 
         displayedViewController?.viewDidDisappear()
         displayedViewController = null
-        (view as ViewGroup).removeAllViews()
-        layoutContent.removeAllViews()
+        clearLayout()
     }
 
     override fun onBackPressed(): Boolean = displayedViewController?.onBackPressed() == true
@@ -92,7 +90,7 @@ open class TabBarController(private val viewControllers: List<ViewController>) :
             item.setOnMenuItemClickListener {
                 if (tabBar.selectedItemId != item.itemId) {
                     clearLayout()
-                    showViewController()
+                    showViewController(item.itemId)
                     displayedViewController?.viewDidAppear()
                 }
                 return@setOnMenuItemClickListener false
@@ -100,19 +98,33 @@ open class TabBarController(private val viewControllers: List<ViewController>) :
         }
     }
 
+    fun setTabBarHidden(hidden: Boolean, animated: Boolean = true) {
+        if (hidden != isTabBarHidden) {
+            layoutContent.removeAllViews()
+            (view as ViewGroup).removeAllViews()
+            if (hidden) {
+                (view as ViewGroup).addView(displayedViewController?.view)
+            } else {
+                layoutContent.addView(displayedViewController?.view)
+                (view as ViewGroup).addView(layout)
+            }
+        }
+        isTabBarHidden = hidden
+    }
+
     private fun clearLayout() {
         displayedViewController?.viewWillDisappear()
         layoutContent.removeAllViews()
-        (view as? ViewGroup)?.removeAllViews()
+        (view as ViewGroup).removeAllViews()
         displayedViewController?.viewDidDisappear()
     }
 
-    private fun showViewController() {
-        displayedViewController = viewControllers[tabBar.selectedItemId]
-        displayedViewController?.loadViewIfNeeded()
+    private fun showViewController(index: Int = tabBar.selectedItemId) {
+        displayedViewController = viewControllers[index]
         displayedViewController?.tabBarController = this
         displayedViewController?.viewWillAppear()
-        if (hideTabBar) {
+        isTabBarHidden = displayedViewController?.hidesBottomBarWhenPushed == true
+        if (isTabBarHidden) {
             (view as ViewGroup).addView(displayedViewController?.view)
         } else {
             layoutContent.addView(displayedViewController?.view)

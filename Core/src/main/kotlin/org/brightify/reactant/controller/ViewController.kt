@@ -30,6 +30,7 @@ open class ViewController(title: String = "") {
     open var hidesBottomBarWhenPushed: Boolean = false
 
     open var tabBarItem: TabBarItem? by onChange<TabBarItem?>(null) { _, _, _ ->
+        // TODO
         tabBarController?.updateTabBarItems()
     }
 

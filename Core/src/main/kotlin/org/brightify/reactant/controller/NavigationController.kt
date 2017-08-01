@@ -9,19 +9,35 @@ import io.reactivex.rxkotlin.addTo
 import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.subjects.ReplaySubject
 import org.brightify.reactant.R
-import org.brightify.reactant.core.ControllerWithResult
 import org.brightify.reactant.autolayout.AutoLayout
 import org.brightify.reactant.autolayout.util.children
 import org.brightify.reactant.autolayout.util.snp
+import org.brightify.reactant.core.ControllerWithResult
 import org.brightify.reactant.core.ReactantActivity
 import java.util.Stack
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
-class NavigationController(initialController: ViewController?) : ViewController() {
+class NavigationController(private val initialController: ViewController?) : ViewController() {
 
-    var isNavigationBarHidden = false
+    override var tabBarItem: TabBarItem?
+        get() = if (viewControllerStack.empty()) null else viewControllerStack.peek().tabBarItem
+        set(value) {
+            if (!viewControllerStack.empty()) {
+                viewControllerStack.peek().tabBarItem = value
+            }
+        }
+
+    override var hidesBottomBarWhenPushed: Boolean
+        get() = if (viewControllerStack.empty()) false else viewControllerStack.peek().hidesBottomBarWhenPushed
+        set(value) {
+            if (!viewControllerStack.empty()) {
+                viewControllerStack.peek().hidesBottomBarWhenPushed = true
+            }
+        }
+
+    var isNavigationBarHidden = false // TODO onChange
 
     val toolbar = Toolbar(ReactantActivity.globalContext)
 
@@ -32,9 +48,7 @@ class NavigationController(initialController: ViewController?) : ViewController(
     private val toolbarHeight = 56 // FIXME get correct value
 
     init {
-        tabBarItem = initialController?.tabBarItem
         loadViewIfNeeded()
-        initialController?.let { push(it, animated = false) }
     }
 
     constructor() : this(null)
@@ -62,6 +76,9 @@ class NavigationController(initialController: ViewController?) : ViewController(
             top.equalTo(toolbar.snp.bottom)
             bottom.left.right.equalToSuperview()
         }
+
+        initialController?.loadViewIfNeeded()
+        initialController?.let { viewControllerStack.push(it) }
     }
 
     override fun viewWillAppear() {
@@ -110,16 +127,18 @@ class NavigationController(initialController: ViewController?) : ViewController(
         clearLayout(!viewControllerStack.empty())
         viewControllerStack.push(viewController)
         showViewController()
+        viewController.viewDidAppear()
     }
 
     fun pop(animated: Boolean = true): ViewController? {
-        if (viewControllerStack.empty()) {
+        if (viewControllerStack.size < 2) {
             return null
         }
 
         clearLayout()
         val viewController = viewControllerStack.pop()
         showViewController()
+        viewControllerStack.peek().viewDidAppear()
         return viewController
     }
 
@@ -185,7 +204,7 @@ class NavigationController(initialController: ViewController?) : ViewController(
             viewControllerStack.peek().viewWillDisappear()
         }
         layoutContent.removeAllViews()
-        (view as? ViewGroup)?.removeAllViews()
+        (view as ViewGroup).removeAllViews()
         if (callCallbacks) {
             viewControllerStack.peek().viewDidDisappear()
         }
@@ -197,6 +216,7 @@ class NavigationController(initialController: ViewController?) : ViewController(
         viewControllerStack.peek().navigationController = this
         viewControllerStack.peek().loadViewIfNeeded()
         viewControllerStack.peek().viewWillAppear()
+        tabBarController?.setTabBarHidden(viewControllerStack.peek().hidesBottomBarWhenPushed)
         if (isNavigationBarHidden) {
             (view as ViewGroup).addView(viewControllerStack.peek().view)
         } else {
