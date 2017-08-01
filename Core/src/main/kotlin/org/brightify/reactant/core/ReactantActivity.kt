@@ -11,12 +11,14 @@ import io.reactivex.rxkotlin.addTo
 import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.ReplaySubject
-import org.brightify.reactant.core.controller.ViewController
+import org.brightify.reactant.controller.ViewController
 import java.util.Stack
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
+// TODO ViewControllerActivity
+// TODO resources to ViewController and ViewBase
 open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : AppCompatActivity() {
 
     companion object {

@@ -7,7 +7,7 @@ import io.reactivex.rxkotlin.addTo
 import org.brightify.reactant.core.component.Component
 import org.brightify.reactant.core.component.ComponentDelegate
 import org.brightify.reactant.core.component.ComponentWithDelegate
-import org.brightify.reactant.core.controller.ViewController
+import org.brightify.reactant.controller.ViewController
 import org.brightify.reactant.core.util.makeGuard
 
 /**

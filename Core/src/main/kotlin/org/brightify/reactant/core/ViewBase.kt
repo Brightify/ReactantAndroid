@@ -4,7 +4,7 @@ import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
 import org.brightify.reactant.core.component.ComponentDelegate
 import org.brightify.reactant.core.component.ComponentWithDelegate
-import org.brightify.reactant.core.constraint.AutoLayout
+import org.brightify.reactant.autolayout.AutoLayout
 import org.brightify.reactant.core.util.makeGuard
 
 /**

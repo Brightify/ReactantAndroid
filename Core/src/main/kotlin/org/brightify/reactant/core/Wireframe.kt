@@ -3,8 +3,8 @@ package org.brightify.reactant.core
 import io.reactivex.Observable
 import io.reactivex.Observer
 import io.reactivex.subjects.PublishSubject
-import org.brightify.reactant.core.controller.NavigationController
-import org.brightify.reactant.core.controller.ViewController
+import org.brightify.reactant.controller.NavigationController
+import org.brightify.reactant.controller.ViewController
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>

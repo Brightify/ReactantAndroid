@@ -9,11 +9,11 @@ import org.brightify.reactant.core.ControllerBase
 import org.brightify.reactant.core.ReactantActivity
 import org.brightify.reactant.core.ViewBase
 import org.brightify.reactant.core.Wireframe
-import org.brightify.reactant.core.constraint.ContainerView
-import org.brightify.reactant.core.constraint.util.children
-import org.brightify.reactant.core.constraint.util.snp
-import org.brightify.reactant.core.controller.NavigationController
-import org.brightify.reactant.core.controller.ViewController
+import org.brightify.reactant.autolayout.ContainerView
+import org.brightify.reactant.autolayout.util.children
+import org.brightify.reactant.autolayout.util.snp
+import org.brightify.reactant.controller.NavigationController
+import org.brightify.reactant.controller.ViewController
 import org.brightify.reactant.core.util.Button
 import org.brightify.reactant.core.util.Style
 import org.brightify.reactant.core.util.TextView
