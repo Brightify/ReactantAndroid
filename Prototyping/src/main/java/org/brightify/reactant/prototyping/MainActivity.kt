@@ -1,24 +1,23 @@
 package org.brightify.reactant.prototyping
 
-import android.content.Context
 import android.graphics.Color
 import android.view.View
 import android.widget.TextView
 import com.jakewharton.rxbinding2.view.clicks
 import io.reactivex.Observable
-import org.brightify.reactant.core.Button
 import org.brightify.reactant.core.ControllerBase
-import org.brightify.reactant.core.NavigationController
 import org.brightify.reactant.core.ReactantActivity
-import org.brightify.reactant.core.Style
-import org.brightify.reactant.core.TextView
 import org.brightify.reactant.core.ViewBase
-import org.brightify.reactant.core.ViewController
 import org.brightify.reactant.core.Wireframe
 import org.brightify.reactant.core.constraint.ContainerView
 import org.brightify.reactant.core.constraint.util.children
 import org.brightify.reactant.core.constraint.util.snp
-import org.brightify.reactant.core.make
+import org.brightify.reactant.core.controller.NavigationController
+import org.brightify.reactant.core.controller.ViewController
+import org.brightify.reactant.core.util.Button
+import org.brightify.reactant.core.util.Style
+import org.brightify.reactant.core.util.TextView
+import org.brightify.reactant.core.util.make
 import org.brightify.reactant.prototyping.CustomView.Styles.text
 
 /**
@@ -34,6 +33,7 @@ class MainWireframe : Wireframe() {
         }
 
         navigationController.push(make(::InitialController, reactions))
+        navigationController.toolbar.setBackgroundColor(Color.BLUE)
 
         return navigationController
     }
@@ -47,12 +47,18 @@ class MainWireframe : Wireframe() {
     }
 }
 
-class MainActivity : ReactantActivity(MainWireframe())
+class MainActivity : ReactantActivity(::MainWireframe)
 
 class InitialController(private val reactions: InitialController.Reactions) : ControllerBase<Unit, CustomView, Unit>(
         make(::CustomView, "Initial")) {
 
     data class Reactions(val onNext: () -> Unit)
+
+    override fun viewWillAppear() {
+        super.viewWillAppear()
+
+        navigationController?.setNavigationBarHidden(true)
+    }
 
     override fun act(action: Unit) {
         reactions.onNext()
@@ -60,7 +66,8 @@ class InitialController(private val reactions: InitialController.Reactions) : Co
     }
 }
 
-class MainController(private val reactions: MainController.Reactions) : ControllerBase<Unit, AnotherView, Unit>(make(::AnotherView)) {
+class MainController(private val reactions: MainController.Reactions) : ControllerBase<Unit, AnotherView, Unit>(
+        make(::AnotherView)) {
 
     data class Reactions(val onNext: () -> Unit)
 
@@ -69,7 +76,7 @@ class MainController(private val reactions: MainController.Reactions) : Controll
     }
 }
 
-class CustomView(title: String, context: Context) : ViewBase<Int, Unit>(context) {
+class CustomView(title: String) : ViewBase<Int, Unit>() {
 
     private val text = make(::TextView, title).apply(Styles.text)
     private val button = make(::Button, "Button")
@@ -134,7 +141,7 @@ class CustomView(title: String, context: Context) : ViewBase<Int, Unit>(context)
     }
 }
 
-class AnotherView(context: Context) : ViewBase<Unit, Unit>(context) {
+class AnotherView : ViewBase<Unit, Unit>() {
 
     private val button = make(::Button, "Main")
 

@@ -6,8 +6,6 @@ import io.reactivex.rxkotlin.addTo
 import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.ReplaySubject
 import kotlin.properties.Delegates
-import kotlin.properties.ObservableProperty
-import kotlin.reflect.KProperty
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
@@ -57,11 +55,8 @@ class ComponentDelegate<STATE, ACTION> {
         }
     }
 
-    var ownerComponent: Component<STATE, ACTION>? by object : ObservableProperty<Component<STATE, ACTION>?>(null) {
-
-        override fun afterChange(property: KProperty<*>, oldValue: Component<STATE, ACTION>?, newValue: Component<STATE, ACTION>?) {
-            needsUpdate = hasComponentState
-        }
+    var ownerComponent: Component<STATE, ACTION>? by Delegates.observable<Component<STATE, ACTION>?>(null) { _, _, _ ->
+        needsUpdate = hasComponentState
     }
 
     var actions: List<Observable<ACTION>> by Delegates.observable(emptyList()) { _, _, _ ->

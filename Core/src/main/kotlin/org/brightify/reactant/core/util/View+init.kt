@@ -1,4 +1,4 @@
-package org.brightify.reactant.core
+package org.brightify.reactant.core.util
 
 import android.content.Context
 import android.widget.Button

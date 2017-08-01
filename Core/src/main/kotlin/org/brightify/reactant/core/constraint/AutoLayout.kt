@@ -5,7 +5,7 @@ import android.util.AttributeSet
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
-import org.brightify.reactant.core.assignId
+import org.brightify.reactant.core.util.assignId
 import org.brightify.reactant.core.constraint.internal.AutoLayoutConstraints
 import org.brightify.reactant.core.constraint.internal.ConstraintManager
 import org.brightify.reactant.core.constraint.internal.util.isAlmostZero

@@ -5,11 +5,11 @@ package org.brightify.reactant.core
  */
 interface RootView {
 
-    fun onStart()
+    fun viewWillAppear()
 
-    fun onResume()
+    fun viewDidAppear()
 
-    fun onPause()
+    fun viewWillDisapper()
 
-    fun onStop()
+    fun viewDidDisapper()
 }
