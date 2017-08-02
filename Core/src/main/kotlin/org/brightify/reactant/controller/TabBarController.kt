@@ -7,7 +7,9 @@ import android.widget.FrameLayout
 import org.brightify.reactant.autolayout.AutoLayout
 import org.brightify.reactant.autolayout.util.children
 import org.brightify.reactant.autolayout.util.snp
+import org.brightify.reactant.controller.util.TransactionManager
 import org.brightify.reactant.core.ReactantActivity
+import org.brightify.reactant.core.util.onChange
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
@@ -16,11 +18,17 @@ open class TabBarController(private val viewControllers: List<ViewController>) :
 
     val tabBar = BottomNavigationView(ReactantActivity.context)
 
-    var isTabBarHidden = false // TODO onChange
+    var isTabBarHidden: Boolean by onChange(false) { _, _, _ ->
+        if (!transactionManager.isInTransaction) {
+            clearLayout(false)
+            addViewToHierarchy()
+        }
+    }
 
     private val layoutContent = FrameLayout(ReactantActivity.context)
     private val layout = AutoLayout(ReactantActivity.context)
     private var displayedViewController: ViewController? = null
+    private val transactionManager = TransactionManager()
 
     init {
         loadViewIfNeeded()
@@ -42,16 +50,20 @@ open class TabBarController(private val viewControllers: List<ViewController>) :
             left.right.bottom.equalToSuperview()
         }
 
-        viewControllers.forEach { it.loadViewIfNeeded() }
-        updateTabBarItems()
+        viewControllers.forEach {
+            it.tabBarController = this
+            updateTabBarItem(it)
+            it.loadViewIfNeeded()
+        }
     }
 
     override fun viewWillAppear() {
         super.viewWillAppear()
 
-        displayedViewController = null
-        clearLayout()
-        showViewController()
+        transactionManager.transaction {
+            clearLayout(false)
+            showViewController()
+        }
     }
 
     override fun viewDidAppear() {
@@ -70,61 +82,60 @@ open class TabBarController(private val viewControllers: List<ViewController>) :
         super.viewDidDisappear()
 
         displayedViewController?.viewDidDisappear()
-        displayedViewController = null
-        clearLayout()
     }
 
     override fun onBackPressed(): Boolean = displayedViewController?.onBackPressed() == true
 
-    fun updateTabBarItems() {
-        // TODO Set correct controller
-        // TODO set item style
-        tabBar.menu.clear()
+    fun updateTabBarItem(viewController: ViewController) {
+        val index = viewControllers.indexOf(viewController)
+        tabBar.menu.removeItem(index)
 
-        viewControllers.forEachIndexed { index, controller ->
-            val text = controller.tabBarItem?.titleRes?.let { resources.getString(it) } ?: "Undefined"
-            val item = tabBar.menu.add(Menu.NONE, index, 0, text)
-            val imageRes = controller.tabBarItem?.imageRes
-            if (imageRes != null) {
-                item.icon = resources.getDrawable(imageRes)
-            }
-            item.setOnMenuItemClickListener {
-                if (tabBar.selectedItemId != item.itemId) {
-                    clearLayout()
+        val text = viewController.tabBarItem?.titleRes?.let { resources.getString(it) } ?: "Undefined"
+        val item = tabBar.menu.add(Menu.NONE, index, 0, text)
+        viewController.tabBarItem?.imageRes?.let { item.icon = resources.getDrawable(it) }
+
+        item.setOnMenuItemClickListener {
+            if (tabBar.selectedItemId != item.itemId) {
+                transactionManager.transaction {
+                    clearLayout(true)
                     showViewController(item.itemId)
                     displayedViewController?.viewDidAppear()
                 }
-                return@setOnMenuItemClickListener false
             }
+            return@setOnMenuItemClickListener false
         }
     }
 
     fun setTabBarHidden(hidden: Boolean, animated: Boolean = true) {
-        if (hidden != isTabBarHidden) {
-            layoutContent.removeAllViews()
-            (view as ViewGroup).removeAllViews()
-            if (hidden) {
-                (view as ViewGroup).addView(displayedViewController?.view)
-            } else {
-                layoutContent.addView(displayedViewController?.view)
-                (view as ViewGroup).addView(layout)
-            }
-        }
         isTabBarHidden = hidden
     }
 
-    private fun clearLayout() {
-        displayedViewController?.viewWillDisappear()
+    fun invalidateChild() {
+        if (!transactionManager.isInTransaction) {
+            clearLayout(false)
+            addViewToHierarchy()
+        }
+    }
+
+    private fun clearLayout(callCallbacks: Boolean) {
+        if (callCallbacks) {
+            displayedViewController?.viewWillDisappear()
+        }
         layoutContent.removeAllViews()
         (view as ViewGroup).removeAllViews()
-        displayedViewController?.viewDidDisappear()
+        if (callCallbacks) {
+            displayedViewController?.viewDidDisappear()
+        }
     }
 
     private fun showViewController(index: Int = tabBar.selectedItemId) {
         displayedViewController = viewControllers[index]
         displayedViewController?.tabBarController = this
         displayedViewController?.viewWillAppear()
-        isTabBarHidden = displayedViewController?.hidesBottomBarWhenPushed == true
+        addViewToHierarchy()
+    }
+
+    private fun addViewToHierarchy() {
         if (isTabBarHidden) {
             (view as ViewGroup).addView(displayedViewController?.view)
         } else {

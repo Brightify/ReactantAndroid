@@ -1,19 +1,17 @@
 package org.brightify.reactant.controller
 
 import android.support.v7.widget.Toolbar
+
 import android.view.ViewGroup
 import android.widget.FrameLayout
-import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.rxkotlin.addTo
-import io.reactivex.rxkotlin.subscribeBy
-import io.reactivex.subjects.ReplaySubject
 import org.brightify.reactant.R
 import org.brightify.reactant.autolayout.AutoLayout
 import org.brightify.reactant.autolayout.util.children
 import org.brightify.reactant.autolayout.util.snp
-import org.brightify.reactant.core.ControllerWithResult
+import org.brightify.reactant.controller.util.TransactionManager
 import org.brightify.reactant.core.ReactantActivity
+import org.brightify.reactant.core.util.onChange
 import java.util.Stack
 
 /**
@@ -21,31 +19,21 @@ import java.util.Stack
  */
 class NavigationController(private val initialController: ViewController?) : ViewController() {
 
-    override var tabBarItem: TabBarItem?
-        get() = if (viewControllerStack.empty()) null else viewControllerStack.peek().tabBarItem
-        set(value) {
-            if (!viewControllerStack.empty()) {
-                viewControllerStack.peek().tabBarItem = value
-            }
-        }
+    val lifetimeDisposeBag = CompositeDisposable()
 
-    override var hidesBottomBarWhenPushed: Boolean
-        get() = if (viewControllerStack.empty()) false else viewControllerStack.peek().hidesBottomBarWhenPushed
-        set(value) {
-            if (!viewControllerStack.empty()) {
-                viewControllerStack.peek().hidesBottomBarWhenPushed = true
-            }
+    var isNavigationBarHidden: Boolean by onChange(false) { _, _, _ ->
+        if (!transactionManager.isInTransaction) {
+            clearLayout(false)
+            addViewToHierarchy()
         }
-
-    var isNavigationBarHidden = false // TODO onChange
+    }
 
     val toolbar = Toolbar(ReactantActivity.context)
-
     private val layout = AutoLayout(ReactantActivity.context)
     private val layoutContent = FrameLayout(ReactantActivity.context)
     private val viewControllerStack = Stack<ViewController>()
-    private val lifetimeDisposeBag = CompositeDisposable()
     private val toolbarHeight = 56 // FIXME get correct value
+    private val transactionManager = TransactionManager()
 
     init {
         loadViewIfNeeded()
@@ -57,11 +45,7 @@ class NavigationController(private val initialController: ViewController?) : Vie
         super.loadView()
 
         toolbar.navigationIcon = resources.getDrawable(R.drawable.abc_ic_ab_back_material)
-        toolbar.setNavigationOnClickListener {
-            if (viewControllerStack.size > 1) {
-                pop()
-            }
-        }
+        toolbar.setNavigationOnClickListener { pop() }
 
         view = FrameLayout(ReactantActivity.context)
 
@@ -77,6 +61,7 @@ class NavigationController(private val initialController: ViewController?) : Vie
             bottom.left.right.equalToSuperview()
         }
 
+        initialController?.navigationController = this
         initialController?.loadViewIfNeeded()
         initialController?.let { viewControllerStack.push(it) }
     }
@@ -84,8 +69,10 @@ class NavigationController(private val initialController: ViewController?) : Vie
     override fun viewWillAppear() {
         super.viewWillAppear()
 
-        clearLayout(false)
-        showViewController()
+        transactionManager.transaction {
+            clearLayout(false)
+            showViewController()
+        }
     }
 
     override fun viewDidAppear() {
@@ -124,82 +111,59 @@ class NavigationController(private val initialController: ViewController?) : Vie
     }
 
     fun push(viewController: ViewController, animated: Boolean = true) {
-        clearLayout(!viewControllerStack.empty())
-        viewControllerStack.push(viewController)
-        showViewController()
-        viewController.viewDidAppear()
+        transactionManager.transaction {
+            clearLayout(!viewControllerStack.empty())
+            viewControllerStack.push(viewController)
+            showViewController()
+            viewController.viewDidAppear()
+        }
     }
 
     fun pop(animated: Boolean = true): ViewController? {
-        if (viewControllerStack.size < 2) {
-            return null
-        }
+        return transactionManager.transaction {
+            if (viewControllerStack.size < 2) {
+                return@transaction null
+            }
 
-        clearLayout()
-        val viewController = viewControllerStack.pop()
-        showViewController()
-        viewControllerStack.peek().viewDidAppear()
-        return viewController
+            clearLayout(true)
+            val viewController = viewControllerStack.pop()
+            showViewController()
+            viewControllerStack.peek().viewDidAppear()
+            return@transaction viewController
+        }
     }
 
     fun replace(viewController: ViewController, animated: Boolean = true): ViewController? {
-        return pop().also { push(viewController, animated) }
+        return transactionManager.transaction {
+            clearLayout(!viewControllerStack.empty())
+            val old = viewControllerStack.pop()
+            viewControllerStack.push(viewController)
+            showViewController()
+            viewControllerStack.peek().viewDidAppear()
+            return@transaction old
+        }
     }
 
     fun replaceAll(viewController: ViewController, animated: Boolean = true): List<ViewController> {
-        clearLayout(!viewControllerStack.empty())
-        val viewControllers = viewControllerStack.elements().toList()
-        viewControllerStack.clear()
-        push(viewController, animated)
-        return viewControllers
+        return transactionManager.transaction {
+            clearLayout(!viewControllerStack.empty())
+            val viewControllers = viewControllerStack.elements().toList()
+            viewControllerStack.clear()
+            viewControllerStack.push(viewController)
+            showViewController()
+            viewController.viewDidAppear()
+            return@transaction viewControllers
+        } ?: emptyList()
     }
 
-    fun <C : ViewController> push(viewController: Observable<C>, animated: Boolean = true) {
-        viewController.subscribe { push(it, animated) }.addTo(lifetimeDisposeBag)
+    fun invalidateChild() {
+        if (!transactionManager.isInTransaction) {
+            clearLayout(false)
+            addViewToHierarchy()
+        }
     }
 
-    fun <C : ViewController> replace(viewController: Observable<C>, animated: Boolean = true): Observable<ViewController?> {
-        val replacedController = ReplaySubject.create<ViewController?>(1)
-        viewController
-                .subscribeBy(
-                        onNext = { controller ->
-                            replacedController.onNext(replace(viewController = controller, animated = animated))
-                        },
-                        onComplete = { replacedController.onComplete() }
-                )
-                .addTo(lifetimeDisposeBag)
-        return replacedController
-    }
-
-    fun <C : ViewController> popAllAndReplace(viewController: Observable<C>): Observable<List<ViewController>> {
-        return replaceAll(viewController, false)
-    }
-
-    fun <C : ViewController> replaceAll(viewController: Observable<C>, animated: Boolean = true): Observable<List<ViewController>> {
-        val oldControllers = ReplaySubject.create<List<ViewController>>(1)
-        viewController
-                .subscribeBy(
-                        onNext = { oldControllers.onNext(replaceAll(viewController = it, animated = animated)) },
-                        onComplete = { oldControllers.onComplete() }
-                )
-                .addTo(lifetimeDisposeBag)
-
-        return oldControllers
-    }
-
-    fun <C : ViewController, T> push(viewController: Observable<ControllerWithResult<C, T>>, animated: Boolean = true): Observable<T> {
-        val sharedController = viewController.replay(1).refCount()
-
-        sharedController.map { it.controller }
-                .subscribeBy(
-                        onNext = { push(viewController = it, animated = animated) }
-                )
-                .addTo(lifetimeDisposeBag)
-
-        return sharedController.flatMap { it.result }
-    }
-
-    private fun clearLayout(callCallbacks: Boolean = true) {
+    private fun clearLayout(callCallbacks: Boolean) {
         if (callCallbacks) {
             viewControllerStack.peek().viewWillDisappear()
         }
@@ -208,15 +172,19 @@ class NavigationController(private val initialController: ViewController?) : Vie
         if (callCallbacks) {
             viewControllerStack.peek().viewDidDisappear()
         }
-        isNavigationBarHidden = false
     }
 
     private fun showViewController() {
         toolbar.menu.clear()
+        isNavigationBarHidden = false
         viewControllerStack.peek().navigationController = this
         viewControllerStack.peek().loadViewIfNeeded()
         viewControllerStack.peek().viewWillAppear()
         tabBarController?.setTabBarHidden(viewControllerStack.peek().hidesBottomBarWhenPushed)
+        addViewToHierarchy()
+    }
+
+    private fun addViewToHierarchy() {
         if (isNavigationBarHidden) {
             (view as ViewGroup).addView(viewControllerStack.peek().view)
         } else {

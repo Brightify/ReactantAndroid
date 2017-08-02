@@ -12,13 +12,12 @@ import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.ReplaySubject
 import org.brightify.reactant.controller.ViewController
+import org.brightify.reactant.controller.util.TransactionManager
 import java.util.Stack
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
-// TODO ViewControllerActivity
-// TODO resources to ViewController and ViewBase
 open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : AppCompatActivity() {
 
     companion object {
@@ -34,8 +33,8 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : App
     }
 
     private val lifetimeDisposeBag = CompositeDisposable()
-
     private val onResumeSubject = PublishSubject.create<Unit>()
+    private val transactionManager = TransactionManager()
 
     val resumed: Observable<Unit>
         get() = onResumeSubject
@@ -48,13 +47,15 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : App
 
         instance = this
 
-        if (savedInstanceState == null) {
-            viewControllerStack.clear()
-        }
+        transactionManager.transaction {
+            if (savedInstanceState == null) {
+                viewControllerStack.clear()
+            }
 
-        if (viewControllerStack.empty()) {
-            viewControllerStack.push(wireframeFactory().entryPoint())
-            viewControllerStack.peek().loadViewIfNeeded()
+            if (viewControllerStack.empty()) {
+                viewControllerStack.push(wireframeFactory().entryPoint())
+                viewControllerStack.peek().loadViewIfNeeded()
+            }
         }
     }
 
@@ -67,43 +68,54 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : App
     override fun onStart() {
         super.onStart()
 
-        viewControllerStack.forEach {
-            it.viewWillAppear()
-            contentView.addView(it.view)
+        transactionManager.transaction {
+            viewControllerStack.forEach {
+                it.viewWillAppear()
+                contentView.addView(it.view)
+            }
         }
     }
 
     override fun onResume() {
         super.onResume()
 
-        viewControllerStack.forEach { it.viewDidAppear() }
+        transactionManager.transaction {
+            viewControllerStack.forEach { it.viewDidAppear() }
+        }
         onResumeSubject.onNext(Unit)
     }
 
     override fun onPause() {
         super.onPause()
 
-        viewControllerStack.forEach { it.viewWillDisappear() }
+        transactionManager.transaction {
+            viewControllerStack.forEach { it.viewWillDisappear() }
+        }
     }
 
     override fun onStop() {
         super.onStop()
 
         contentView.removeAllViews()
-        viewControllerStack.forEach { it.viewDidDisappear() }
+        transactionManager.transaction {
+            viewControllerStack.forEach { it.viewDidDisappear() }
+        }
     }
 
     fun present(viewController: ViewController, animated: Boolean = true): Observable<Unit> {
-        viewController.loadViewIfNeeded()
-        viewControllerStack.push(viewController)
-        viewController.viewWillAppear()
-        contentView.addView(viewController.view)
-        viewController.viewDidAppear()
+        transactionManager.transaction {
+            viewController.loadViewIfNeeded()
+            viewControllerStack.push(viewController)
+            viewController.viewWillAppear()
+            contentView.addView(viewController.view)
+            viewController.viewDidAppear()
+        }
         return Observable.just(Unit)
     }
 
-    fun dismiss(animated: Boolean = true) {
+    fun dismiss(animated: Boolean = true): Observable<Unit> {
         dismissOrFinish()
+        return Observable.just(Unit)
     }
 
     fun <C : ViewController> present(viewController: Observable<C>, animated: Boolean = true): Observable<C> {
@@ -121,17 +133,26 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : App
         return replay
     }
 
+    fun invalidateChildren() {
+        transactionManager.transaction {
+            contentView.removeAllViews()
+            viewControllerStack.forEach { contentView.addView(it.view) }
+        }
+    }
+
     private fun dismissOrFinish() {
-        if (viewControllerStack.size > 1) {
-            viewControllerStack.peek().viewWillDisappear()
-            contentView.removeView(viewControllerStack.peek().view)
-            viewControllerStack.peek().viewDidDisappear()
-            viewControllerStack.pop()
-        } else {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                finishAfterTransition()
+        transactionManager.transaction {
+            if (viewControllerStack.size > 1) {
+                viewControllerStack.peek().viewWillDisappear()
+                contentView.removeView(viewControllerStack.peek().view)
+                viewControllerStack.peek().viewDidDisappear()
+                viewControllerStack.pop()
             } else {
-                finish()
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    finishAfterTransition()
+                } else {
+                    finish()
+                }
             }
         }
     }

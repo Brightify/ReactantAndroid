@@ -15,7 +15,17 @@ import kotlin.properties.Delegates
  */
 open class ViewController(title: String = "") {
 
-    lateinit var view: View // TODO onChange fix for navigation controller
+    var view: View by onChange(View(ReactantActivity.context)) { _, _, _ ->
+        if (isVisible) {
+            if (navigationController != null) {
+                navigationController?.invalidateChild()
+            } else if (tabBarController != null) {
+                tabBarController?.invalidateChild()
+            } else {
+                ReactantActivity.instance.invalidateChildren()
+            }
+        }
+    }
 
     var navigationController: NavigationController? = null
         internal set
@@ -30,10 +40,11 @@ open class ViewController(title: String = "") {
     open var hidesBottomBarWhenPushed: Boolean = false
 
     open var tabBarItem: TabBarItem? by onChange<TabBarItem?>(null) { _, _, _ ->
-        // TODO
-        tabBarController?.updateTabBarItems()
+        navigationController?.tabBarItem = tabBarItem
+        tabBarController?.updateTabBarItem(this)
     }
 
+    // FIXME
     var statusBarTranslucent: Boolean by Delegates.observable(false) { _, _, _ ->
         if (statusBarTranslucent) {
             ReactantActivity.instance.window.addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
@@ -46,9 +57,10 @@ open class ViewController(title: String = "") {
         get() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 return ReactantActivity.instance.window.statusBarColor
+            } else {
+                Log.w("Reactant", "You are attempting to use status bar color API on unsupported OS version")
+                return Color.BLACK
             }
-            Log.w("Reactant", "You are attempting to use status bar color API on unsupported OS version")
-            return Color.BLACK
         }
         set(value) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -59,6 +71,7 @@ open class ViewController(title: String = "") {
         }
 
     private var loaded = false
+    private var isVisible = false
 
     open fun loadView() {
     }
@@ -71,12 +84,14 @@ open class ViewController(title: String = "") {
     }
 
     open fun viewDidAppear() {
+        isVisible = true
     }
 
     open fun viewWillDisappear() {
     }
 
     open fun viewDidDisappear() {
+        isVisible = false
     }
 
     /**
@@ -98,8 +113,8 @@ open class ViewController(title: String = "") {
         return ReactantActivity.instance.present(controller, animated)
     }
 
-    fun dismiss(animated: Boolean = true) {
-        ReactantActivity.instance.dismiss(animated)
+    fun dismiss(animated: Boolean = true): Observable<Unit> {
+        return ReactantActivity.instance.dismiss(animated)
     }
 
     fun <C : ViewController> present(controller: Observable<C>, animated: Boolean = true): Observable<C> {
