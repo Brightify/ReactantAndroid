@@ -137,13 +137,13 @@ open class AutoLayout : ViewGroup {
         if (MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.UNSPECIFIED) {
             autoLayoutConstraints.width = -1.0
         } else {
-            autoLayoutConstraints.width = MeasureSpec.getSize(widthMeasureSpec) / density
+            autoLayoutConstraints.width = MeasureSpec.getSize(widthMeasureSpec).toDp()
         }
         autoLayoutConstraints.heightIsAtMost = MeasureSpec.getMode(heightMeasureSpec) == MeasureSpec.AT_MOST
         if (MeasureSpec.getMode(heightMeasureSpec) == MeasureSpec.UNSPECIFIED) {
             autoLayoutConstraints.height = -1.0
         } else {
-            autoLayoutConstraints.height = MeasureSpec.getSize(heightMeasureSpec) / density
+            autoLayoutConstraints.height = MeasureSpec.getSize(heightMeasureSpec).toDp()
         }
     }
 
@@ -165,8 +165,8 @@ open class AutoLayout : ViewGroup {
                     it.measure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED)
                 }
 
-                it.snp.intrinsicWidth = if (needsWidth) it.measuredWidth / density else -1.0
-                it.snp.intrinsicHeight = if (needsHeight) it.measuredHeight / density else -1.0
+                it.snp.intrinsicWidth = if (needsWidth) it.measuredWidth.toDp() else -1.0
+                it.snp.intrinsicHeight = if (needsHeight) it.measuredHeight.toDp() else -1.0
             }
         }
     }
@@ -178,9 +178,9 @@ open class AutoLayout : ViewGroup {
             } else if (constraintManager.needsIntrinsicHeight(it)
                     && constraintManager.getIntrinsicSizeManager(it) != null
                     && !(constraintManager.getValueForVariable(it.snp.width) - it.snp.intrinsicWidth).isAlmostZero) {
-                it.measure(MeasureSpec.makeMeasureSpec(getValueForVariableInPx(it.snp.width), MeasureSpec.EXACTLY),
+                it.measure(MeasureSpec.makeMeasureSpec(constraintManager.getValueForVariable(it.snp.width).toPx(), MeasureSpec.EXACTLY),
                         MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED))
-                val measuredHeight = it.measuredHeight / density
+                val measuredHeight = it.measuredHeight.toDp()
                 if (!(it.snp.intrinsicHeight - measuredHeight).isAlmostZero) {
                     it.snp.intrinsicHeight = measuredHeight
                 }
@@ -200,23 +200,21 @@ open class AutoLayout : ViewGroup {
             if (it is AutoLayout) {
                 it.measureRealSizes()
             } else {
-                it.measure(MeasureSpec.makeMeasureSpec(getValueForVariableInPx(it.snp.width), MeasureSpec.EXACTLY),
-                        MeasureSpec.makeMeasureSpec(getValueForVariableInPx(it.snp.height), MeasureSpec.EXACTLY))
+                it.measure(MeasureSpec.makeMeasureSpec(constraintManager.getValueForVariable(it.snp.width).toPx(), MeasureSpec.EXACTLY),
+                        MeasureSpec.makeMeasureSpec(constraintManager.getValueForVariable(it.snp.height).toPx(), MeasureSpec.EXACTLY))
             }
         }
     }
 
-    private fun getChildPosition(variable: ConstraintVariable, offset: Double): Int {
-        val positionInDpi = constraintManager.getValueForVariable(variable) - offset
-        return (positionInDpi * density).toInt()
-    }
+    private fun getChildPosition(variable: ConstraintVariable, offset: Double): Int = (constraintManager.getValueForVariable(
+            variable) - offset).toPx()
 
     private fun setMeasuredSize(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         fun getMeasuredSize(measureSpec: Int, currentSize: ConstraintVariable): Int {
             return when (MeasureSpec.getMode(measureSpec)) {
                 MeasureSpec.EXACTLY -> MeasureSpec.getSize(measureSpec)
-                MeasureSpec.UNSPECIFIED -> getValueForVariableInPx(currentSize)
-                else -> Math.min(MeasureSpec.getSize(measureSpec), getValueForVariableInPx(currentSize))
+                MeasureSpec.UNSPECIFIED -> constraintManager.getValueForVariable(currentSize).toPx()
+                else -> Math.min(MeasureSpec.getSize(measureSpec), constraintManager.getValueForVariable(currentSize).toPx())
             }
         }
 
@@ -227,10 +225,6 @@ open class AutoLayout : ViewGroup {
         setMeasuredDimension(getMeasuredSize(widthMeasureSpec, snp.width), getMeasuredSize(heightMeasureSpec, snp.height))
     }
 
-    private fun getValueForVariableInPx(variable: ConstraintVariable): Int {
-        return (constraintManager.getValueForVariable(variable) * density).toInt()
-    }
-
     private fun setConstraintManagerRecursive(view: AutoLayout, constraintManager: ConstraintManager) {
         view.constraintManager = constraintManager
         view.forEachChildren {
@@ -239,4 +233,8 @@ open class AutoLayout : ViewGroup {
             }
         }
     }
+
+    private fun Double.toPx(): Int = Math.ceil(this * density).toInt()
+
+    private fun Int.toDp(): Double = this / density
 }
