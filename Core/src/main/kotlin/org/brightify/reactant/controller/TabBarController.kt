@@ -14,12 +14,12 @@ import org.brightify.reactant.core.ReactantActivity
  */
 open class TabBarController(private val viewControllers: List<ViewController>) : ViewController() {
 
-    val tabBar = BottomNavigationView(ReactantActivity.globalContext)
+    val tabBar = BottomNavigationView(ReactantActivity.context)
 
     var isTabBarHidden = false // TODO onChange
 
-    private val layoutContent = FrameLayout(ReactantActivity.globalContext)
-    private val layout = AutoLayout(ReactantActivity.globalContext)
+    private val layoutContent = FrameLayout(ReactantActivity.context)
+    private val layout = AutoLayout(ReactantActivity.context)
     private var displayedViewController: ViewController? = null
 
     init {
@@ -29,7 +29,7 @@ open class TabBarController(private val viewControllers: List<ViewController>) :
     override fun loadView() {
         super.loadView()
 
-        view = FrameLayout(ReactantActivity.globalContext).children(layout)
+        view = FrameLayout(ReactantActivity.context).children(layout)
 
         layout.children(layoutContent, tabBar)
         layoutContent.snp.makeConstraints {
@@ -78,14 +78,15 @@ open class TabBarController(private val viewControllers: List<ViewController>) :
 
     fun updateTabBarItems() {
         // TODO Set correct controller
+        // TODO set item style
         tabBar.menu.clear()
 
         viewControllers.forEachIndexed { index, controller ->
-            val text = controller.tabBarItem?.titleRes?.let { ReactantActivity.instance.resources.getString(it) } ?: "Undefined"
+            val text = controller.tabBarItem?.titleRes?.let { resources.getString(it) } ?: "Undefined"
             val item = tabBar.menu.add(Menu.NONE, index, 0, text)
             val imageRes = controller.tabBarItem?.imageRes
             if (imageRes != null) {
-                item.icon = ReactantActivity.instance.resources.getDrawable(imageRes)
+                item.icon = resources.getDrawable(imageRes)
             }
             item.setOnMenuItemClickListener {
                 if (tabBar.selectedItemId != item.itemId) {

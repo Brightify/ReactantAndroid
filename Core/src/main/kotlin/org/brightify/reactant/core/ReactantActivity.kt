@@ -27,8 +27,9 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : App
 
         private val viewControllerStack = Stack<ViewController>()
 
-        val globalContext: Context by lazy {
-            instance
+        val context: Context by lazy {
+            instance.applicationContext.setTheme(instance.applicationInfo.theme)
+            instance.applicationContext
         }
     }
 

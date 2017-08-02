@@ -39,10 +39,10 @@ class NavigationController(private val initialController: ViewController?) : Vie
 
     var isNavigationBarHidden = false // TODO onChange
 
-    val toolbar = Toolbar(ReactantActivity.globalContext)
+    val toolbar = Toolbar(ReactantActivity.context)
 
-    private val layout = AutoLayout(ReactantActivity.globalContext)
-    private val layoutContent = FrameLayout(ReactantActivity.globalContext)
+    private val layout = AutoLayout(ReactantActivity.context)
+    private val layoutContent = FrameLayout(ReactantActivity.context)
     private val viewControllerStack = Stack<ViewController>()
     private val lifetimeDisposeBag = CompositeDisposable()
     private val toolbarHeight = 56 // FIXME get correct value
@@ -56,14 +56,14 @@ class NavigationController(private val initialController: ViewController?) : Vie
     override fun loadView() {
         super.loadView()
 
-        toolbar.navigationIcon = ReactantActivity.instance.resources.getDrawable(R.drawable.abc_ic_ab_back_material)
+        toolbar.navigationIcon = resources.getDrawable(R.drawable.abc_ic_ab_back_material)
         toolbar.setNavigationOnClickListener {
             if (viewControllerStack.size > 1) {
                 pop()
             }
         }
 
-        view = FrameLayout(ReactantActivity.globalContext)
+        view = FrameLayout(ReactantActivity.context)
 
         layout.children(toolbar, layoutContent)
 
