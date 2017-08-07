@@ -1,5 +1,6 @@
 package org.brightify.reactant.controller
 
+import android.support.v4.content.ContextCompat
 import android.support.v7.widget.Toolbar
 
 import android.view.ViewGroup
@@ -44,7 +45,7 @@ class NavigationController(private val initialController: ViewController?) : Vie
     override fun loadView() {
         super.loadView()
 
-        toolbar.navigationIcon = resources.getDrawable(R.drawable.abc_ic_ab_back_material)
+        toolbar.navigationIcon = ContextCompat.getDrawable(ReactantActivity.context, R.drawable.abc_ic_ab_back_material)
         toolbar.setNavigationOnClickListener { pop() }
 
         view = FrameLayout(ReactantActivity.context)
