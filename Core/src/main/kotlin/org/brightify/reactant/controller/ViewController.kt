@@ -25,6 +25,7 @@ open class ViewController(title: String = "") {
                 ReactantActivity.instance.invalidateChildren()
             }
         }
+        view.isClickable = true
     }
 
     var navigationController: NavigationController? = null
@@ -72,6 +73,10 @@ open class ViewController(title: String = "") {
 
     private var loaded = false
     private var isVisible = false
+
+    init {
+        view.isClickable = true
+    }
 
     open fun loadView() {
     }
