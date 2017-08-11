@@ -9,7 +9,7 @@ import android.view.ViewGroup
 val ViewGroup.children: List<View>
     get() = (0 until childCount).map { getChildAt(it) }
 
-inline fun ViewGroup.forEachChildren(action: (View) -> Unit) {
+inline fun ViewGroup.forEachChild(action: (View) -> Unit) {
     (0 until childCount).forEach {
         action(getChildAt(it))
     }

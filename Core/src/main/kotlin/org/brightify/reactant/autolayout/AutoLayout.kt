@@ -5,13 +5,13 @@ import android.util.AttributeSet
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
-import org.brightify.reactant.core.util.assignId
 import org.brightify.reactant.autolayout.internal.AutoLayoutConstraints
 import org.brightify.reactant.autolayout.internal.ConstraintManager
 import org.brightify.reactant.autolayout.internal.util.isAlmostZero
 import org.brightify.reactant.autolayout.util.description
-import org.brightify.reactant.autolayout.util.forEachChildren
+import org.brightify.reactant.autolayout.util.forEachChild
 import org.brightify.reactant.autolayout.util.snp
+import org.brightify.reactant.core.util.assignId
 import kotlin.properties.Delegates
 
 /**
@@ -60,7 +60,7 @@ open class AutoLayout : ViewGroup {
         val offsetTop = constraintManager.getValueForVariable(snp.top)
         val offsetLeft = constraintManager.getValueForVariable(snp.left)
 
-        forEachChildren {
+        forEachChild {
             it.layout(
                     getChildPosition(it.snp.left, offsetLeft),
                     getChildPosition(it.snp.top, offsetTop),
@@ -71,32 +71,38 @@ open class AutoLayout : ViewGroup {
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        val begin = System.nanoTime()
-
-        initializeAutoLayoutConstraints(widthMeasureSpec, heightMeasureSpec)
-        resetVisibility()
-        measureIntrinsicSizes()
-        setMeasuredSize(widthMeasureSpec, heightMeasureSpec)
-        constraintManager.solve()
-        measureIntrinsicHeights()
-        updateVisibility()
-        if (MeasureSpec.getMode(widthMeasureSpec) != MeasureSpec.EXACTLY || MeasureSpec.getMode(heightMeasureSpec) != MeasureSpec.EXACTLY) {
-            setMeasuredSize(widthMeasureSpec, heightMeasureSpec)
+        if (parent is AutoLayout) {
+            setMeasuredDimension(widthMeasureSpec, heightMeasureSpec)
+            measureRealSizes()
         } else {
+            val begin = System.nanoTime()
+
+            initializeAutoLayoutConstraints(widthMeasureSpec, heightMeasureSpec)
+            resetVisibility()
+            measureIntrinsicSizes()
+            setMeasuredSize(widthMeasureSpec, heightMeasureSpec)
             constraintManager.solve()
-        }
-        measureRealSizes()
+            measureIntrinsicHeights()
+            updateVisibility()
+            if (MeasureSpec.getMode(widthMeasureSpec) != MeasureSpec.EXACTLY || MeasureSpec.getMode(
+                    heightMeasureSpec) != MeasureSpec.EXACTLY) {
+                setMeasuredSize(widthMeasureSpec, heightMeasureSpec)
+            } else {
+                constraintManager.solve()
+            }
+            measureRealSizes()
 
-        if (measureTime) {
-            val time = (System.nanoTime() - begin) / 1e9
+            if (measureTime) {
+                val time = (System.nanoTime() - begin) / 1e9
 
-            val wMode = MeasureSpec.getMode(widthMeasureSpec) shr 30
-            val wSize = MeasureSpec.getSize(widthMeasureSpec)
-            val hMode = MeasureSpec.getMode(heightMeasureSpec) shr 30
-            val hSize = MeasureSpec.getSize(heightMeasureSpec)
+                val wMode = MeasureSpec.getMode(widthMeasureSpec) shr 30
+                val wSize = MeasureSpec.getSize(widthMeasureSpec)
+                val hMode = MeasureSpec.getMode(heightMeasureSpec) shr 30
+                val hSize = MeasureSpec.getSize(heightMeasureSpec)
 
-            Log.d("AutoLayout.onMeasure",
-                    "($description) Took $time s totally where width: $wMode / $wSize and height: $hMode / $hSize.\n\n")
+                Log.d("AutoLayout.onMeasure",
+                        "($description) Took $time s totally where width: $wMode / $wSize and height: $hMode / $hSize.\n\n")
+            }
         }
     }
 
@@ -149,13 +155,13 @@ open class AutoLayout : ViewGroup {
 
     private fun resetVisibility() {
         constraintManager.getVisibilityManager(this).visibility = View.VISIBLE
-        forEachChildren {
+        forEachChild {
             constraintManager.getVisibilityManager(it).visibility = View.VISIBLE
         }
     }
 
     private fun measureIntrinsicSizes() {
-        forEachChildren {
+        forEachChild {
             if (it is AutoLayout) {
                 it.measureIntrinsicSizes()
             } else if (constraintManager.getIntrinsicSizeManager(it) != null) {
@@ -172,7 +178,7 @@ open class AutoLayout : ViewGroup {
     }
 
     private fun measureIntrinsicHeights() {
-        forEachChildren {
+        forEachChild {
             if (it is AutoLayout) {
                 it.measureIntrinsicHeights()
             } else if (constraintManager.needsIntrinsicHeight(it)
@@ -190,19 +196,15 @@ open class AutoLayout : ViewGroup {
 
     private fun updateVisibility() {
         constraintManager.getVisibilityManager(this).visibility = visibility
-        forEachChildren {
+        forEachChild {
             constraintManager.getVisibilityManager(it).visibility = it.visibility
         }
     }
 
     private fun measureRealSizes() {
-        forEachChildren {
-            if (it is AutoLayout) {
-                it.measureRealSizes()
-            } else {
-                it.measure(MeasureSpec.makeMeasureSpec(constraintManager.getValueForVariable(it.snp.width).toPx(), MeasureSpec.EXACTLY),
-                        MeasureSpec.makeMeasureSpec(constraintManager.getValueForVariable(it.snp.height).toPx(), MeasureSpec.EXACTLY))
-            }
+        forEachChild {
+            it.measure(MeasureSpec.makeMeasureSpec(constraintManager.getValueForVariable(it.snp.width).toPx(), MeasureSpec.EXACTLY),
+                    MeasureSpec.makeMeasureSpec(constraintManager.getValueForVariable(it.snp.height).toPx(), MeasureSpec.EXACTLY))
         }
     }
 
@@ -227,7 +229,7 @@ open class AutoLayout : ViewGroup {
 
     private fun setConstraintManagerRecursive(view: AutoLayout, constraintManager: ConstraintManager) {
         view.constraintManager = constraintManager
-        view.forEachChildren {
+        view.forEachChild {
             if (it is AutoLayout) {
                 setConstraintManagerRecursive(it, constraintManager)
             }
