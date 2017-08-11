@@ -54,7 +54,7 @@ class ConstraintDsl internal constructor(private val view: View) {
     val centerY: ConstraintVariable
         get() = ConstraintVariable(ConstraintType.centerY)
 
-    var collapsaAxis: CollapseAxis
+    var collapseAxis: CollapseAxis
         get() = visibilityManager.collapseAxis
         set(value) {
             visibilityManager.collapseAxis = value

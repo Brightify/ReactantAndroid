@@ -130,6 +130,7 @@ class Constraint internal constructor(internal val view: View, internal val cons
             deactivate()
             closure()
             activate()
+            view.requestLayout()
         } else {
             closure()
         }
