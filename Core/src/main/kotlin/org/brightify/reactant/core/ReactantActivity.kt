@@ -27,7 +27,8 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : App
         private val viewControllerStack = Stack<ViewController>()
 
         val context: Context by lazy {
-            ContextDelegate(instance)
+            instance.applicationContext.setTheme(instance.applicationInfo.theme)
+            instance.applicationContext
         }
     }
 
@@ -45,7 +46,6 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : App
         super.onCreate(savedInstanceState)
 
         instance = this
-        (context as? ContextDelegate)?.delegate = this
 
         transactionManager.transaction {
             if (savedInstanceState == null) {
