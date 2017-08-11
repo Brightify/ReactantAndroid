@@ -91,8 +91,8 @@ open class TabBarController(private val viewControllers: List<ViewController>) :
         tabBar.menu.removeItem(index)
 
         val text = viewController.tabBarItem?.titleRes?.let { resources.getString(it) } ?: "Undefined"
-        val item = tabBar.menu.add(Menu.NONE, index, 0, text)
-        viewController.tabBarItem?.imageRes?.let { item.icon = resources.getDrawable(it) }
+        val item = tabBar.menu.add(Menu.NONE, index, index, text)
+        viewController.tabBarItem?.imageRes?.let { item.setIcon(it) }
 
         item.setOnMenuItemClickListener {
             if (tabBar.selectedItemId != item.itemId) {
