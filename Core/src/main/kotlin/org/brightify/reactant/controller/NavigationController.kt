@@ -45,9 +45,6 @@ class NavigationController(private val initialController: ViewController?) : Vie
     override fun loadView() {
         super.loadView()
 
-        toolbar.navigationIcon = ContextCompat.getDrawable(ReactantActivity.context, R.drawable.abc_ic_ab_back_material)
-        toolbar.setNavigationOnClickListener { pop() }
-
         view = FrameLayout(ReactantActivity.context)
 
         layout.children(toolbar, layoutContent)
@@ -176,6 +173,8 @@ class NavigationController(private val initialController: ViewController?) : Vie
     }
 
     private fun showViewController() {
+        toolbar.navigationIcon = ContextCompat.getDrawable(ReactantActivity.context, R.drawable.abc_ic_ab_back_material)
+        toolbar.setNavigationOnClickListener { pop() }
         toolbar.menu.clear()
         isNavigationBarHidden = false
         viewControllerStack.peek().navigationController = this
