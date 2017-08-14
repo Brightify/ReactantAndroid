@@ -76,13 +76,13 @@ open class ControllerBase<STATE, ROOT, ROOT_ACTION>(rootView: ROOT, title: Strin
 
         componentDelegate.canUpdate = false
 
-        castRootView?.viewWillDisapper()
+        castRootView?.viewWillDisappear()
     }
 
     override fun viewDidDisappear() {
         super.viewDidDisappear()
 
-        castRootView?.viewDidDisapper()
+        castRootView?.viewDidDisappear()
     }
 
     open fun act(action: ROOT_ACTION) {
