@@ -4,10 +4,10 @@ import android.view.View
 import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.addTo
+import org.brightify.reactant.controller.ViewController
 import org.brightify.reactant.core.component.Component
 import org.brightify.reactant.core.component.ComponentDelegate
 import org.brightify.reactant.core.component.ComponentWithDelegate
-import org.brightify.reactant.controller.ViewController
 import org.brightify.reactant.core.util.makeGuard
 
 /**
@@ -25,7 +25,7 @@ open class ControllerBase<STATE, ROOT, ROOT_ACTION>(rootView: ROOT, title: Strin
     final override val actions: List<Observable<Unit>> = emptyList()
 
     @Suppress("UNCHECKED_CAST")
-    val rootView: ROOT
+    open val rootView: ROOT
         get() = view as ROOT
 
     private val castRootView: RootView?
