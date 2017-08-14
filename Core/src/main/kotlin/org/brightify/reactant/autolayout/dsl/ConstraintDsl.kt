@@ -121,24 +121,22 @@ class ConstraintDsl internal constructor(private val view: View) {
         makeConstraints(closure)
     }
 
-    fun disableIntrinsicSize() {
-        constraintManager.disableIntrinsicSize(view)
-    }
-
     fun debugValues() {
-        val otherValues = if ((view !is AutoLayout)) "\nintrinsicWidth = $intrinsicWidth\n" +
-                "intrinsicHeight = $intrinsicHeight\n" +
-                "horizontalContentHuggingPriority = $horizontalContentHuggingPriority\n" +
-                "verticalContentHuggingPriority = $verticalContentHuggingPriority\n" +
-                "horizontalContentCompressionResistancePriority = $horizontalContentCompressionResistancePriority\n" +
-                "verticalContentCompressionResistancePriority = $verticalContentCompressionResistancePriority" else ""
-        (listOf(top, left, bottom, right, width, height, centerX, centerY)
+        val values = listOf(top, left, bottom, right, width, height, centerX, centerY)
                 .map {
                     val value = constraintManager.getValueForVariable(it)
                     "${it.type} = ${if (value == 0.0) Math.abs(value) else value}"
                 }
-                .joinToString("\n") + otherValues)
-                .let { Log.d("debugValues(view=${view.description})", it) }
+                .joinToString("\n")
+        val intrinsicWidth = if (constraintManager.needsIntrinsicWidth(view))
+            "\nintrinsicWidth = $intrinsicWidth\n" +
+                    "horizontalContentHuggingPriority = $horizontalContentHuggingPriority\n" +
+                    "horizontalContentCompressionResistancePriority = $horizontalContentCompressionResistancePriority\n" else ""
+        val intrinsicHeight = if (constraintManager.needsIntrinsicHeight(view))
+            "\nintrinsicHeight = $intrinsicHeight\n" +
+                    "verticalContentHuggingPriority = $verticalContentHuggingPriority\n" +
+                    "verticalContentCompressionResistancePriority = $verticalContentCompressionResistancePriority" else ""
+        Log.d("debugValues(view=${view.description})", values + intrinsicWidth + intrinsicHeight)
     }
 
     fun debugValuesRecursive() {

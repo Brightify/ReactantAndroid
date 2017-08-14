@@ -24,6 +24,12 @@ internal class IntrinsicDimensionManager(dimensionVariable: ConstraintVariable) 
         updateEquations()
     }
 
+    val isUsingEqualConstraint: Boolean
+        get() = contentHuggingPriority == contentCompressionResistancePriority
+
+    val equalConstraintForNecessityDecider: Constraint
+        get() = equalConstraint.priority(contentHuggingPriority)
+
     private val equalConstraint = Constraint(dimensionVariable.view, listOf(ConstraintItem(dimensionVariable, ConstraintOperator.equal)))
     private val contentHuggingConstraint = Constraint(dimensionVariable.view,
             listOf(ConstraintItem(dimensionVariable, ConstraintOperator.lessOrEqual)))
@@ -33,25 +39,17 @@ internal class IntrinsicDimensionManager(dimensionVariable: ConstraintVariable) 
     init {
         deactivateConstraints()
 
-        equalConstraint.ignoreInNecessityDecider = true
-        contentHuggingConstraint.ignoreInNecessityDecider = true
-        contentCompressionResistanceConstraint.ignoreInNecessityDecider = true
+        equalConstraint.isEqualIntrinsicSizeConstraint = true
 
         equalConstraint.initialized = true
         contentHuggingConstraint.initialized = true
         contentCompressionResistanceConstraint.initialized = true
     }
 
-    fun deactivateConstraints() {
-        equalConstraint.deactivate()
-        contentHuggingConstraint.deactivate()
-        contentCompressionResistanceConstraint.deactivate()
-    }
-
     private fun updateEquations() {
         deactivateConstraints()
         if (size >= 0) {
-            if (contentHuggingPriority == contentCompressionResistancePriority) {
+            if (isUsingEqualConstraint) {
                 equalConstraint.offset = size
                 equalConstraint.priority = contentHuggingPriority
                 equalConstraint.activate()
@@ -64,5 +62,11 @@ internal class IntrinsicDimensionManager(dimensionVariable: ConstraintVariable) 
                 contentCompressionResistanceConstraint.activate()
             }
         }
+    }
+
+    private fun deactivateConstraints() {
+        equalConstraint.deactivate()
+        contentHuggingConstraint.deactivate()
+        contentCompressionResistanceConstraint.deactivate()
     }
 }

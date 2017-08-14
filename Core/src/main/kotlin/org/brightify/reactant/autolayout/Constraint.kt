@@ -69,7 +69,7 @@ class Constraint internal constructor(internal val view: View, internal val cons
 
     internal var initialized = false
 
-    internal var ignoreInNecessityDecider = false
+    internal var isEqualIntrinsicSizeConstraint = false
 
     fun multipliedBy(value: Number): Constraint {
         this.multiplier = value

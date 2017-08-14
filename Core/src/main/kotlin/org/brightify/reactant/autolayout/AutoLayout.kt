@@ -78,11 +78,12 @@ open class AutoLayout : ViewGroup {
             val begin = System.nanoTime()
 
             initializeAutoLayoutConstraints(widthMeasureSpec, heightMeasureSpec)
+            updateIntrinsicSizeNecessityDecider()
+            updateVisibility()
             measureIntrinsicSizes()
             setMeasuredSize(widthMeasureSpec, heightMeasureSpec)
             constraintManager.solve()
             measureIntrinsicHeights()
-            updateVisibility()
             if (MeasureSpec.getMode(widthMeasureSpec) != MeasureSpec.EXACTLY || MeasureSpec.getMode(
                     heightMeasureSpec) != MeasureSpec.EXACTLY) {
                 setMeasuredSize(widthMeasureSpec, heightMeasureSpec)
@@ -152,6 +153,38 @@ open class AutoLayout : ViewGroup {
         }
     }
 
+    private fun updateIntrinsicSizeNecessityDecider() {
+        forEachChild {
+            if (it is AutoLayout) {
+                it.updateIntrinsicSizeNecessityDecider()
+            } else {
+                constraintManager.getIntrinsicSizeManager(it)?.let {
+                    if (it.width.isUsingEqualConstraint) {
+                        constraintManager.addConstraintToIntrinsicSizeNecessityDecider(it.width.equalConstraintForNecessityDecider)
+                    } else {
+                        constraintManager.removeConstraintFromIntrinsicSizeNecessityDecider(it.width.equalConstraintForNecessityDecider)
+                    }
+                    if (it.height.isUsingEqualConstraint) {
+                        constraintManager.addConstraintToIntrinsicSizeNecessityDecider(it.height.equalConstraintForNecessityDecider)
+                    } else {
+                        constraintManager.removeConstraintFromIntrinsicSizeNecessityDecider(it.height.equalConstraintForNecessityDecider)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun updateVisibility() {
+        constraintManager.getVisibilityManager(this).visibility = visibility
+        forEachChild {
+            if (it is AutoLayout) {
+                it.updateVisibility()
+            } else {
+                constraintManager.getVisibilityManager(it).visibility = it.visibility
+            }
+        }
+    }
+
     private fun measureIntrinsicSizes() {
         forEachChild {
             if (it is AutoLayout) {
@@ -174,7 +207,6 @@ open class AutoLayout : ViewGroup {
             if (it is AutoLayout) {
                 it.measureIntrinsicHeights()
             } else if (constraintManager.needsIntrinsicHeight(it)
-                    && constraintManager.getIntrinsicSizeManager(it) != null
                     && !(constraintManager.getValueForVariable(it.snp.width) - it.snp.intrinsicWidth).isAlmostZero) {
                 it.measure(MeasureSpec.makeMeasureSpec(constraintManager.getValueForVariable(it.snp.width).toPx(), MeasureSpec.EXACTLY),
                         MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED))
@@ -182,17 +214,6 @@ open class AutoLayout : ViewGroup {
                 if (!(it.snp.intrinsicHeight - measuredHeight).isAlmostZero) {
                     it.snp.intrinsicHeight = measuredHeight
                 }
-            }
-        }
-    }
-
-    private fun updateVisibility() {
-        constraintManager.getVisibilityManager(this).visibility = visibility
-        forEachChild {
-            if (it is AutoLayout) {
-                it.updateVisibility()
-            } else {
-                constraintManager.getVisibilityManager(it).visibility = it.visibility
             }
         }
     }

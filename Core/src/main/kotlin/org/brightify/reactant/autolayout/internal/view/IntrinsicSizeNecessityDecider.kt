@@ -1,5 +1,6 @@
 package org.brightify.reactant.autolayout.internal.view
 
+import android.util.Log
 import android.view.View
 import org.brightify.reactant.autolayout.Constraint
 import org.brightify.reactant.autolayout.ConstraintOperator
@@ -14,6 +15,7 @@ import org.brightify.reactant.autolayout.internal.ConstraintType
 internal class IntrinsicSizeNecessityDecider {
 
     private val fixedVariables = HashMap<View, HashSet<ConstraintType>>()
+    private val variablesNeedingIntrinsicSize = HashMap<View, HashSet<ConstraintType>>()
 
     private val activeConstraints = HashSet<Constraint>()
     private val constraintsToAdd = HashSet<Constraint>()
@@ -21,12 +23,14 @@ internal class IntrinsicSizeNecessityDecider {
 
     fun needsIntrinsicWidth(view: View): Boolean {
         invalidate()
-        return fixedVariables[view]?.contains(ConstraintType.width) != true
+        return variablesNeedingIntrinsicSize[view]?.contains(ConstraintType.width) == true ||
+                fixedVariables[view]?.contains(ConstraintType.width) != true
     }
 
     fun needsIntrinsicHeight(view: View): Boolean {
         invalidate()
-        return fixedVariables[view]?.contains(ConstraintType.height) != true
+        return variablesNeedingIntrinsicSize[view]?.contains(ConstraintType.height) == true ||
+                fixedVariables[view]?.contains(ConstraintType.height) != true
     }
 
     fun addConstraint(constraint: Constraint) {
@@ -48,12 +52,15 @@ internal class IntrinsicSizeNecessityDecider {
 
     private fun invalidate() {
         if (!constraintsToAdd.isEmpty() || !constraintsToRemove.isEmpty()) {
+            Log.d("AutoLayout.Decider", "invalidate")
             fixedVariables.clear()
+            variablesNeedingIntrinsicSize.clear()
             activeConstraints.removeAll(constraintsToRemove)
             activeConstraints.addAll(constraintsToAdd)
             constraintsToRemove.clear()
             constraintsToAdd.clear()
             solve()
+            registerVariablesNeedingIntrinsicSize()
         }
     }
 
@@ -75,6 +82,19 @@ internal class IntrinsicSizeNecessityDecider {
                 }
             }
             constraintItems = newConstraintItems
+        }
+    }
+
+    private fun registerVariablesNeedingIntrinsicSize() {
+        activeConstraints.filter { it.isEqualIntrinsicSizeConstraint }.forEach {
+            var types = variablesNeedingIntrinsicSize[it.view]
+            if (types == null) {
+                types = HashSet()
+                variablesNeedingIntrinsicSize[it.view] = types
+            }
+            it.constraintItems.forEach {
+                types?.add(it.leftVariable.type)
+            }
         }
     }
 
@@ -123,6 +143,5 @@ internal class IntrinsicSizeNecessityDecider {
         get() = fixedVariables[view]?.contains(type) == true
 
     private val Constraint.isFixing: Boolean
-        get() = !ignoreInNecessityDecider &&
-                priority == ConstraintPriority.required && constraintItems.all { it.operator == ConstraintOperator.equal }
+        get() = priority == ConstraintPriority.required && constraintItems.all { it.operator == ConstraintOperator.equal }
 }

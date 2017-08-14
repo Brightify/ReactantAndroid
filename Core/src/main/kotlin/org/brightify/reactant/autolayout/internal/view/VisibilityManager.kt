@@ -41,9 +41,7 @@ internal class VisibilityManager(view: View) {
     init {
         widthConstraint.deactivate()
         widthConstraint.initialized = true
-        widthConstraint.ignoreInNecessityDecider = true
         heightConstraint.deactivate()
         heightConstraint.initialized = true
-        heightConstraint.ignoreInNecessityDecider = true
     }
 }

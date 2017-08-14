@@ -5,6 +5,7 @@ import android.view.Menu
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import org.brightify.reactant.autolayout.AutoLayout
+import org.brightify.reactant.autolayout.ConstraintPriority
 import org.brightify.reactant.autolayout.util.children
 import org.brightify.reactant.autolayout.util.snp
 import org.brightify.reactant.controller.util.TransactionManager
@@ -44,11 +45,12 @@ open class TabBarController(private val viewControllers: List<ViewController>) :
             left.right.top.equalToSuperview()
             bottom.equalTo(tabBar.snp.top)
         }
-        layoutContent.snp.disableIntrinsicSize()
 
         tabBar.snp.makeConstraints {
             left.right.bottom.equalToSuperview()
         }
+        tabBar.snp.verticalContentHuggingPriority = ConstraintPriority.required
+        tabBar.snp.verticalContentCompressionResistancePriority = ConstraintPriority.required
 
         viewControllers.forEach {
             it.tabBarController = this

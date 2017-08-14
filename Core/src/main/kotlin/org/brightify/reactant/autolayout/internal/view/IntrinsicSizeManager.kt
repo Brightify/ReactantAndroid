@@ -11,9 +11,4 @@ internal class IntrinsicSizeManager(view: View) {
 
     val width = IntrinsicDimensionManager(ConstraintVariable(view, ConstraintType.width))
     val height = IntrinsicDimensionManager(ConstraintVariable(view, ConstraintType.height))
-
-    fun deactivateConstraints() {
-        width.deactivateConstraints()
-        height.deactivateConstraints()
-    }
 }
