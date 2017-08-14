@@ -78,7 +78,6 @@ open class AutoLayout : ViewGroup {
             val begin = System.nanoTime()
 
             initializeAutoLayoutConstraints(widthMeasureSpec, heightMeasureSpec)
-            resetVisibility()
             measureIntrinsicSizes()
             setMeasuredSize(widthMeasureSpec, heightMeasureSpec)
             constraintManager.solve()
@@ -153,13 +152,6 @@ open class AutoLayout : ViewGroup {
         }
     }
 
-    private fun resetVisibility() {
-        constraintManager.getVisibilityManager(this).visibility = View.VISIBLE
-        forEachChild {
-            constraintManager.getVisibilityManager(it).visibility = View.VISIBLE
-        }
-    }
-
     private fun measureIntrinsicSizes() {
         forEachChild {
             if (it is AutoLayout) {
@@ -197,7 +189,11 @@ open class AutoLayout : ViewGroup {
     private fun updateVisibility() {
         constraintManager.getVisibilityManager(this).visibility = visibility
         forEachChild {
-            constraintManager.getVisibilityManager(it).visibility = it.visibility
+            if (it is AutoLayout) {
+                it.updateVisibility()
+            } else {
+                constraintManager.getVisibilityManager(it).visibility = it.visibility
+            }
         }
     }
 
