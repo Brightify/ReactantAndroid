@@ -1,6 +1,5 @@
 package org.brightify.reactant.autolayout.internal.view
 
-import android.util.Log
 import android.view.View
 import org.brightify.reactant.autolayout.Constraint
 import org.brightify.reactant.autolayout.ConstraintOperator
@@ -52,7 +51,6 @@ internal class IntrinsicSizeNecessityDecider {
 
     private fun invalidate() {
         if (!constraintsToAdd.isEmpty() || !constraintsToRemove.isEmpty()) {
-            Log.d("AutoLayout.Decider", "invalidate")
             fixedVariables.clear()
             variablesNeedingIntrinsicSize.clear()
             activeConstraints.removeAll(constraintsToRemove)
