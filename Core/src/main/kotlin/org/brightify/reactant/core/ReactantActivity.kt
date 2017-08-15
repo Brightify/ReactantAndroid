@@ -34,10 +34,14 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : App
 
     private val lifetimeDisposeBag = CompositeDisposable()
     private val onResumeSubject = PublishSubject.create<Unit>()
+    private val onPauseSubject = PublishSubject.create<Unit>()
     private val transactionManager = TransactionManager()
 
     val resumed: Observable<Unit>
         get() = onResumeSubject
+
+    val paused: Observable<Unit>
+        get() = onPauseSubject
 
     private val contentView: FrameLayout
         get() = findViewById(android.R.id.content) as FrameLayout
@@ -91,6 +95,7 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : App
         transactionManager.transaction {
             viewControllerStack.forEach { it.viewWillDisappear() }
         }
+        onPauseSubject.onNext(Unit)
     }
 
     override fun onStop() {
