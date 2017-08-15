@@ -2,8 +2,10 @@ package org.brightify.reactant.controller
 
 import android.support.design.widget.BottomNavigationView
 import android.view.Menu
+import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import io.reactivex.rxkotlin.addTo
 import org.brightify.reactant.autolayout.AutoLayout
 import org.brightify.reactant.autolayout.ConstraintPriority
 import org.brightify.reactant.autolayout.util.children
@@ -61,6 +63,21 @@ open class TabBarController(private val viewControllers: List<ViewController>) :
 
     override fun viewWillAppear() {
         super.viewWillAppear()
+
+        tabBar.snp.verticalContentHuggingPriority = ConstraintPriority.required
+        tabBar.snp.verticalContentCompressionResistancePriority = ConstraintPriority.required
+        tabBar.visibility = View.VISIBLE
+        ReactantActivity.instance.keyboardVisibilityChanged.subscribe {
+            if (it) {
+                tabBar.visibility = View.GONE
+                tabBar.snp.verticalContentHuggingPriority = ConstraintPriority.low
+                tabBar.snp.verticalContentCompressionResistancePriority = ConstraintPriority.low
+            } else {
+                tabBar.snp.verticalContentHuggingPriority = ConstraintPriority.required
+                tabBar.snp.verticalContentCompressionResistancePriority = ConstraintPriority.required
+                tabBar.visibility = View.VISIBLE
+            }
+        }.addTo(visibleDisposeBag)
 
         transactionManager.transaction {
             clearLayout(false)

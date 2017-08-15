@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Build
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
+import android.view.View
 import android.widget.FrameLayout
 import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
@@ -33,9 +34,11 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : App
     }
 
     private val lifetimeDisposeBag = CompositeDisposable()
+
+    private val transactionManager = TransactionManager()
+
     private val onResumeSubject = PublishSubject.create<Unit>()
     private val onPauseSubject = PublishSubject.create<Unit>()
-    private val transactionManager = TransactionManager()
 
     val resumed: Observable<Unit>
         get() = onResumeSubject
@@ -43,13 +46,18 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : App
     val paused: Observable<Unit>
         get() = onPauseSubject
 
-    private val contentView: FrameLayout
-        get() = findViewById(android.R.id.content) as FrameLayout
+    val keyboardVisibilityChanged: Observable<Boolean>
+        get() = contentView.keyboardVisibilityChangeSubject
+
+    private lateinit var contentView: ReactantActivityContentView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         instance = this
+
+        contentView = ReactantActivityContentView(this)
+        setContentView(contentView)
 
         transactionManager.transaction {
             if (savedInstanceState == null) {

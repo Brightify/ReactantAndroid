@@ -24,8 +24,6 @@ open class ControllerBase<STATE, ROOT, ROOT_ACTION>(rootView: ROOT, title: Strin
 
     final override val actions: List<Observable<Unit>> = emptyList()
 
-    val visibleDisposeBag = CompositeDisposable()
-
     @Suppress("UNCHECKED_CAST")
     open val rootView: ROOT
         get() = view as ROOT
@@ -62,7 +60,6 @@ open class ControllerBase<STATE, ROOT, ROOT_ACTION>(rootView: ROOT, title: Strin
     override fun viewWillAppear() {
         super.viewWillAppear()
 
-        visibleDisposeBag.clear()
         castRootView?.viewWillAppear()
     }
 
@@ -86,7 +83,6 @@ open class ControllerBase<STATE, ROOT, ROOT_ACTION>(rootView: ROOT, title: Strin
         super.viewDidDisappear()
 
         castRootView?.viewDidDisappear()
-        visibleDisposeBag.clear()
     }
 
     open fun act(action: ROOT_ACTION) {

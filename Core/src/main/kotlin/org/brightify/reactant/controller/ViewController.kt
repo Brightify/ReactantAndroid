@@ -6,6 +6,7 @@ import android.util.Log
 import android.view.View
 import android.view.WindowManager
 import io.reactivex.Observable
+import io.reactivex.disposables.CompositeDisposable
 import org.brightify.reactant.core.ReactantActivity
 import org.brightify.reactant.core.util.onChange
 import kotlin.properties.Delegates
@@ -14,6 +15,8 @@ import kotlin.properties.Delegates
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
 open class ViewController(title: String = "") {
+
+    val visibleDisposeBag = CompositeDisposable()
 
     var view: View by onChange(View(ReactantActivity.context)) { _, _, _ ->
         if (isVisible) {
@@ -85,6 +88,7 @@ open class ViewController(title: String = "") {
     }
 
     open fun viewWillAppear() {
+        visibleDisposeBag.clear()
         title = title
     }
 
@@ -97,6 +101,7 @@ open class ViewController(title: String = "") {
 
     open fun viewDidDisappear() {
         isVisible = false
+        visibleDisposeBag.clear()
     }
 
     /**
