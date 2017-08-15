@@ -40,7 +40,7 @@ internal class ConstraintManager {
             solver.addConstraint(constraint)
             constraint.isManaged = true
             constraints[constraint.view]?.add(constraint)
-            addConstraintToIntrinsicSizeNecessityDecider(constraint)
+            intrinsicSizeNecessityDecider.addConstraint(constraint)
         } else if (!managedViews.contains(constraint.view)) {
             throw IllegalStateException("View ${constraint.view.description} is not managed by correct ConstraintManager.")
         } else {
@@ -56,7 +56,7 @@ internal class ConstraintManager {
 
         solver.removeConstraint(constraint)
         constraint.isManaged = false
-        removeConstraintFromIntrinsicSizeNecessityDecider(constraint)
+        intrinsicSizeNecessityDecider.removeConstraint(constraint)
     }
 
     fun solve() {
@@ -159,12 +159,8 @@ internal class ConstraintManager {
     fun needsIntrinsicHeight(view: View): Boolean = getIntrinsicSizeManager(view) != null &&
             intrinsicSizeNecessityDecider.needsIntrinsicHeight(view)
 
-    fun addConstraintToIntrinsicSizeNecessityDecider(constraint: Constraint) {
-        intrinsicSizeNecessityDecider.addConstraint(constraint)
-    }
-
-    fun removeConstraintFromIntrinsicSizeNecessityDecider(constraint: Constraint) {
-        intrinsicSizeNecessityDecider.removeConstraint(constraint)
+    fun updateIntrinsicSizeNecessityDecider() {
+        intrinsicSizeNecessityDecider.updateViewsNeedingIntrinsicSize(viewConstraints)
     }
 
     private fun verifyViewsUsedByConstraint(constraint: Constraint): Boolean {

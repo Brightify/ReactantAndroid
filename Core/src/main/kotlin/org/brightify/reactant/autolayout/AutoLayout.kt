@@ -78,7 +78,7 @@ open class AutoLayout : ViewGroup {
             val begin = System.nanoTime()
 
             initializeAutoLayoutConstraints(widthMeasureSpec, heightMeasureSpec)
-            updateIntrinsicSizeNecessityDecider()
+            constraintManager.updateIntrinsicSizeNecessityDecider()
             updateVisibility()
             measureIntrinsicSizes()
             setMeasuredSize(widthMeasureSpec, heightMeasureSpec)
@@ -150,27 +150,6 @@ open class AutoLayout : ViewGroup {
             autoLayoutConstraints.height = -1.0
         } else {
             autoLayoutConstraints.height = MeasureSpec.getSize(heightMeasureSpec).toDp()
-        }
-    }
-
-    private fun updateIntrinsicSizeNecessityDecider() {
-        forEachChild {
-            if (it is AutoLayout) {
-                it.updateIntrinsicSizeNecessityDecider()
-            } else {
-                constraintManager.getIntrinsicSizeManager(it)?.let {
-                    if (it.width.isUsingEqualConstraint) {
-                        constraintManager.addConstraintToIntrinsicSizeNecessityDecider(it.width.equalConstraintForNecessityDecider)
-                    } else {
-                        constraintManager.removeConstraintFromIntrinsicSizeNecessityDecider(it.width.equalConstraintForNecessityDecider)
-                    }
-                    if (it.height.isUsingEqualConstraint) {
-                        constraintManager.addConstraintToIntrinsicSizeNecessityDecider(it.height.equalConstraintForNecessityDecider)
-                    } else {
-                        constraintManager.removeConstraintFromIntrinsicSizeNecessityDecider(it.height.equalConstraintForNecessityDecider)
-                    }
-                }
-            }
         }
     }
 

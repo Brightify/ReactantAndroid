@@ -14,7 +14,8 @@ import org.brightify.reactant.autolayout.internal.ConstraintType
 internal class IntrinsicSizeNecessityDecider {
 
     private val fixedVariables = HashMap<View, HashSet<ConstraintType>>()
-    private val variablesNeedingIntrinsicSize = HashMap<View, HashSet<ConstraintType>>()
+    private val viewsNeedingIntrinsicWidth = HashSet<View>()
+    private val viewsNeedingIntrinsicHeight = HashSet<View>()
 
     private val activeConstraints = HashSet<Constraint>()
     private val constraintsToAdd = HashSet<Constraint>()
@@ -22,13 +23,13 @@ internal class IntrinsicSizeNecessityDecider {
 
     fun needsIntrinsicWidth(view: View): Boolean {
         invalidate()
-        return variablesNeedingIntrinsicSize[view]?.contains(ConstraintType.width) == true ||
+        return viewsNeedingIntrinsicWidth.contains(view) ||
                 fixedVariables[view]?.contains(ConstraintType.width) != true
     }
 
     fun needsIntrinsicHeight(view: View): Boolean {
         invalidate()
-        return variablesNeedingIntrinsicSize[view]?.contains(ConstraintType.height) == true ||
+        return viewsNeedingIntrinsicHeight.contains(view) ||
                 fixedVariables[view]?.contains(ConstraintType.height) != true
     }
 
@@ -49,16 +50,41 @@ internal class IntrinsicSizeNecessityDecider {
         }
     }
 
+    fun updateViewsNeedingIntrinsicSize(viewsConstraints: Map<View, ViewConstraints>) {
+        viewsNeedingIntrinsicWidth.clear()
+        viewsNeedingIntrinsicHeight.clear()
+        viewsConstraints.forEach { (view, viewConstraints) ->
+            viewConstraints.intrinsicSizeManager?.let {
+                if (it.width.contentHuggingPriority == ConstraintPriority.required ||
+                        it.width.contentCompressionResistancePriority == ConstraintPriority.required) {
+                    viewsNeedingIntrinsicWidth.add(view)
+                }
+                if (it.width.isUsingEqualConstraint) {
+                    addConstraint(it.width.equalConstraintForNecessityDecider)
+                } else {
+                    removeConstraint(it.width.equalConstraintForNecessityDecider)
+                }
+                if (it.height.contentHuggingPriority == ConstraintPriority.required ||
+                        it.height.contentCompressionResistancePriority == ConstraintPriority.required) {
+                    viewsNeedingIntrinsicHeight.add(view)
+                }
+                if (it.height.isUsingEqualConstraint) {
+                    addConstraint(it.height.equalConstraintForNecessityDecider)
+                } else {
+                    removeConstraint(it.height.equalConstraintForNecessityDecider)
+                }
+            }
+        }
+    }
+
     private fun invalidate() {
         if (!constraintsToAdd.isEmpty() || !constraintsToRemove.isEmpty()) {
             fixedVariables.clear()
-            variablesNeedingIntrinsicSize.clear()
             activeConstraints.removeAll(constraintsToRemove)
             activeConstraints.addAll(constraintsToAdd)
             constraintsToRemove.clear()
             constraintsToAdd.clear()
             solve()
-            registerVariablesNeedingIntrinsicSize()
         }
     }
 
@@ -80,19 +106,6 @@ internal class IntrinsicSizeNecessityDecider {
                 }
             }
             constraintItems = newConstraintItems
-        }
-    }
-
-    private fun registerVariablesNeedingIntrinsicSize() {
-        activeConstraints.filter { it.isEqualIntrinsicSizeConstraint }.forEach {
-            var types = variablesNeedingIntrinsicSize[it.view]
-            if (types == null) {
-                types = HashSet()
-                variablesNeedingIntrinsicSize[it.view] = types
-            }
-            it.constraintItems.forEach {
-                types?.add(it.leftVariable.type)
-            }
         }
     }
 

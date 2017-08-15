@@ -30,7 +30,8 @@ internal class IntrinsicDimensionManager(dimensionVariable: ConstraintVariable) 
     val equalConstraintForNecessityDecider: Constraint
         get() = equalConstraint.priority(contentHuggingPriority)
 
-    private val equalConstraint = Constraint(dimensionVariable.view, listOf(ConstraintItem(dimensionVariable, ConstraintOperator.equal)))
+    private val equalConstraint = Constraint(dimensionVariable.view,
+            listOf(ConstraintItem(dimensionVariable, ConstraintOperator.equal)))
     private val contentHuggingConstraint = Constraint(dimensionVariable.view,
             listOf(ConstraintItem(dimensionVariable, ConstraintOperator.lessOrEqual)))
     private val contentCompressionResistanceConstraint = Constraint(dimensionVariable.view,
@@ -38,8 +39,6 @@ internal class IntrinsicDimensionManager(dimensionVariable: ConstraintVariable) 
 
     init {
         deactivateConstraints()
-
-        equalConstraint.isEqualIntrinsicSizeConstraint = true
 
         equalConstraint.initialized = true
         contentHuggingConstraint.initialized = true
