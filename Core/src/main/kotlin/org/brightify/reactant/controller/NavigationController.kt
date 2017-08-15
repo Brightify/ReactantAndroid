@@ -1,8 +1,9 @@
 package org.brightify.reactant.controller
 
+import android.graphics.Color
 import android.support.v4.content.ContextCompat
 import android.support.v7.widget.Toolbar
-
+import android.util.TypedValue
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import io.reactivex.disposables.CompositeDisposable
@@ -13,7 +14,7 @@ import org.brightify.reactant.autolayout.util.snp
 import org.brightify.reactant.controller.util.TransactionManager
 import org.brightify.reactant.core.ReactantActivity
 import org.brightify.reactant.core.util.onChange
-import java.util.Stack
+import java.util.*
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
@@ -46,6 +47,7 @@ class NavigationController(private val initialController: ViewController?) : Vie
         super.loadView()
 
         view = FrameLayout(ReactantActivity.context)
+        view.setBackgroundColor(getWindowBackgroundColor())
 
         layout.children(toolbar, layoutContent)
 
@@ -190,6 +192,20 @@ class NavigationController(private val initialController: ViewController?) : Vie
         } else {
             layoutContent.addView(viewControllerStack.peek().view)
             (view as ViewGroup).addView(layout)
+        }
+    }
+
+    private fun getWindowBackgroundColor(): Int {
+        val a = TypedValue()
+        ReactantActivity.instance.theme.resolveAttribute(android.R.attr.windowBackground, a, true)
+        if (a.type >= TypedValue.TYPE_FIRST_COLOR_INT && a.type <= TypedValue.TYPE_LAST_COLOR_INT) {
+            // windowBackground is a color
+            return a.data
+        } else {
+            // windowBackground is not a color, probably a drawable
+            // FIXME solve window background drawables - not very often used in our apps
+            ///val d = activity.getResources().getDrawable(a.resourceId)
+            return Color.WHITE
         }
     }
 }
