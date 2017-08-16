@@ -13,7 +13,7 @@ import io.reactivex.subjects.PublishSubject
 */
 class ReactantActivityContentView(context: Context): FrameLayout(context) {
 
-    val keyboardVisibilityChangeSubject: PublishSubject<Boolean> = PublishSubject.create<Boolean>()
+    val beforeKeyboardVisibilityChangeSubject: PublishSubject<Boolean> = PublishSubject.create<Boolean>()
 
     private var keyboardState = false
 
@@ -45,7 +45,7 @@ class ReactantActivityContentView(context: Context): FrameLayout(context) {
         if (windowHeight != 0) {
             val newState = windowHeight - statusBarHeight - navigationBarHeight > measuredHeight
             if (keyboardState != newState) {
-                keyboardVisibilityChangeSubject.onNext(newState)
+                beforeKeyboardVisibilityChangeSubject.onNext(newState)
                 keyboardState = newState
             }
         }
