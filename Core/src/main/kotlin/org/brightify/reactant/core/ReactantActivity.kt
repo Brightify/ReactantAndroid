@@ -160,6 +160,8 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : App
                 contentView.removeView(viewControllerStack.peek().view)
                 viewControllerStack.peek().viewDidDisappear()
                 viewControllerStack.pop()
+                viewControllerStack.peek().viewWillAppear()
+                viewControllerStack.peek().viewDidAppear()
             } else {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     finishAfterTransition()

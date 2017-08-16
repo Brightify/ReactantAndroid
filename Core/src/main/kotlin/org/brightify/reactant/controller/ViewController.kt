@@ -1,11 +1,7 @@
 package org.brightify.reactant.controller
 
 import android.app.Activity
-import android.graphics.Color
-import android.os.Build
-import android.util.Log
 import android.view.View
-import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
 import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
@@ -50,34 +46,16 @@ open class ViewController(title: String = "") {
         tabBarController?.updateTabBarItem(this)
     }
 
-    // FIXME
-    var statusBarTranslucent: Boolean by Delegates.observable(false) { _, _, _ ->
-        if (statusBarTranslucent) {
-            ReactantActivity.instance.window.addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
-        } else {
-            ReactantActivity.instance.window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
-        }
-    }
-
     var statusBarColor: Int
-        get() {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                return ReactantActivity.instance.window.statusBarColor
-            } else {
-                Log.w("Reactant", "You are attempting to use status bar color API on unsupported OS version")
-                return Color.BLACK
-            }
-        }
+        get() = ReactantActivity.instance.window.statusBarColor
         set(value) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                ReactantActivity.instance.window.statusBarColor = value
-            } else {
-                Log.w("Reactant", "You are attempting to use status bar color API on unsupported OS version")
-            }
+            lastStatusBarColor = value
+            ReactantActivity.instance.window.statusBarColor = value
         }
 
     private var loaded = false
     private var isVisible = false
+    private var lastStatusBarColor: Int? = null
 
     init {
         view.isClickable = true
@@ -92,6 +70,7 @@ open class ViewController(title: String = "") {
     open fun viewWillAppear() {
         visibleDisposeBag.clear()
         title = title
+        invalidateStatusBarColor()
     }
 
     open fun viewDidAppear() {
@@ -135,5 +114,15 @@ open class ViewController(title: String = "") {
 
     fun <C : ViewController> present(controller: Observable<C>, animated: Boolean = true): Observable<C> {
         return ReactantActivity.instance.present(controller, animated)
+    }
+
+    fun invalidateStatusBarColor() {
+        navigationController?.invalidateStatusBarColor()
+        tabBarController?.invalidateStatusBarColor()
+        lastStatusBarColor?.let { statusBarColor = it }
+    }
+
+    fun resetRememberedStatusBarColor() {
+        lastStatusBarColor = null
     }
 }

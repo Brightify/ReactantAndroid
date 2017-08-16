@@ -175,10 +175,7 @@ class NavigationController(private val initialController: ViewController?) : Vie
     }
 
     private fun showViewController() {
-        toolbar.navigationIcon = ContextCompat.getDrawable(ReactantActivity.context, R.drawable.abc_ic_ab_back_material)
-        toolbar.setNavigationOnClickListener { pop() }
-        toolbar.menu.clear()
-        isNavigationBarHidden = false
+        resetViewControllerSpecificSettings()
         viewControllerStack.peek().navigationController = this
         viewControllerStack.peek().loadViewIfNeeded()
         viewControllerStack.peek().viewWillAppear()
@@ -207,5 +204,12 @@ class NavigationController(private val initialController: ViewController?) : Vie
             ///val d = activity.getResources().getDrawable(a.resourceId)
             return Color.WHITE
         }
+    }
+
+    fun resetViewControllerSpecificSettings() {
+        toolbar.navigationIcon = ContextCompat.getDrawable(ReactantActivity.context, R.drawable.abc_ic_ab_back_material)
+        toolbar.setNavigationOnClickListener { pop() }
+        toolbar.menu.clear()
+        isNavigationBarHidden = false
     }
 }
