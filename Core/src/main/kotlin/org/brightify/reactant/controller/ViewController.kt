@@ -1,10 +1,12 @@
 package org.brightify.reactant.controller
 
+import android.app.Activity
 import android.graphics.Color
 import android.os.Build
 import android.util.Log
 import android.view.View
 import android.view.WindowManager
+import android.view.inputmethod.InputMethodManager
 import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
 import org.brightify.reactant.core.ReactantActivity
@@ -97,6 +99,10 @@ open class ViewController(title: String = "") {
     }
 
     open fun viewWillDisappear() {
+        ReactantActivity.instance.let {
+            val inputManager = it.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
+            inputManager.hideSoftInputFromWindow(view.windowToken, 0)
+        }
     }
 
     open fun viewDidDisappear() {

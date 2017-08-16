@@ -131,7 +131,7 @@ class ConstraintDsl internal constructor(private val view: View) {
         val intrinsicWidth = if (constraintManager.needsIntrinsicWidth(view))
             "\nintrinsicWidth = $intrinsicWidth\n" +
                     "horizontalContentHuggingPriority = $horizontalContentHuggingPriority\n" +
-                    "horizontalContentCompressionResistancePriority = $horizontalContentCompressionResistancePriority\n" else ""
+                    "horizontalContentCompressionResistancePriority = $horizontalContentCompressionResistancePriority" else ""
         val intrinsicHeight = if (constraintManager.needsIntrinsicHeight(view))
             "\nintrinsicHeight = $intrinsicHeight\n" +
                     "verticalContentHuggingPriority = $verticalContentHuggingPriority\n" +
