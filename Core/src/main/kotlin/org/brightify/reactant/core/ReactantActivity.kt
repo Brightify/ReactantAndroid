@@ -4,8 +4,6 @@ import android.content.Context
 import android.os.Build
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
-import android.view.View
-import android.widget.FrameLayout
 import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.addTo
@@ -46,10 +44,15 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : App
     val paused: Observable<Unit>
         get() = onPauseSubject
 
-    val keyboardVisibilityChanged: Observable<Boolean>
-        get() = contentView.keyboardVisibilityChangeSubject
+    val beforeKeyboardVisibilityChanged: Observable<Boolean>
+        get() = contentView.beforeKeyboardVisibilityChangeSubject
+
+    val afterKeyboardVisibilityChanged: Observable<Boolean>
+        get() = beforeKeyboardVisibilityChanged.flatMap { value -> onLayoutSubject.take(1).map { value } }
 
     private lateinit var contentView: ReactantActivityContentView
+
+    private val onLayoutSubject = PublishSubject.create<Unit>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -68,6 +71,10 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : App
                 viewControllerStack.push(wireframeFactory().entryPoint())
                 viewControllerStack.peek().loadViewIfNeeded()
             }
+        }
+
+        contentView.viewTreeObserver.addOnGlobalLayoutListener {
+            onLayoutSubject.onNext(Unit)
         }
     }
 

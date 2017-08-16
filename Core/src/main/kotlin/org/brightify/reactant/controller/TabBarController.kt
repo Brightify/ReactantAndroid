@@ -67,7 +67,7 @@ open class TabBarController(private val viewControllers: List<ViewController>) :
         tabBar.snp.verticalContentHuggingPriority = ConstraintPriority.required
         tabBar.snp.verticalContentCompressionResistancePriority = ConstraintPriority.required
         tabBar.visibility = View.VISIBLE
-        ReactantActivity.instance.keyboardVisibilityChanged.subscribe {
+        ReactantActivity.instance.beforeKeyboardVisibilityChanged.subscribe {
             if (it) {
                 tabBar.visibility = View.GONE
                 tabBar.snp.verticalContentHuggingPriority = ConstraintPriority.low
