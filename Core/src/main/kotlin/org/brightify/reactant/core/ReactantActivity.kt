@@ -37,12 +37,16 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : App
 
     private val onResumeSubject = PublishSubject.create<Unit>()
     private val onPauseSubject = PublishSubject.create<Unit>()
+    private val onDestroySubject = PublishSubject.create<Unit>()
 
     val resumed: Observable<Unit>
         get() = onResumeSubject
 
     val paused: Observable<Unit>
         get() = onPauseSubject
+
+    val destroyed: Observable<Unit>
+        get() = onDestroySubject
 
     val beforeKeyboardVisibilityChanged: Observable<Boolean>
         get() = contentView.beforeKeyboardVisibilityChangeSubject
@@ -120,6 +124,12 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : App
         transactionManager.transaction {
             viewControllerStack.forEach { it.viewDidDisappear() }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+
+        onDestroySubject.onNext(Unit)
     }
 
     fun present(viewController: ViewController, animated: Boolean = true): Observable<Unit> {
