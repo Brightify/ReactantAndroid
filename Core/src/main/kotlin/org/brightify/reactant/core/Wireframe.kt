@@ -5,6 +5,7 @@ import io.reactivex.Observer
 import io.reactivex.subjects.PublishSubject
 import org.brightify.reactant.controller.NavigationController
 import org.brightify.reactant.controller.ViewController
+import java.lang.ref.WeakReference
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
@@ -16,7 +17,9 @@ abstract class Wireframe {
 
 class FutureControllerProvider<T : ViewController> {
 
-    var controller: T? = null
+    internal var controllerRef: WeakReference<T>? = null
+    val controller: T?
+       get() = controllerRef?.get()
 
     val navigation: NavigationController?
         get() = controller?.navigationController
@@ -25,7 +28,7 @@ class FutureControllerProvider<T : ViewController> {
 fun <T : ViewController> Wireframe.create(factory: (FutureControllerProvider<T>) -> T): T {
     val futureControllerProvider = FutureControllerProvider<T>()
     val controller = factory(futureControllerProvider)
-    futureControllerProvider.controller = controller
+    futureControllerProvider.controllerRef = WeakReference(controller)
     return controller
 }
 
@@ -35,6 +38,6 @@ fun <T : ViewController, U> Wireframe.create(factory: (FutureControllerProvider<
     val futureControllerProvider = FutureControllerProvider<T>()
     val subject: PublishSubject<U> = PublishSubject.create()
     val controller = factory(futureControllerProvider, subject)
-    futureControllerProvider.controller = controller
+    futureControllerProvider.controllerRef = WeakReference(controller)
     return ControllerWithResult(controller, subject)
 }

@@ -2,14 +2,12 @@ package org.brightify.reactant.core.component
 
 import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
+import org.brightify.reactant.core.LifetimeDisposeBagContainer
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
-interface Component<STATE, ACTION> {
-
-    val lifetimeDisposeBag: CompositeDisposable
-
+interface Component<STATE, ACTION>: LifetimeDisposeBagContainer {
     val stateDisposeBag: CompositeDisposable
 
     val observableState: Observable<STATE>
@@ -19,8 +17,6 @@ interface Component<STATE, ACTION> {
     var componentState: STATE
 
     val action: Observable<ACTION>
-
-    fun init()
 
     fun afterInit()
 

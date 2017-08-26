@@ -5,6 +5,10 @@ import android.view.View
 import android.view.inputmethod.InputMethodManager
 import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.disposables.Disposable
+import io.reactivex.internal.disposables.DisposableContainer
+import org.brightify.reactant.core.LifetimeDisposeBagContainerDelegate
+import org.brightify.reactant.core.LifetimeDisposeBagContainerWithDelegate
 import org.brightify.reactant.core.ReactantActivity
 import org.brightify.reactant.core.util.onChange
 import kotlin.properties.Delegates
@@ -12,9 +16,10 @@ import kotlin.properties.Delegates
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
-open class ViewController(title: String = "") {
-
+open class ViewController(title: String = ""): LifetimeDisposeBagContainerWithDelegate {
     val visibleDisposeBag = CompositeDisposable()
+
+    override val lifetimeDisposeBagContainerDelegate = LifetimeDisposeBagContainerDelegate { init() }
 
     var view: View by onChange(View(ReactantActivity.context)) { _, _, _ ->
         if (isVisible) {
@@ -29,10 +34,18 @@ open class ViewController(title: String = "") {
         view.isClickable = true
     }
 
-    var navigationController: NavigationController? = null
+    var navigationController: NavigationController? by onChange<NavigationController?>(null) { _, _, _ ->
+            if (tabBarItem != null) {
+                navigationController?.tabBarItem = tabBarItem
+            }
+        }
         internal set
 
-    var tabBarController: TabBarController? = null
+    var tabBarController: TabBarController? by onChange<TabBarController?>(null) { _, _, _ ->
+            if (tabBarItem != null) {
+                tabBarController?.updateTabBarItem(this)
+            }
+        }
         internal set
 
     var title: String by Delegates.observable(title) { _, _, newValue ->
@@ -41,7 +54,7 @@ open class ViewController(title: String = "") {
 
     open var hidesBottomBarWhenPushed: Boolean = false
 
-    open var tabBarItem: TabBarItem? by onChange<TabBarItem?>(null) { _, _, _ ->
+    var tabBarItem: TabBarItem? by onChange<TabBarItem?>(null) { _, _, _ ->
         navigationController?.tabBarItem = tabBarItem
         tabBarController?.updateTabBarItem(this)
     }
@@ -60,6 +73,8 @@ open class ViewController(title: String = "") {
     init {
         view.isClickable = true
     }
+
+    internal open fun init() { }
 
     open fun loadView() {
     }

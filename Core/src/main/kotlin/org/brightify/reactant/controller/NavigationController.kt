@@ -21,8 +21,6 @@ import java.util.*
  */
 class NavigationController(private val initialController: ViewController?) : ViewController() {
 
-    val lifetimeDisposeBag = CompositeDisposable()
-
     var isNavigationBarHidden: Boolean by onChange(false) { _, _, _ ->
         if (!transactionManager.isInTransaction) {
             clearLayout(false)
@@ -37,11 +35,13 @@ class NavigationController(private val initialController: ViewController?) : Vie
     private val toolbarHeight = 56 // FIXME get correct value
     private val transactionManager = TransactionManager()
 
-    init {
+    constructor() : this(null)
+
+    override fun init() {
+        super.init()
+
         loadViewIfNeeded()
     }
-
-    constructor() : this(null)
 
     override fun loadView() {
         super.loadView()
@@ -61,6 +61,7 @@ class NavigationController(private val initialController: ViewController?) : Vie
             bottom.left.right.equalToSuperview()
         }
 
+        initialController?.let { addChildContainer(it) }
         initialController?.navigationController = this
         initialController?.loadViewIfNeeded()
         initialController?.let { viewControllerStack.push(it) }
@@ -112,6 +113,7 @@ class NavigationController(private val initialController: ViewController?) : Vie
 
     fun push(viewController: ViewController, animated: Boolean = true) {
         transactionManager.transaction {
+            addChildContainer(viewController)
             clearLayout(!viewControllerStack.empty())
             viewControllerStack.push(viewController)
             showViewController()
@@ -129,29 +131,34 @@ class NavigationController(private val initialController: ViewController?) : Vie
             val viewController = viewControllerStack.pop()
             showViewController()
             viewControllerStack.peek().viewDidAppear()
+            removeChildContainer(viewController)
             return@transaction viewController
         }
     }
 
     fun replace(viewController: ViewController, animated: Boolean = true): ViewController? {
         return transactionManager.transaction {
+            addChildContainer(viewController)
             clearLayout(!viewControllerStack.empty())
             val old = viewControllerStack.pop()
             viewControllerStack.push(viewController)
             showViewController()
             viewControllerStack.peek().viewDidAppear()
+            removeChildContainer(old)
             return@transaction old
         }
     }
 
     fun replaceAll(viewController: ViewController, animated: Boolean = true): List<ViewController> {
         return transactionManager.transaction {
+            addChildContainer(viewController)
             clearLayout(!viewControllerStack.empty())
             val viewControllers = viewControllerStack.elements().toList()
             viewControllerStack.clear()
             viewControllerStack.push(viewController)
             showViewController()
             viewController.viewDidAppear()
+            viewControllers.forEach { removeChildContainer(it) }
             return@transaction viewControllers
         } ?: emptyList()
     }

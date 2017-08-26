@@ -33,7 +33,9 @@ open class TabBarController(private val viewControllers: List<ViewController>) :
     private var displayedViewController: ViewController? = null
     private val transactionManager = TransactionManager()
 
-    init {
+    override fun init() {
+        super.init()
+
         loadViewIfNeeded()
     }
 
@@ -55,6 +57,7 @@ open class TabBarController(private val viewControllers: List<ViewController>) :
         tabBar.snp.verticalContentCompressionResistancePriority = ConstraintPriority.required
 
         viewControllers.forEach {
+            addChildContainer(it)
             it.tabBarController = this
             updateTabBarItem(it)
             it.loadViewIfNeeded()

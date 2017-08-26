@@ -1,28 +1,36 @@
 package org.brightify.reactant.core
 
+import android.annotation.SuppressLint
+import android.view.View
 import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
 import org.brightify.reactant.autolayout.AutoLayout
 import org.brightify.reactant.core.component.ComponentDelegate
 import org.brightify.reactant.core.component.ComponentWithDelegate
 import org.brightify.reactant.core.util.makeGuard
+import android.view.ViewGroup
+import org.brightify.reactant.autolayout.util.children
+
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
-open class ViewBase<STATE, ACTION> : AutoLayout(ReactantActivity.context), ComponentWithDelegate<STATE, ACTION> {
-
-    override val lifetimeDisposeBag = CompositeDisposable()
+@SuppressLint("ViewConstructor")
+open class ViewBase<STATE, ACTION> : AutoLayout(ReactantActivity.context), ComponentWithDelegate<STATE, ACTION>, LifetimeDisposeBagContainerWithDelegate, ViewGroup.OnHierarchyChangeListener {
 
     final override val componentDelegate = ComponentDelegate<STATE, ACTION>()
 
     override val actions: List<Observable<ACTION>> = emptyList()
 
+    override val lifetimeDisposeBagContainerDelegate = LifetimeDisposeBagContainerDelegate { init() }
+
     init {
         makeGuard()
     }
 
-    override fun init() {
+    fun init() {
+        setOnHierarchyChangeListener(HierarchyTreeChangeListener(this))
+
         componentDelegate.ownerComponent = this
 
         loadView()
@@ -46,5 +54,42 @@ open class ViewBase<STATE, ACTION> : AutoLayout(ReactantActivity.context), Compo
     }
 
     open fun setupConstraints() {
+    }
+
+    override fun onChildViewAdded(parent: View?, child: View?) {
+        if (child is LifetimeDisposeBagContainer) {
+            addChildContainer(child)
+        }
+    }
+
+    override fun onChildViewRemoved(parent: View?, child: View?) {
+    }
+}
+
+/**
+ * A [hierarchy change listener][ViewGroup.OnHierarchyChangeListener] which recursively
+ * monitors an entire tree of views.
+ */
+class HierarchyTreeChangeListener(private val delegate: ViewGroup.OnHierarchyChangeListener): ViewGroup.OnHierarchyChangeListener {
+    override fun onChildViewAdded(parent: View, child: View) {
+        delegate.onChildViewAdded(parent, child)
+
+        if (child is ViewGroup) {
+            child.setOnHierarchyChangeListener(this)
+            for (grandChild in child.children) {
+                onChildViewAdded(child, grandChild)
+            }
+        }
+    }
+
+    override fun onChildViewRemoved(parent: View, child: View) {
+        if (child is ViewGroup) {
+            for (grandChild in child.children) {
+                onChildViewRemoved(child, grandChild)
+            }
+            child.setOnHierarchyChangeListener(null)
+        }
+
+        delegate.onChildViewRemoved(parent, child)
     }
 }

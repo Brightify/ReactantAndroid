@@ -17,7 +17,7 @@ import java.util.Stack
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
-open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : AppCompatActivity() {
+open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : AppCompatActivity(), LifetimeDisposeBagContainerWithDelegate {
 
     companion object {
 
@@ -31,7 +31,7 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : App
         }
     }
 
-    private val lifetimeDisposeBag = CompositeDisposable()
+    override val lifetimeDisposeBagContainerDelegate = LifetimeDisposeBagContainerDelegate({ /* No action on first retain */ })
 
     private val transactionManager = TransactionManager()
 
@@ -60,6 +60,8 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : App
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        retain()
 
         instance = this
 
@@ -130,10 +132,13 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : App
         super.onDestroy()
 
         onDestroySubject.onNext(Unit)
+
+        release()
     }
 
     fun present(viewController: ViewController, animated: Boolean = true): Observable<Unit> {
         transactionManager.transaction {
+            addChildContainer(viewController)
             viewController.loadViewIfNeeded()
             viewControllerStack.push(viewController)
             viewController.viewWillAppear()
@@ -172,6 +177,7 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : App
 
     private fun dismissOrFinish() {
         transactionManager.transaction {
+            val oldController = viewControllerStack.peek()
             if (viewControllerStack.size > 1) {
                 viewControllerStack.peek().viewWillDisappear()
                 contentView.removeView(viewControllerStack.peek().view)
@@ -179,7 +185,13 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : App
                 viewControllerStack.pop()
                 viewControllerStack.peek().viewWillAppear()
                 viewControllerStack.peek().viewDidAppear()
+                if (oldController != null) {
+                    removeChildContainer(oldController)
+                }
             } else {
+                if (oldController != null) {
+                    removeChildContainer(oldController)
+                }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     finishAfterTransition()
                 } else {

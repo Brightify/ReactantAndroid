@@ -16,8 +16,6 @@ import org.brightify.reactant.core.util.makeGuard
 open class ControllerBase<STATE, ROOT, ROOT_ACTION>(rootView: ROOT, title: String = "")
     : ViewController(), ComponentWithDelegate<STATE, Unit> where ROOT : View, ROOT : Component<*, ROOT_ACTION> {
 
-    final override val lifetimeDisposeBag = CompositeDisposable()
-
     final override val componentDelegate = ComponentDelegate<STATE, Unit>()
 
     final override val action: Observable<Unit> = Observable.empty()
@@ -38,7 +36,13 @@ open class ControllerBase<STATE, ROOT, ROOT_ACTION>(rootView: ROOT, title: Strin
     }
 
     override fun init() {
+        super.init()
+
         componentDelegate.ownerComponent = this
+
+        addChildContainer(rootView)
+
+        afterInit()
     }
 
     override fun afterInit() {
@@ -53,8 +57,6 @@ open class ControllerBase<STATE, ROOT, ROOT_ACTION>(rootView: ROOT, title: Strin
         super.loadView()
 
         rootView.action.subscribe { act(it) }.addTo(lifetimeDisposeBag)
-
-        afterInit()
     }
 
     override fun viewWillAppear() {

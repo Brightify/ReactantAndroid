@@ -28,7 +28,6 @@ inline fun <T> make(factory: () -> T): T {
             if (__makeUsed.get() != makeUsedCount) {
                 throw MakeGuardNotUsedException()
             }
-            it.init()
         } else {
             __makeUsed.set(makeUsedCount)
         }
