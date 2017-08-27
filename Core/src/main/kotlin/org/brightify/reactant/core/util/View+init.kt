@@ -16,7 +16,6 @@ import android.widget.ScrollView
 import android.widget.Switch
 import android.widget.TextView
 import org.brightify.reactant.autolayout.AutoLayout
-import org.brightify.reactant.autolayout.ContainerView
 import org.brightify.reactant.core.ReactantActivity
 
 /**
@@ -68,10 +67,6 @@ fun Switch(): Switch {
 
 fun AutoLayout(): AutoLayout {
     return AutoLayout(ReactantActivity.context)
-}
-
-fun ContainerView(): ContainerView {
-    return ContainerView(ReactantActivity.context)
 }
 
 fun ScrollView(): ScrollView {
