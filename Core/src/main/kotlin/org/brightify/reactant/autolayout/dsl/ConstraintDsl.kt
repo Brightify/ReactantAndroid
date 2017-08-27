@@ -121,6 +121,16 @@ class ConstraintDsl internal constructor(private val view: View) {
         makeConstraints(closure)
     }
 
+    fun setHorizontalIntrinsicSizePriority(priority: ConstraintPriority) {
+        horizontalContentHuggingPriority = priority
+        horizontalContentCompressionResistancePriority = priority
+    }
+
+    fun setVerticalIntrinsicSizePriority(priority: ConstraintPriority) {
+        verticalContentHuggingPriority = priority
+        verticalContentCompressionResistancePriority = priority
+    }
+
     fun debugValues() {
         val values = listOf(top, left, bottom, right, width, height, centerX, centerY)
                 .map {
