@@ -5,7 +5,6 @@ import android.os.Build
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import io.reactivex.Observable
-import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.addTo
 import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.subjects.PublishSubject
@@ -61,9 +60,9 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : App
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        retain()
-
         instance = this
+
+        retain()
 
         contentView = ReactantActivityContentView(this)
         setContentView(contentView)
