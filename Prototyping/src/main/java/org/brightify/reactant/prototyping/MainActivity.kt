@@ -2,10 +2,8 @@ package org.brightify.reactant.prototyping
 
 import android.graphics.Color
 import android.view.View
-import android.widget.TextView
 import com.jakewharton.rxbinding2.view.clicks
 import io.reactivex.Observable
-import org.brightify.reactant.autolayout.ContainerView
 import org.brightify.reactant.autolayout.util.children
 import org.brightify.reactant.autolayout.util.snp
 import org.brightify.reactant.controller.NavigationController
@@ -15,9 +13,9 @@ import org.brightify.reactant.core.ReactantActivity
 import org.brightify.reactant.core.ViewBase
 import org.brightify.reactant.core.Wireframe
 import org.brightify.reactant.core.util.Button
+import org.brightify.reactant.core.util.ContainerView
 import org.brightify.reactant.core.util.Style
 import org.brightify.reactant.core.util.TextView
-import org.brightify.reactant.core.util.make
 import org.brightify.reactant.prototyping.CustomView.Styles.text
 
 /**
@@ -32,7 +30,7 @@ class MainWireframe : Wireframe() {
             navigationController.push(main())
         }
 
-        navigationController.push(make(::InitialController, reactions))
+        navigationController.push(InitialController(reactions))
         navigationController.toolbar.setBackgroundColor(Color.BLUE)
 
         return navigationController
@@ -43,14 +41,13 @@ class MainWireframe : Wireframe() {
             navigationController.pop()
         }
 
-        return make(::MainController, reactions)
+        return MainController(reactions)
     }
 }
 
 class MainActivity : ReactantActivity(::MainWireframe)
 
-class InitialController(private val reactions: InitialController.Reactions) : ControllerBase<Unit, CustomView, Unit>(
-        make(::CustomView, "Initial")) {
+class InitialController(private val reactions: InitialController.Reactions) : ControllerBase<Unit, CustomView, Unit>(CustomView("Initial")) {
 
     data class Reactions(val onNext: () -> Unit)
 
@@ -66,7 +63,7 @@ class InitialController(private val reactions: InitialController.Reactions) : Co
 }
 
 class MainController(private val reactions: MainController.Reactions) : ControllerBase<Unit, AnotherView, Unit>(
-        make(::AnotherView)) {
+        AnotherView()) {
 
     data class Reactions(val onNext: () -> Unit)
 
@@ -77,11 +74,11 @@ class MainController(private val reactions: MainController.Reactions) : Controll
 
 class CustomView(title: String) : ViewBase<Int, Unit>() {
 
-    private val text = make(::TextView, title).apply(Styles.text)
-    private val button = make(::Button, "Button")
-    private val container = make(::ContainerView)
-    private val view = make(::TextView).apply { setBackgroundColor(Color.rgb(0, 255, 0)) }
-    private val view2 = make(::TextView).apply { setBackgroundColor(Color.rgb(0, 0, 255)) }
+    private val text = TextView(title).apply(Styles.text)
+    private val button = Button("Button")
+    private val container = ContainerView()
+    private val view = TextView().apply { setBackgroundColor(Color.rgb(0, 255, 0)) }
+    private val view2 = TextView().apply { setBackgroundColor(Color.rgb(0, 0, 255)) }
 
     override fun loadView() {
         children(
@@ -142,7 +139,7 @@ class CustomView(title: String) : ViewBase<Int, Unit>() {
 
 class AnotherView : ViewBase<Unit, Unit>() {
 
-    private val button = make(::Button, "Main")
+    private val button = Button("Main")
 
     override val actions: List<Observable<Unit>> = listOf(button.clicks())
 

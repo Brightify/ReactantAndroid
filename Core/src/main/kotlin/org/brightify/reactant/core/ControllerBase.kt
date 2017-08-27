@@ -2,13 +2,11 @@ package org.brightify.reactant.core
 
 import android.view.View
 import io.reactivex.Observable
-import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.addTo
 import org.brightify.reactant.controller.ViewController
 import org.brightify.reactant.core.component.Component
 import org.brightify.reactant.core.component.ComponentDelegate
 import org.brightify.reactant.core.component.ComponentWithDelegate
-import org.brightify.reactant.core.util.makeGuard
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
@@ -30,8 +28,6 @@ open class ControllerBase<STATE, ROOT, ROOT_ACTION>(rootView: ROOT, title: Strin
         get() = rootView as? RootView
 
     init {
-        makeGuard()
-
         view = rootView
     }
 

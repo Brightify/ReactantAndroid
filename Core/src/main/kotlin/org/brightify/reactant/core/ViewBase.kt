@@ -2,14 +2,12 @@ package org.brightify.reactant.core
 
 import android.annotation.SuppressLint
 import android.view.View
+import android.view.ViewGroup
 import io.reactivex.Observable
-import io.reactivex.disposables.CompositeDisposable
 import org.brightify.reactant.autolayout.AutoLayout
+import org.brightify.reactant.autolayout.util.children
 import org.brightify.reactant.core.component.ComponentDelegate
 import org.brightify.reactant.core.component.ComponentWithDelegate
-import org.brightify.reactant.core.util.makeGuard
-import android.view.ViewGroup
-import org.brightify.reactant.autolayout.util.children
 
 
 /**
@@ -23,10 +21,6 @@ open class ViewBase<STATE, ACTION> : AutoLayout(ReactantActivity.context), Compo
     override val actions: List<Observable<ACTION>> = emptyList()
 
     override val lifetimeDisposeBagContainerDelegate = LifetimeDisposeBagContainerDelegate { init() }
-
-    init {
-        makeGuard()
-    }
 
     fun init() {
         setOnHierarchyChangeListener(HierarchyTreeChangeListener(this))
