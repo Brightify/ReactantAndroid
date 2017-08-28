@@ -5,8 +5,6 @@ import android.view.View
 import android.view.inputmethod.InputMethodManager
 import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.disposables.Disposable
-import io.reactivex.internal.disposables.DisposableContainer
 import org.brightify.reactant.core.LifetimeDisposeBagContainerDelegate
 import org.brightify.reactant.core.LifetimeDisposeBagContainerWithDelegate
 import org.brightify.reactant.core.ReactantActivity
@@ -66,8 +64,10 @@ open class ViewController(title: String = ""): LifetimeDisposeBagContainerWithDe
             ReactantActivity.instance.window.statusBarColor = value
         }
 
+    var isVisible = false
+        private set
+
     private var loaded = false
-    private var isVisible = false
     private var lastStatusBarColor: Int? = null
 
     init {
