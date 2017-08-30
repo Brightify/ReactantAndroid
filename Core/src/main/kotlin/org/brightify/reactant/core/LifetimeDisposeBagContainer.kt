@@ -1,8 +1,11 @@
 package org.brightify.reactant.core
 
 import android.util.Log
+import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
-import java.util.*
+import io.reactivex.subjects.PublishSubject
+import java.util.Collections
+import java.util.WeakHashMap
 
 /**
  * Created by TadeasKriz on 8/25/17.
@@ -10,6 +13,8 @@ import java.util.*
 
 interface LifetimeDisposeBagContainer {
     val lifetimeDisposeBag: CompositeDisposable
+
+    val onDispose: Observable<Unit>
 
     fun retain()
 
@@ -25,6 +30,9 @@ interface LifetimeDisposeBagContainerWithDelegate: LifetimeDisposeBagContainer {
 
     override val lifetimeDisposeBag: CompositeDisposable
         get() = lifetimeDisposeBagContainerDelegate.lifetimeDisposeBag
+
+    override val onDispose: Observable<Unit>
+        get() = lifetimeDisposeBagContainerDelegate.onDispose
 
     override fun retain() {
         Log.d("Lifetime", "Retaining: $this")
@@ -48,7 +56,10 @@ interface LifetimeDisposeBagContainerWithDelegate: LifetimeDisposeBagContainer {
 }
 
 class LifetimeDisposeBagContainerDelegate(private val onFirstRetain: () -> Unit): LifetimeDisposeBagContainer {
-    private val disposeBag = CompositeDisposable()
+
+    override val onDispose: Observable<Unit>
+        get() = disposeSubject
+
     override val lifetimeDisposeBag: CompositeDisposable
         get() {
             if (retainCount == null) {
@@ -57,6 +68,8 @@ class LifetimeDisposeBagContainerDelegate(private val onFirstRetain: () -> Unit)
             return disposeBag
         }
 
+    private val disposeBag = CompositeDisposable()
+    private val disposeSubject = PublishSubject.create<Unit>()
     private val childContainers: MutableSet<LifetimeDisposeBagContainer> = Collections.newSetFromMap(WeakHashMap())
     private val lock = Any()
     private var retainCount: Int? = null
@@ -86,6 +99,7 @@ class LifetimeDisposeBagContainerDelegate(private val onFirstRetain: () -> Unit)
                         child.release()
                     }
                     childContainers.clear()
+                    disposeSubject.onNext(Unit)
                     lifetimeDisposeBag.dispose()
                     0
                 }

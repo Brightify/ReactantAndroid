@@ -11,7 +11,7 @@ import org.brightify.reactant.core.component.ComponentWithDelegate
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
-open class ControllerBase<STATE, ROOT, ROOT_ACTION>(rootView: ROOT, title: String = "")
+open class ControllerBase<STATE, ROOT, ROOT_ACTION>(rootView: ROOT)
     : ViewController(), ComponentWithDelegate<STATE, Unit> where ROOT : View, ROOT : Component<*, ROOT_ACTION> {
 
     final override val componentDelegate = ComponentDelegate<STATE, Unit>()
@@ -35,6 +35,8 @@ open class ControllerBase<STATE, ROOT, ROOT_ACTION>(rootView: ROOT, title: Strin
         super.init()
 
         componentDelegate.ownerComponent = this
+
+        onDispose.subscribe { stateDisposeBag.dispose() }.addTo(lifetimeDisposeBag)
 
         addChildContainer(rootView)
 
