@@ -6,7 +6,6 @@ import android.support.v7.widget.Toolbar
 import android.util.TypedValue
 import android.view.ViewGroup
 import android.widget.FrameLayout
-import io.reactivex.disposables.CompositeDisposable
 import org.brightify.reactant.R
 import org.brightify.reactant.autolayout.AutoLayout
 import org.brightify.reactant.autolayout.util.children
@@ -14,12 +13,12 @@ import org.brightify.reactant.autolayout.util.snp
 import org.brightify.reactant.controller.util.TransactionManager
 import org.brightify.reactant.core.ReactantActivity
 import org.brightify.reactant.core.util.onChange
-import java.util.*
+import java.util.Stack
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
-class NavigationController(private val initialController: ViewController?) : ViewController() {
+class NavigationController(private val initialController: ViewController?): ViewController() {
 
     var isNavigationBarHidden: Boolean by onChange(false) { _, _, _ ->
         if (!transactionManager.isInTransaction) {
@@ -35,7 +34,7 @@ class NavigationController(private val initialController: ViewController?) : Vie
     private val toolbarHeight = 56 // FIXME get correct value
     private val transactionManager = TransactionManager()
 
-    constructor() : this(null)
+    constructor(): this(null)
 
     override fun init() {
         super.init()
@@ -214,7 +213,8 @@ class NavigationController(private val initialController: ViewController?) : Vie
     }
 
     fun resetViewControllerSpecificSettings() {
-        toolbar.navigationIcon = ContextCompat.getDrawable(ReactantActivity.context, R.drawable.abc_ic_ab_back_material)
+        toolbar.navigationIcon = if (viewControllerStack.size > 1) ContextCompat.getDrawable(ReactantActivity.context,
+                R.drawable.abc_ic_ab_back_material) else null
         toolbar.setNavigationOnClickListener { pop() }
         toolbar.menu.clear()
         isNavigationBarHidden = false
