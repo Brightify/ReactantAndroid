@@ -1,6 +1,7 @@
 package org.brightify.reactant.core
 
 import android.content.Context
+import android.content.pm.ActivityInfo
 import android.os.Build
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
@@ -58,6 +59,8 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : App
 
     val afterKeyboardVisibilityChanged: Observable<Boolean>
         get() = beforeKeyboardVisibilityChanged.flatMap { value -> onLayoutSubject.take(1).map { value } }
+
+    var screenOrientation: Int = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
 
     private lateinit var contentView: ReactantActivityContentView
 
@@ -181,6 +184,10 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : App
             contentView.removeAllViews()
             viewControllerStack.forEach { contentView.addView(it.view) }
         }
+    }
+
+    fun updateScreenOrientation() {
+        requestedOrientation = screenOrientation
     }
 
     private fun dismissOrFinish() {

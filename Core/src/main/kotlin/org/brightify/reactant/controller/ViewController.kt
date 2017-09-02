@@ -65,10 +65,11 @@ open class ViewController(title: String = ""): LifetimeDisposeBagContainerWithDe
         }
 
     var screenOrientation: Int
-        get() = ReactantActivity.instance.requestedOrientation
+        get() = ReactantActivity.instance.screenOrientation
         set(value) {
             lastScreenOrientation = value
-            ReactantActivity.instance.requestedOrientation = value
+            ReactantActivity.instance.screenOrientation = value
+            ReactantActivity.instance.updateScreenOrientation()
         }
 
     var isVisible = false
@@ -93,7 +94,11 @@ open class ViewController(title: String = ""): LifetimeDisposeBagContainerWithDe
     open fun viewWillAppear() {
         visibleDisposeBag.clear()
         title = title
-        invalidateGlobalSettings()
+
+        if (this !is NavigationController && this !is TabBarController) {
+            invalidateGlobalSettings()
+            ReactantActivity.instance.updateScreenOrientation()
+        }
     }
 
     open fun viewDidAppear() {
@@ -147,6 +152,6 @@ open class ViewController(title: String = ""): LifetimeDisposeBagContainerWithDe
         navigationController?.invalidateGlobalSettings()
         tabBarController?.invalidateGlobalSettings()
         lastStatusBarColor?.let { statusBarColor = it }
-        lastScreenOrientation?.let { screenOrientation = it }
+        lastScreenOrientation?.let { ReactantActivity.instance.screenOrientation = it }
     }
 }
