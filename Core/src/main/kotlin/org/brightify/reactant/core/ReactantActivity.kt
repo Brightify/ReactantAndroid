@@ -20,13 +20,19 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : App
 
     companion object {
 
-        lateinit var instance: ReactantActivity
+        val instance: ReactantActivity
+            get() = instanceOrNull ?: throw IllegalStateException("Instance has not been created yes.")
+
+        var instanceOrNull: ReactantActivity? = null
+            private set
 
         private val viewControllerStack = Stack<ViewController>()
 
         val context: Context by lazy {
-            instance.applicationContext.setTheme(instance.applicationInfo.theme)
-            instance.applicationContext
+            instance?.let {
+                it.applicationContext.setTheme(it.applicationInfo.theme)
+                it.applicationContext
+            } ?: throw IllegalStateException("Cannot access context before Activity instance exists.")
         }
     }
 
@@ -60,7 +66,7 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : App
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        instance = this
+        instanceOrNull = this
 
         retain()
 
@@ -74,6 +80,7 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : App
 
             if (viewControllerStack.empty()) {
                 viewControllerStack.push(wireframeFactory().entryPoint())
+                viewControllerStack.peek().retain()
                 viewControllerStack.peek().loadViewIfNeeded()
             }
         }
@@ -81,6 +88,8 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : App
         contentView.viewTreeObserver.addOnGlobalLayoutListener {
             onLayoutSubject.onNext(Unit)
         }
+
+        transactionManager.enabled = true
     }
 
     override fun onBackPressed() {
@@ -128,16 +137,16 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : App
     }
 
     override fun onDestroy() {
-        super.onDestroy()
-
         onDestroySubject.onNext(Unit)
-
         release()
+        instanceOrNull = null
+
+        super.onDestroy()
     }
 
     fun present(viewController: ViewController, animated: Boolean = true): Observable<Unit> {
         transactionManager.transaction {
-            addChildContainer(viewController)
+            viewController.retain()
             viewController.loadViewIfNeeded()
             viewControllerStack.push(viewController)
             viewController.viewWillAppear()
@@ -176,21 +185,14 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : App
 
     private fun dismissOrFinish() {
         transactionManager.transaction {
-            val oldController = viewControllerStack.peek()
             if (viewControllerStack.size > 1) {
                 viewControllerStack.peek().viewWillDisappear()
                 contentView.removeView(viewControllerStack.peek().view)
                 viewControllerStack.peek().viewDidDisappear()
-                viewControllerStack.pop()
+                viewControllerStack.pop().release()
                 viewControllerStack.peek().viewWillAppear()
                 viewControllerStack.peek().viewDidAppear()
-                if (oldController != null) {
-                    removeChildContainer(oldController)
-                }
             } else {
-                if (oldController != null) {
-                    removeChildContainer(oldController)
-                }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     finishAfterTransition()
                 } else {

@@ -64,11 +64,19 @@ open class ViewController(title: String = ""): LifetimeDisposeBagContainerWithDe
             ReactantActivity.instance.window.statusBarColor = value
         }
 
+    var screenOrientation: Int
+        get() = ReactantActivity.instance.requestedOrientation
+        set(value) {
+            lastScreenOrientation = value
+            ReactantActivity.instance.requestedOrientation = value
+        }
+
     var isVisible = false
         private set
 
     private var loaded = false
     private var lastStatusBarColor: Int? = null
+    private var lastScreenOrientation: Int? = null
 
     init {
         view.isClickable = true
@@ -85,7 +93,7 @@ open class ViewController(title: String = ""): LifetimeDisposeBagContainerWithDe
     open fun viewWillAppear() {
         visibleDisposeBag.clear()
         title = title
-        invalidateStatusBarColor()
+        invalidateGlobalSettings()
     }
 
     open fun viewDidAppear() {
@@ -131,13 +139,14 @@ open class ViewController(title: String = ""): LifetimeDisposeBagContainerWithDe
         return ReactantActivity.instance.present(controller, animated)
     }
 
-    fun invalidateStatusBarColor() {
-        navigationController?.invalidateStatusBarColor()
-        tabBarController?.invalidateStatusBarColor()
-        lastStatusBarColor?.let { statusBarColor = it }
-    }
-
     fun resetRememberedStatusBarColor() {
         lastStatusBarColor = null
+    }
+
+    internal fun invalidateGlobalSettings() {
+        navigationController?.invalidateGlobalSettings()
+        tabBarController?.invalidateGlobalSettings()
+        lastStatusBarColor?.let { statusBarColor = it }
+        lastScreenOrientation?.let { screenOrientation = it }
     }
 }

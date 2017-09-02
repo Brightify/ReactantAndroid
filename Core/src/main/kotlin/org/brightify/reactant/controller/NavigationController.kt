@@ -18,7 +18,7 @@ import java.util.Stack
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
-class NavigationController(private val initialController: ViewController?): ViewController() {
+open class NavigationController(private val initialController: ViewController?): ViewController() {
 
     var isNavigationBarHidden: Boolean by onChange(false) { _, _, _ ->
         if (!transactionManager.isInTransaction) {
@@ -64,6 +64,8 @@ class NavigationController(private val initialController: ViewController?): View
         initialController?.navigationController = this
         initialController?.loadViewIfNeeded()
         initialController?.let { viewControllerStack.push(it) }
+
+        transactionManager.enabled = true
     }
 
     override fun viewWillAppear() {

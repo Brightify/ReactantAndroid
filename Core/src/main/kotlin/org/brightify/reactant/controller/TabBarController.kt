@@ -33,6 +33,10 @@ open class TabBarController(private val viewControllers: List<ViewController>) :
     private var displayedViewController: ViewController? = null
     private val transactionManager = TransactionManager()
 
+    init {
+        view = FrameLayout(ReactantActivity.context).children(layout)
+    }
+
     override fun init() {
         super.init()
 
@@ -41,8 +45,6 @@ open class TabBarController(private val viewControllers: List<ViewController>) :
 
     override fun loadView() {
         super.loadView()
-
-        view = FrameLayout(ReactantActivity.context).children(layout)
 
         layout.children(layoutContent, tabBar)
         layoutContent.snp.makeConstraints {
@@ -61,6 +63,8 @@ open class TabBarController(private val viewControllers: List<ViewController>) :
             updateTabBarItem(it)
             it.loadViewIfNeeded()
         }
+
+        transactionManager.enabled = true
     }
 
     override fun viewWillAppear() {
