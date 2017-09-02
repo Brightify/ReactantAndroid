@@ -212,7 +212,7 @@ class NavigationController(private val initialController: ViewController?): View
         }
     }
 
-    fun resetViewControllerSpecificSettings() {
+    private fun resetViewControllerSpecificSettings() {
         toolbar.navigationIcon = if (viewControllerStack.size > 1) ContextCompat.getDrawable(ReactantActivity.context,
                 R.drawable.abc_ic_ab_back_material) else null
         toolbar.setNavigationOnClickListener { pop() }

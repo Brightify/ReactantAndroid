@@ -1,6 +1,7 @@
 package org.brightify.reactant.autolayout.internal.view
 
 import android.view.View
+import org.brightify.reactant.autolayout.Constraint
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
@@ -9,4 +10,7 @@ internal class ViewConstraints(view: View) {
 
     val visibilityManager = VisibilityManager(view)
     var intrinsicSizeManager: IntrinsicSizeManager? = null
+
+    val usedConstraints: Set<Constraint>
+        get() = visibilityManager.usedConstraints + (intrinsicSizeManager?.usedConstraints ?: emptySet())
 }

@@ -17,7 +17,7 @@ import kotlin.properties.Delegates
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
-open class AutoLayout : ViewGroup {
+open class AutoLayout: ViewGroup {
 
     var measureTime: Boolean by Delegates.observable(false) { _, _, _ ->
         (parent as? AutoLayout)?.measureTime = measureTime
@@ -31,19 +31,19 @@ open class AutoLayout : ViewGroup {
     private val density: Double
         get() = resources.displayMetrics.density.toDouble()
 
-    constructor(context: Context?) : super(context) {
+    constructor(context: Context?): super(context) {
         init()
     }
 
-    constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs) {
+    constructor(context: Context?, attrs: AttributeSet?): super(context, attrs) {
         init()
     }
 
-    constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
+    constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int): super(context, attrs, defStyleAttr) {
         init()
     }
 
-    constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) : super(context, attrs, defStyleAttr,
+    constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int): super(context, attrs, defStyleAttr,
             defStyleRes) {
         init()
     }
@@ -53,7 +53,7 @@ open class AutoLayout : ViewGroup {
 
         constraintManager.addManagedView(this)
         autoLayoutConstraints = AutoLayoutConstraints(this)
-        autoLayoutConstraints.isActive = true
+        autoLayoutConstraints.setActive(true)
     }
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
@@ -77,9 +77,11 @@ open class AutoLayout : ViewGroup {
         } else {
             val begin = System.nanoTime()
 
+            autoLayoutConstraints.setActive(true)
             initializeAutoLayoutConstraints(widthMeasureSpec, heightMeasureSpec)
             constraintManager.updateIntrinsicSizeNecessityDecider()
             updateVisibility()
+            requestLayoutRecursive(this)
             measureIntrinsicSizes()
             setMeasuredSize(widthMeasureSpec, heightMeasureSpec)
             constraintManager.solve()
@@ -117,7 +119,7 @@ open class AutoLayout : ViewGroup {
             if (child is AutoLayout) {
                 constraintManager.join(child.constraintManager)
                 setConstraintManagerRecursive(child, constraintManager)
-                child.autoLayoutConstraints.isActive = false
+                child.autoLayoutConstraints.setActive(false)
                 measureTime = measureTime or child.measureTime
             } else {
                 constraintManager.addManagedView(child)
@@ -131,7 +133,7 @@ open class AutoLayout : ViewGroup {
         child?.let {
             if (child is AutoLayout) {
                 setConstraintManagerRecursive(child, constraintManager.split(child))
-                child.autoLayoutConstraints.isActive = true
+                child.autoLayoutConstraints.setActive(true)
             } else {
                 constraintManager.removeManagedView(child)
             }
@@ -229,6 +231,13 @@ open class AutoLayout : ViewGroup {
             if (it is AutoLayout) {
                 setConstraintManagerRecursive(it, constraintManager)
             }
+        }
+    }
+
+    private fun requestLayoutRecursive(view: View) {
+        view.requestLayout()
+        (view as? AutoLayout)?.forEachChild {
+            requestLayoutRecursive(it)
         }
     }
 

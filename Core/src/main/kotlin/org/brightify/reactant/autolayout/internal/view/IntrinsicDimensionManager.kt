@@ -37,6 +37,8 @@ internal class IntrinsicDimensionManager(dimensionVariable: ConstraintVariable) 
     private val contentCompressionResistanceConstraint = Constraint(dimensionVariable.view,
             listOf(ConstraintItem(dimensionVariable, ConstraintOperator.greaterOrEqual)))
 
+    val usedConstraints = setOf(equalConstraint, contentHuggingConstraint, contentCompressionResistanceConstraint)
+
     init {
         deactivateConstraints()
 

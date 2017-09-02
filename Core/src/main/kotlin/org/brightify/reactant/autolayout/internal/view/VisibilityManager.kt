@@ -38,6 +38,8 @@ internal class VisibilityManager(view: View) {
     private val heightConstraint = Constraint(view,
             listOf(ConstraintItem(ConstraintVariable(view, ConstraintType.height), ConstraintOperator.equal)))
 
+    val usedConstraints = setOf(widthConstraint, heightConstraint)
+
     init {
         widthConstraint.deactivate()
         widthConstraint.initialized = true

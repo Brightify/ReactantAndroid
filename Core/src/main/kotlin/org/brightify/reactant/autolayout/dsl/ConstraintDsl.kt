@@ -117,7 +117,7 @@ class ConstraintDsl internal constructor(private val view: View) {
     }
 
     fun remakeConstraints(closure: ConstraintMakerProvider.() -> Unit) {
-        constraintManager.removeViewConstraints(view)
+        constraintManager.removeUserViewConstraints(view)
         makeConstraints(closure)
     }
 

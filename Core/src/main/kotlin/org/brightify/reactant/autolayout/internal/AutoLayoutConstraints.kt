@@ -11,12 +11,6 @@ import org.brightify.reactant.core.util.onChange
  */
 internal class AutoLayoutConstraints(autoLayout: AutoLayout) {
 
-    var isActive: Boolean by onChange(false) { _, _, _ ->
-        widthConstraint.isActive = isActive && width >= 0
-        heightConstraint.isActive = isActive && height >= 0
-        cornerConstraint.isActive = isActive
-    }
-
     var width: Double by onChange(-1.0) { _, _, _ ->
         widthConstraint.offset = width
         widthConstraint.isActive = isActive && width >= 0
@@ -35,6 +29,8 @@ internal class AutoLayoutConstraints(autoLayout: AutoLayout) {
         heightConstraint.operator = if (heightIsAtMost) ConstraintOperator.lessOrEqual else ConstraintOperator.equal
     }
 
+    private var isActive = false
+
     private val widthConstraint = Constraint(autoLayout,
             listOf(ConstraintItem(ConstraintVariable(autoLayout, ConstraintType.width), ConstraintOperator.equal)))
     private val heightConstraint = Constraint(autoLayout,
@@ -52,5 +48,12 @@ internal class AutoLayoutConstraints(autoLayout: AutoLayout) {
         widthConstraint.initialized = true
         heightConstraint.initialized = true
         cornerConstraint.initialized = true
+    }
+
+    fun setActive(isActive: Boolean) {
+        widthConstraint.isActive = isActive && width >= 0
+        heightConstraint.isActive = isActive && height >= 0
+        cornerConstraint.isActive = isActive
+        this.isActive = isActive
     }
 }

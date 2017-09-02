@@ -53,8 +53,7 @@ open class TabBarController(private val viewControllers: List<ViewController>) :
         tabBar.snp.makeConstraints {
             left.right.bottom.equalToSuperview()
         }
-        tabBar.snp.verticalContentHuggingPriority = ConstraintPriority.required
-        tabBar.snp.verticalContentCompressionResistancePriority = ConstraintPriority.required
+        tabBar.snp.setVerticalIntrinsicSizePriority(ConstraintPriority.required)
 
         viewControllers.forEach {
             addChildContainer(it)
@@ -67,17 +66,14 @@ open class TabBarController(private val viewControllers: List<ViewController>) :
     override fun viewWillAppear() {
         super.viewWillAppear()
 
-        tabBar.snp.verticalContentHuggingPriority = ConstraintPriority.required
-        tabBar.snp.verticalContentCompressionResistancePriority = ConstraintPriority.required
+        tabBar.snp.setVerticalIntrinsicSizePriority(ConstraintPriority.required)
         tabBar.visibility = View.VISIBLE
         ReactantActivity.instance.beforeKeyboardVisibilityChanged.subscribe {
             if (it) {
                 tabBar.visibility = View.GONE
-                tabBar.snp.verticalContentHuggingPriority = ConstraintPriority.low
-                tabBar.snp.verticalContentCompressionResistancePriority = ConstraintPriority.low
+                tabBar.snp.setVerticalIntrinsicSizePriority(ConstraintPriority.low)
             } else {
-                tabBar.snp.verticalContentHuggingPriority = ConstraintPriority.required
-                tabBar.snp.verticalContentCompressionResistancePriority = ConstraintPriority.required
+                tabBar.snp.setVerticalIntrinsicSizePriority(ConstraintPriority.required)
                 tabBar.visibility = View.VISIBLE
             }
         }.addTo(visibleDisposeBag)

@@ -136,8 +136,8 @@ internal class ConstraintManager {
         return newConstraintManager
     }
 
-    fun removeViewConstraints(view: View) {
-        constraints[view]?.forEach { removeConstraint(it) }
+    fun removeUserViewConstraints(view: View) {
+        ((constraints[view] ?: HashSet()) - (viewConstraints[view]?.usedConstraints ?: emptySet())).forEach { removeConstraint(it) }
     }
 
     fun getValueForVariable(variable: ConstraintVariable): Double {
@@ -170,8 +170,8 @@ internal class ConstraintManager {
     }
 
     private fun normalizeConstraints() {
-        constraints.forEach {
-            it.value.forEach {
+        HashMap(constraints).forEach {
+            HashSet(it.value).forEach {
                 if (!verifyViewsUsedByConstraint(it)) {
                     removeConstraint(it)
                 }

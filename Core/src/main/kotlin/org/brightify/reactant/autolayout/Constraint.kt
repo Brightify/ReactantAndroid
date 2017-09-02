@@ -63,6 +63,7 @@ class Constraint internal constructor(internal val view: View, internal val cons
             }
 
             isManaged = value
+            view.requestLayout()
         }
 
     internal var isManaged = true
@@ -128,7 +129,6 @@ class Constraint internal constructor(internal val view: View, internal val cons
             deactivate()
             closure()
             activate()
-            view.requestLayout()
         } else {
             closure()
         }

@@ -12,8 +12,8 @@ import org.brightify.reactant.core.ControllerBase
 import org.brightify.reactant.core.ReactantActivity
 import org.brightify.reactant.core.ViewBase
 import org.brightify.reactant.core.Wireframe
+import org.brightify.reactant.core.util.AutoLayout
 import org.brightify.reactant.core.util.Button
-import org.brightify.reactant.core.util.ContainerView
 import org.brightify.reactant.core.util.Style
 import org.brightify.reactant.core.util.TextView
 import org.brightify.reactant.prototyping.CustomView.Styles.text
@@ -24,6 +24,10 @@ import org.brightify.reactant.prototyping.CustomView.Styles.text
 class MainWireframe : Wireframe() {
 
     private val navigationController = NavigationController()
+
+    init {
+        ReactantActivity.instance.addChildContainer(navigationController)
+    }
 
     override fun entryPoint(): ViewController {
         val reactions = InitialController.Reactions {
@@ -76,7 +80,7 @@ class CustomView(title: String) : ViewBase<Int, Unit>() {
 
     private val text = TextView(title).apply(Styles.text)
     private val button = Button("Button")
-    private val container = ContainerView()
+    private val container = AutoLayout()
     private val view = TextView().apply { setBackgroundColor(Color.rgb(0, 255, 0)) }
     private val view2 = TextView().apply { setBackgroundColor(Color.rgb(0, 0, 255)) }
 
