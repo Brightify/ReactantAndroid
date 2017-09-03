@@ -17,7 +17,7 @@ import java.util.Stack
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
-open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : AppCompatActivity(), LifetimeDisposeBagContainerWithDelegate {
+open class ReactantActivity(private val wireframeFactory: () -> Wireframe): AppCompatActivity(), LifetimeDisposeBagContainerWithDelegate {
 
     companion object {
 
@@ -30,10 +30,8 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : App
         private val viewControllerStack = Stack<ViewController>()
 
         val context: Context by lazy {
-            instance?.let {
-                it.applicationContext.setTheme(it.applicationInfo.theme)
-                it.applicationContext
-            } ?: throw IllegalStateException("Cannot access context before Activity instance exists.")
+            instance.applicationContext.setTheme(instance.applicationInfo.theme)
+            instance.applicationContext
         }
     }
 
@@ -105,7 +103,7 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : App
         super.onStart()
 
         transactionManager.transaction {
-            viewControllerStack.forEach {
+            viewControllerStack.lastOrNull()?.let {
                 it.viewWillAppear()
                 contentView.addView(it.view)
             }
@@ -116,7 +114,7 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : App
         super.onResume()
 
         transactionManager.transaction {
-            viewControllerStack.forEach { it.viewDidAppear() }
+            viewControllerStack.lastOrNull()?.viewDidAppear()
         }
         onResumeSubject.onNext(Unit)
     }
@@ -125,7 +123,7 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : App
         super.onPause()
 
         transactionManager.transaction {
-            viewControllerStack.forEach { it.viewWillDisappear() }
+            viewControllerStack.lastOrNull()?.viewWillDisappear()
         }
         onPauseSubject.onNext(Unit)
     }
@@ -135,7 +133,7 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : App
 
         contentView.removeAllViews()
         transactionManager.transaction {
-            viewControllerStack.forEach { it.viewDidDisappear() }
+            viewControllerStack.lastOrNull()?.viewDidDisappear()
         }
     }
 
@@ -149,6 +147,11 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : App
 
     fun present(viewController: ViewController, animated: Boolean = true): Observable<Unit> {
         transactionManager.transaction {
+            viewControllerStack.lastOrNull()?.let {
+                it.viewWillDisappear()
+                contentView.removeView(it.view)
+                it.viewDidDisappear()
+            }
             viewController.retain()
             viewController.loadViewIfNeeded()
             viewControllerStack.push(viewController)
@@ -164,7 +167,7 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : App
         return Observable.just(Unit)
     }
 
-    fun <C : ViewController> present(viewController: Observable<C>, animated: Boolean = true): Observable<C> {
+    fun <C: ViewController> present(viewController: Observable<C>, animated: Boolean = true): Observable<C> {
         val replay = ReplaySubject.create<C>(1)
         viewController
                 .switchMap { controllerInstance ->
@@ -182,7 +185,7 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : App
     fun invalidateChildren() {
         transactionManager.transaction {
             contentView.removeAllViews()
-            viewControllerStack.forEach { contentView.addView(it.view) }
+            viewControllerStack.lastOrNull()?.let { contentView.addView(it.view) }
         }
     }
 
@@ -198,6 +201,7 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe) : App
                 viewControllerStack.peek().viewDidDisappear()
                 viewControllerStack.pop().release()
                 viewControllerStack.peek().viewWillAppear()
+                contentView.addView(viewControllerStack.peek().view)
                 viewControllerStack.peek().viewDidAppear()
             } else {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
