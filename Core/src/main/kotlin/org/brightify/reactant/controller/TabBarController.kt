@@ -28,6 +28,24 @@ open class TabBarController(private val viewControllers: List<ViewController>) :
         }
     }
 
+    var selectedViewController: ViewController?
+        get() = displayedViewController
+        set(value) {
+            if (selectedViewController != value) {
+                transactionManager.transaction {
+                    clearLayout(true)
+                    value?.let { showViewController(value) }
+                    displayedViewController?.viewDidAppear()
+                }
+            }
+        }
+
+    var selectedViewControllerIndex: Int
+        get() = tabBar.selectedItemId
+        set(value) {
+            tabBar.selectedItemId = value
+        }
+
     private val layoutContent = FrameLayout(ReactantActivity.context)
     private val layout = AutoLayout(ReactantActivity.context)
     private var displayedViewController: ViewController? = null
@@ -84,7 +102,7 @@ open class TabBarController(private val viewControllers: List<ViewController>) :
 
         transactionManager.transaction {
             clearLayout(false)
-            showViewController()
+            showViewController(viewControllers[tabBar.selectedItemId])
         }
     }
 
@@ -117,13 +135,7 @@ open class TabBarController(private val viewControllers: List<ViewController>) :
         viewController.tabBarItem?.imageRes?.let { item.setIcon(it) }
 
         item.setOnMenuItemClickListener {
-            if (tabBar.selectedItemId != item.itemId) {
-                transactionManager.transaction {
-                    clearLayout(true)
-                    showViewController(item.itemId)
-                    displayedViewController?.viewDidAppear()
-                }
-            }
+            selectedViewController = viewControllers[item.itemId]
             return@setOnMenuItemClickListener false
         }
     }
@@ -150,8 +162,9 @@ open class TabBarController(private val viewControllers: List<ViewController>) :
         }
     }
 
-    private fun showViewController(index: Int = tabBar.selectedItemId) {
-        displayedViewController = viewControllers[index]
+    private fun showViewController(viewController: ViewController) {
+        displayedViewController = viewController
+        tabBar.selectedItemId = viewControllers.indexOf(viewController)
         displayedViewController?.tabBarController = this
         displayedViewController?.viewWillAppear()
         addViewToHierarchy()
