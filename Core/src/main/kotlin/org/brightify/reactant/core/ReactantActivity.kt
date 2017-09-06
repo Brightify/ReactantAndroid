@@ -22,7 +22,7 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe): AppC
     companion object {
 
         val instance: ReactantActivity
-            get() = instanceOrNull ?: throw IllegalStateException("Instance has not been created yes.")
+            get() = instanceOrNull ?: throw IllegalStateException("Instance has not been created yet.")
 
         var instanceOrNull: ReactantActivity? = null
             private set
@@ -36,12 +36,6 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe): AppC
     }
 
     override val lifetimeDisposeBagContainerDelegate = LifetimeDisposeBagContainerDelegate({ /* No action on first retain */ })
-
-    private val transactionManager = TransactionManager()
-
-    private val onResumeSubject = PublishSubject.create<Unit>()
-    private val onPauseSubject = PublishSubject.create<Unit>()
-    private val onDestroySubject = PublishSubject.create<Unit>()
 
     val resumed: Observable<Unit>
         get() = onResumeSubject
@@ -61,6 +55,12 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe): AppC
     var screenOrientation: Int = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
 
     private lateinit var contentView: ReactantActivityContentView
+
+    private val transactionManager = TransactionManager()
+
+    private val onResumeSubject = ReplaySubject.create<Unit>(1)
+    private val onPauseSubject = ReplaySubject.create<Unit>(1)
+    private val onDestroySubject = ReplaySubject.create<Unit>(1)
 
     private val onLayoutSubject = PublishSubject.create<Unit>()
 
