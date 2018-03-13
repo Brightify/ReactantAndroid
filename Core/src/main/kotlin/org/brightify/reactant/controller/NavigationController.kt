@@ -3,6 +3,7 @@ package org.brightify.reactant.controller
 import android.graphics.Color
 import android.support.v4.content.ContextCompat
 import android.support.v7.widget.Toolbar
+import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.ViewGroup
 import android.widget.FrameLayout
@@ -27,7 +28,7 @@ open class NavigationController(private val initialController: ViewController?):
         }
     }
 
-    val toolbar = Toolbar(ReactantActivity.context)
+    val toolbar = Toolbar(ReactantActivity.context, null, R.attr.navigationBarStyle)
     private val layout = AutoLayout(ReactantActivity.context)
     private val layoutContent = FrameLayout(ReactantActivity.context)
     private val viewControllerStack = Stack<ViewController>()
