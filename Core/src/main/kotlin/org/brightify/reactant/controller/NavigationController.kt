@@ -5,6 +5,7 @@ import android.support.v4.content.ContextCompat
 import android.support.v7.widget.Toolbar
 import android.util.AttributeSet
 import android.util.TypedValue
+import android.view.ContextThemeWrapper
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import org.brightify.reactant.R
@@ -19,7 +20,9 @@ import java.util.Stack
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
  */
-open class NavigationController(private val initialController: ViewController?): ViewController() {
+open class NavigationController @JvmOverloads constructor(
+    private val initialController: ViewController? = null,
+    toolbarTheme: Int? = null): ViewController() {
 
     var isNavigationBarHidden: Boolean by onChange(false) { _, _, _ ->
         if (!transactionManager.isInTransaction) {
@@ -28,14 +31,16 @@ open class NavigationController(private val initialController: ViewController?):
         }
     }
 
-    val toolbar = Toolbar(ReactantActivity.context, null, R.attr.navigationBarStyle)
+    val toolbar: Toolbar = if(toolbarTheme != null) {
+            Toolbar(ContextThemeWrapper(ReactantActivity.context, toolbarTheme))
+        } else {
+            Toolbar(ReactantActivity.context, null, R.attr.navigationBarStyle)
+        }
     private val layout = AutoLayout(ReactantActivity.context)
     private val layoutContent = FrameLayout(ReactantActivity.context)
     private val viewControllerStack = Stack<ViewController>()
     private val toolbarHeight = 56 // FIXME get correct value
     private val transactionManager = TransactionManager()
-
-    constructor(): this(null)
 
     override fun init() {
         super.init()
@@ -216,8 +221,11 @@ open class NavigationController(private val initialController: ViewController?):
     }
 
     private fun resetViewControllerSpecificSettings() {
-        toolbar.navigationIcon = if (viewControllerStack.size > 1) ContextCompat.getDrawable(ReactantActivity.context,
-                R.drawable.abc_ic_ab_back_material) else null
+        toolbar.navigationIcon = if (viewControllerStack.size > 1) {
+            toolbar.context.getDrawable(R.drawable.abc_ic_ab_back_material)
+        } else {
+            null
+        }
         toolbar.setNavigationOnClickListener { pop() }
         toolbar.menu.clear()
         isNavigationBarHidden = false
