@@ -31,7 +31,7 @@ fun <STATE, ACTION> Component<STATE, ACTION>.setComponentState(state: STATE) {
     componentState = state
 }
 
-fun <STATE, ACTION> Component<STATE, ACTION>.withState(state: STATE): Component<STATE, ACTION> {
+fun <STATE, ACTION, COMPONENT: Component<STATE, ACTION>> COMPONENT.withState(state: STATE): COMPONENT {
     setComponentState(state)
     return this
 }
