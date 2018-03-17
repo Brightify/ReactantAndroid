@@ -22,7 +22,7 @@ class ReactantActivityContentView(context: Context): FrameLayout(context) {
         val decorView = ReactantActivity.instance.window.decorView
         val windowHeight = decorView.height
         val statusBarHeight = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            val statusBar = decorView.findViewById(android.R.id.statusBarBackground)
+            val statusBar = decorView.findViewById<View>(android.R.id.statusBarBackground)
             if (statusBar != null && statusBar.visibility == View.VISIBLE) {
                 statusBar.height
             } else {
@@ -32,7 +32,7 @@ class ReactantActivityContentView(context: Context): FrameLayout(context) {
             0
         }
         val navigationBarHeight = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            val navigationBar = decorView.findViewById(android.R.id.navigationBarBackground)
+            val navigationBar = decorView.findViewById<View>(android.R.id.navigationBarBackground)
             if (navigationBar != null && navigationBar.visibility == View.VISIBLE) {
                 navigationBar.height
             } else {

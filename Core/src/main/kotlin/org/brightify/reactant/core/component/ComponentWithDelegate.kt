@@ -10,7 +10,7 @@ interface ComponentWithDelegate<STATE, ACTION> : Component<STATE, ACTION> {
 
     val componentDelegate: ComponentDelegate<STATE, ACTION>
 
-    val actions: List<Observable<ACTION>>
+    val actions: List<Observable<out ACTION>>
 
     override val action: Observable<ACTION>
         get() = componentDelegate.action

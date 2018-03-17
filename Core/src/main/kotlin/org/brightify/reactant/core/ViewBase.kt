@@ -18,7 +18,7 @@ open class ViewBase<STATE, ACTION> : AutoLayout(ReactantActivity.context), Compo
 
     final override val componentDelegate = ComponentDelegate<STATE, ACTION>()
 
-    override val actions: List<Observable<ACTION>> = emptyList()
+    override val actions: List<Observable<out ACTION>> = emptyList()
 
     override val lifetimeDisposeBagContainerDelegate = LifetimeDisposeBagContainerDelegate { init() }
 

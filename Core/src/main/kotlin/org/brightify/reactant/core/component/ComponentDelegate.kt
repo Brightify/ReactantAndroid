@@ -59,7 +59,7 @@ class ComponentDelegate<STATE, ACTION> {
         needsUpdate = hasComponentState
     }
 
-    var actions: List<Observable<ACTION>> by Delegates.observable(emptyList()) { _, _, _ ->
+    var actions: List<Observable<out ACTION>> by Delegates.observable(emptyList()) { _, _, _ ->
         actionsDisposeBag.clear()
         Observable.merge(actions).subscribe(this::perform).addTo(actionsDisposeBag)
     }
