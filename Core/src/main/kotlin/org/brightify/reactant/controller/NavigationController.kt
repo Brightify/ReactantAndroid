@@ -226,7 +226,10 @@ open class NavigationController @JvmOverloads constructor(
         } else {
             null
         }
-        toolbar.setNavigationOnClickListener { pop() }
+        toolbar.setNavigationOnClickListener {
+            // TODO We should propagate information about "back type" (navigation | device button)
+            onBackPressed()
+        }
         toolbar.menu.clear()
         isNavigationBarHidden = false
     }
