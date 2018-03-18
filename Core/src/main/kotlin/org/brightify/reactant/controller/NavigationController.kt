@@ -193,7 +193,13 @@ open class NavigationController @JvmOverloads constructor(
         viewControllerStack.peek().navigationController = this
         viewControllerStack.peek().loadViewIfNeeded()
         viewControllerStack.peek().viewWillAppear()
-        tabBarController?.setTabBarHidden(viewControllerStack.peek().hidesBottomBarWhenPushed)
+
+        val shouldHideBottomBar = viewControllerStack
+            .map { it.hidesBottomBarWhenPushed }
+            .reduce { accumulator, hidesBottomBarWhenPushed ->
+                accumulator || hidesBottomBarWhenPushed
+            }
+        tabBarController?.setTabBarHidden(shouldHideBottomBar)
         addViewToHierarchy()
     }
 
