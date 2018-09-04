@@ -1,6 +1,18 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
+buildscript {
+    repositories {
+        jcenter()
+        mavenCentral()
+        google()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath 'com.android.tools.build:gradle:3.1.4'
+    }
+}
+
 android {
     compileSdkVersion 27
     buildToolsVersion "27.0.3"
