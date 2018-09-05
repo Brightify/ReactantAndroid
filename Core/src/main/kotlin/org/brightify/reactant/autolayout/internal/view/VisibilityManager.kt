@@ -10,7 +10,7 @@ import org.brightify.reactant.autolayout.internal.ConstraintType
 import org.brightify.reactant.core.util.onChange
 
 /**
- *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
+ *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
  */
 internal class VisibilityManager(view: View) {
 

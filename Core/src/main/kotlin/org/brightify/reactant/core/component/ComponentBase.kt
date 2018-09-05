@@ -6,7 +6,7 @@ import org.brightify.reactant.core.LifetimeDisposeBagContainerDelegate
 import org.brightify.reactant.core.LifetimeDisposeBagContainerWithDelegate
 
 /**
- *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
+ *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
  */
 open class ComponentBase<STATE, ACTION> : ComponentWithDelegate<STATE, ACTION>, LifetimeDisposeBagContainerWithDelegate {
 

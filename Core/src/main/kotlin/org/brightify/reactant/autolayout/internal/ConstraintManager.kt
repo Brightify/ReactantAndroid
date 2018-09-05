@@ -16,7 +16,7 @@ import org.brightify.reactant.autolayout.util.children
 import org.brightify.reactant.autolayout.util.description
 
 /**
- *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
+ *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
  */
 internal class ConstraintManager {
 

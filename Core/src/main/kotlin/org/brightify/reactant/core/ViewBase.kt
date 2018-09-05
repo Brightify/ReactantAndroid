@@ -11,7 +11,7 @@ import org.brightify.reactant.core.component.ComponentWithDelegate
 
 
 /**
- *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
+ *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
  */
 @SuppressLint("ViewConstructor")
 open class ViewBase<STATE, ACTION> : AutoLayout(ReactantActivity.context), ComponentWithDelegate<STATE, ACTION>, LifetimeDisposeBagContainerWithDelegate, ViewGroup.OnHierarchyChangeListener {

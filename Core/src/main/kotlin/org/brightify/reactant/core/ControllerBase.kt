@@ -9,7 +9,7 @@ import org.brightify.reactant.core.component.ComponentDelegate
 import org.brightify.reactant.core.component.ComponentWithDelegate
 
 /**
- *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
+ *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
  */
 open class ControllerBase<STATE, ROOT, ROOT_ACTION>(rootView: ROOT)
     : ViewController(), ComponentWithDelegate<STATE, Unit> where ROOT : View, ROOT : Component<*, ROOT_ACTION> {

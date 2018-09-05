@@ -8,7 +8,7 @@ import org.brightify.reactant.autolayout.internal.solver.Term
 import org.brightify.reactant.core.util.onChange
 
 /**
- *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
+ *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
  */
 internal class ConstraintItem(val leftVariable: ConstraintVariable, operator: ConstraintOperator,
                               val rightVariable: ConstraintVariable? = null, offset: Number = 0) {

@@ -3,7 +3,7 @@ package org.brightify.reactant.autolayout.internal.solver
 import org.brightify.reactant.autolayout.internal.util.isAlmostZero
 
 /**
- *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
+ *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
  */
 internal class Row(var constant: Double = 0.0) {
 

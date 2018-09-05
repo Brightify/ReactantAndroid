@@ -11,7 +11,7 @@ import org.brightify.reactant.controller.ViewController
 import org.brightify.reactant.core.ControllerWithResult
 
 /**
- *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
+ *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
  */
 fun <C : ViewController> NavigationController.push(viewController: Observable<C>, animated: Boolean = true) {
     viewController.subscribe { push(it, animated) }.addTo(lifetimeDisposeBag)

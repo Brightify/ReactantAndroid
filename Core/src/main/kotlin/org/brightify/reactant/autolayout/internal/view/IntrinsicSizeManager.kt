@@ -6,7 +6,7 @@ import org.brightify.reactant.autolayout.ConstraintVariable
 import org.brightify.reactant.autolayout.internal.ConstraintType
 
 /**
- *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
+ *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
  */
 internal class IntrinsicSizeManager(view: View) {
 

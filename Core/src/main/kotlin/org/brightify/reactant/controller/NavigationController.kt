@@ -18,7 +18,7 @@ import org.brightify.reactant.core.util.onChange
 import java.util.Stack
 
 /**
- *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
+ *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
  */
 open class NavigationController @JvmOverloads constructor(
     private val initialController: ViewController? = null,

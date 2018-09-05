@@ -5,7 +5,7 @@ import io.reactivex.disposables.CompositeDisposable
 import org.brightify.reactant.core.LifetimeDisposeBagContainer
 
 /**
- *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
+ *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
  */
 interface Component<STATE, ACTION>: LifetimeDisposeBagContainer {
     val stateDisposeBag: CompositeDisposable

@@ -19,7 +19,7 @@ import org.brightify.reactant.autolayout.AutoLayout
 import org.brightify.reactant.core.ReactantActivity
 
 /**
- *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
+ *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
  */
 fun View(): View {
     return View(ReactantActivity.context)

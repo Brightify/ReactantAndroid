@@ -4,7 +4,7 @@ import org.brightify.reactant.autolayout.ConstraintOperator
 import org.brightify.reactant.autolayout.ConstraintPriority
 
 /**
- *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
+ *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
  */
 internal class Equation(val terms: List<Term> = emptyList(),
                         val operator: ConstraintOperator = ConstraintOperator.equal,

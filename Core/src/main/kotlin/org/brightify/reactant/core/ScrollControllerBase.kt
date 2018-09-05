@@ -7,7 +7,7 @@ import org.brightify.reactant.autolayout.util.children
 import org.brightify.reactant.core.component.Component
 
 /**
- *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
+ *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
  */
 open class ScrollControllerBase<STATE, ROOT, ROOT_ACTION>(rootView: ROOT) : ControllerBase<STATE, ROOT, ROOT_ACTION>(
         rootView) where ROOT : View, ROOT : Component<*, ROOT_ACTION> {

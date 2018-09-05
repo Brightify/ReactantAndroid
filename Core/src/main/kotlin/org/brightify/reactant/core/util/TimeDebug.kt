@@ -5,7 +5,7 @@ import java.lang.Math.pow
 import java.util.Stack
 
 /**
- *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
+ *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
  */
 private data class Measurement(var called: Int = 0, var time: Long = 0)
 

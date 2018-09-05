@@ -15,7 +15,7 @@ import org.brightify.reactant.core.ReactantActivity
 import org.brightify.reactant.core.util.onChange
 
 /**
- *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>
+ *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
  */
 open class TabBarController(private val viewControllers: List<ViewController>) : ViewController() {
 
