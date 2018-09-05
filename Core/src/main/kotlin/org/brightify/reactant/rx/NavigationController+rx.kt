@@ -1,5 +1,7 @@
 package org.brightify.reactant.rx
 
+import com.gojuno.koptional.Optional
+import com.gojuno.koptional.toOptional
 import io.reactivex.Observable
 import io.reactivex.rxkotlin.addTo
 import io.reactivex.rxkotlin.subscribeBy
@@ -16,12 +18,12 @@ fun <C : ViewController> NavigationController.push(viewController: Observable<C>
 }
 
 fun <C : ViewController> NavigationController.replace(viewController: Observable<C>,
-                                                      animated: Boolean = true): Observable<ViewController?> {
-    val replacedController = ReplaySubject.create<ViewController?>(1)
+                                                      animated: Boolean = true): Observable<Optional<ViewController>> {
+    val replacedController = ReplaySubject.create<Optional<ViewController>>(1)
     viewController
             .subscribeBy(
                     onNext = { controller ->
-                        replacedController.onNext(replace(viewController = controller, animated = animated))
+                        replacedController.onNext(replace(viewController = controller, animated = animated).toOptional())
                     },
                     onComplete = { replacedController.onComplete() }
             )
