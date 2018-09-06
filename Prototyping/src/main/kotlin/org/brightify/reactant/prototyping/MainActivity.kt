@@ -151,7 +151,7 @@ class CustomView(context: Context, title: String): ViewBase<String, Unit>(contex
 
     //    override val actions: List<Observable<Unit>> = listOf(button1.clicks())
 
-    override fun update() {
+    override fun update(previousComponentState: String?) {
         setBackgroundColor(Color.parseColor(componentState))
     }
 

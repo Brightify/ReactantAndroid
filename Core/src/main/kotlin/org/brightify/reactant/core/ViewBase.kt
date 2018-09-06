@@ -45,7 +45,7 @@ open class ViewBase<STATE, ACTION>(context: Context, initialState: STATE): AutoL
 
     override fun needsUpdate(): Boolean = true
 
-    override fun update() {
+    override fun update(previousComponentState: STATE?) {
     }
 
     open fun loadView() {

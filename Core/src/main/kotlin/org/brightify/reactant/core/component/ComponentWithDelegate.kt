@@ -24,9 +24,6 @@ interface ComponentWithDelegate<STATE, ACTION> : Component<STATE, ACTION> {
     override val observableState: Observable<STATE>
         get() = componentDelegate.observableState
 
-    override val previousComponentState: STATE?
-        get() = componentDelegate.previousComponentState
-
     override var componentState: STATE
         get() = componentDelegate.componentState
         set(value) {

@@ -30,6 +30,6 @@ open class ComponentBase<STATE, ACTION>(initialState: STATE) : ComponentWithDele
         return true
     }
 
-    override fun update() {
+    override fun update(previousComponentState: STATE?) {
     }
 }

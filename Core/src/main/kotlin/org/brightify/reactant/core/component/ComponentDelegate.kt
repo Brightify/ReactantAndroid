@@ -17,11 +17,11 @@ class ComponentDelegate<STATE, ACTION>(val initialState: STATE) {
     val observableState: Observable<STATE>
         get() = observableStateSubject
 
-    var previousComponentState: STATE? = null
+    var temporaryPreviousComponentState: STATE? = null
         private set
 
     var componentState: STATE by Delegates.observable(initialState) { _, oldValue, _ ->
-        previousComponentState = oldValue
+        temporaryPreviousComponentState = oldValue
         needsUpdate = true
     }
 
@@ -61,15 +61,15 @@ class ComponentDelegate<STATE, ACTION>(val initialState: STATE) {
     private fun update() {
         needsUpdate = false
 
-        // TODO Exceptions
         if (ownerComponent == null) {
-            throw UnsupportedOperationException()
+            throw UnsupportedOperationException("Owner component must be set before update is called.")
         }
 
         if (ownerComponent?.needsUpdate() == true) {
             stateDisposeBag.clear()
-            ownerComponent?.update()
+            ownerComponent?.update(temporaryPreviousComponentState)
             observableStateSubject.onNext(componentState)
+            temporaryPreviousComponentState = null
         }
     }
 }

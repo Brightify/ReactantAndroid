@@ -41,7 +41,7 @@ open class ControllerBase<STATE, ROOT, ROOT_ACTION>(initialState: STATE, private
 
     override fun needsUpdate(): Boolean = true
 
-    override fun update() {
+    override fun update(previousComponentState: STATE?) {
     }
 
     override fun loadView() {

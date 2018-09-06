@@ -12,15 +12,13 @@ interface Component<STATE, ACTION> {
 
     val observableState: Observable<STATE>
 
-    val previousComponentState: STATE?
-
     var componentState: STATE
 
     val action: Observable<ACTION>
 
     fun needsUpdate(): Boolean
 
-    fun update()
+    fun update(previousComponentState: STATE?)
 
     fun perform(action: ACTION)
 }
