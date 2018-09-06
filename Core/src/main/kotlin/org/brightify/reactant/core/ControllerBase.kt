@@ -59,7 +59,7 @@ open class ControllerBase<STATE, ROOT, ROOT_ACTION>(initialState: STATE, private
         (newRootView as? ViewBase<*, *>)?.init()
 
         newRootView.observableState.subscribe { rootViewState = StateWrapper.HasState(it) }
-        newRootView.action.subscribe { act(it) }.addTo(viewLifecycleDisposeBag)
+        newRootView.action.subscribe { act(it) }.addTo(viewLifetimeDisposeBag)
 
         view = newRootView
     }

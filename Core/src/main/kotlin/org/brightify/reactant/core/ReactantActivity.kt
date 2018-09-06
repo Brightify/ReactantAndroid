@@ -8,6 +8,7 @@ import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.addTo
 import io.reactivex.rxkotlin.subscribeBy
+import io.reactivex.subjects.BehaviorSubject
 import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.ReplaySubject
 import org.brightify.reactant.controller.ViewController
@@ -21,10 +22,13 @@ import java.util.UUID
 open class ReactantActivity(private val wireframeFactory: () -> Wireframe): AppCompatActivity() {
 
     val resumed: Observable<Unit>
-        get() = onResumeSubject
+        get() = isResumed.filter { it }.map { }
 
     val paused: Observable<Unit>
-        get() = onPauseSubject
+        get() = isResumed.filter { !it }.map { }
+
+    val isResumed: Observable<Boolean>
+        get() = isResumedSubject
 
     val destroyed: Observable<Unit>
         get() = onDestroySubject
@@ -42,8 +46,7 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe): AppC
     private lateinit var contentView: ReactantActivityContentView
 
     private val transactionManager = TransactionManager()
-    private val onResumeSubject = ReplaySubject.create<Unit>(1)
-    private val onPauseSubject = ReplaySubject.create<Unit>(1)
+    private val isResumedSubject = BehaviorSubject.createDefault(false)
     private val onDestroySubject = ReplaySubject.create<Unit>(1)
 
     private val onLayoutSubject = PublishSubject.create<Unit>()
@@ -108,7 +111,7 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe): AppC
         transactionManager.transaction {
             viewControllerStack.lastOrNull()?.viewDidAppear()
         }
-        onResumeSubject.onNext(Unit)
+        isResumedSubject.onNext(true)
     }
 
     override fun onPause() {
@@ -117,7 +120,7 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe): AppC
         transactionManager.transaction {
             viewControllerStack.lastOrNull()?.viewWillDisappear()
         }
-        onPauseSubject.onNext(Unit)
+        isResumedSubject.onNext(false)
     }
 
     override fun onStop() {

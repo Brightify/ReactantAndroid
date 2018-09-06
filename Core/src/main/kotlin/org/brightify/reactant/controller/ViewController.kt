@@ -19,7 +19,7 @@ open class ViewController(title: String = "") {
 
     val visibleDisposeBag = CompositeDisposable()
 
-    val viewLifecycleDisposeBag = CompositeDisposable()
+    val viewLifetimeDisposeBag = CompositeDisposable()
 
     val activeDisposeBag = CompositeDisposable()
 
@@ -151,7 +151,7 @@ open class ViewController(title: String = "") {
     }
 
     open fun loadView() {
-        viewLifecycleDisposeBag.clear()
+        viewLifetimeDisposeBag.clear()
     }
 
     open fun viewDidLoad() {
@@ -189,7 +189,7 @@ open class ViewController(title: String = "") {
     }
 
     open fun viewDestroyed() {
-        viewLifecycleDisposeBag.clear()
+        viewLifetimeDisposeBag.clear()
     }
 
     open fun deactivated() {
