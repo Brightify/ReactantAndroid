@@ -1,11 +1,11 @@
 package org.brightify.reactant.core
 
-import android.content.Context
 import android.content.pm.ActivityInfo
 import android.os.Build
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import io.reactivex.Observable
+import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.addTo
 import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.subjects.PublishSubject
@@ -13,29 +13,12 @@ import io.reactivex.subjects.ReplaySubject
 import org.brightify.reactant.controller.ViewController
 import org.brightify.reactant.controller.util.TransactionManager
 import java.util.Stack
+import java.util.UUID
 
 /**
  *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
  */
-open class ReactantActivity(private val wireframeFactory: () -> Wireframe): AppCompatActivity(), LifetimeDisposeBagContainerWithDelegate {
-
-    companion object {
-
-        val instance: ReactantActivity
-            get() = instanceOrNull ?: throw IllegalStateException("Instance has not been created yet.")
-
-        var instanceOrNull: ReactantActivity? = null
-            private set
-
-        private val viewControllerStack = Stack<ViewController>()
-
-        val context: Context by lazy {
-            instance.applicationContext.setTheme(instance.applicationInfo.theme)
-            instance.applicationContext
-        }
-    }
-
-    override val lifetimeDisposeBagContainerDelegate = LifetimeDisposeBagContainerDelegate({ /* No action on first retain */ })
+open class ReactantActivity(private val wireframeFactory: () -> Wireframe): AppCompatActivity() {
 
     val resumed: Observable<Unit>
         get() = onResumeSubject
@@ -54,36 +37,37 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe): AppC
 
     var screenOrientation: Int = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
 
+    val lifetimeDisposeBag = CompositeDisposable()
+
     private lateinit var contentView: ReactantActivityContentView
 
     private val transactionManager = TransactionManager()
-
     private val onResumeSubject = ReplaySubject.create<Unit>(1)
     private val onPauseSubject = ReplaySubject.create<Unit>(1)
     private val onDestroySubject = ReplaySubject.create<Unit>(1)
 
     private val onLayoutSubject = PublishSubject.create<Unit>()
 
+    private val viewControllerStack = Stack<ViewController>()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        instanceOrNull = this
-
-        retain()
 
         contentView = ReactantActivityContentView(this)
         setContentView(contentView)
 
         transactionManager.transaction {
-            if (savedInstanceState == null) {
-                viewControllerStack.clear()
+            if (savedInstanceState != null) {
+                val key = savedInstanceState.getString(SAVED_STATE_KEY)
+                viewControllerStack.addAll(savedStates[key] ?: emptyList())
+                savedStates.remove(key)
             }
 
             if (viewControllerStack.empty()) {
-                viewControllerStack.push(wireframeFactory().entryPoint())
-                viewControllerStack.peek().retain()
-                viewControllerStack.peek().loadViewIfNeeded()
+                viewControllerStack.push(wireframeFactory().entrypoint())
             }
+
+            viewControllerStack.forEach { it.activity_ = this }
         }
 
         contentView.viewTreeObserver.addOnGlobalLayoutListener {
@@ -91,6 +75,14 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe): AppC
         }
 
         transactionManager.enabled = true
+    }
+
+    override fun onSaveInstanceState(outState: Bundle?) {
+        super.onSaveInstanceState(outState)
+
+        val key = UUID.randomUUID().toString()
+        outState?.putString(SAVED_STATE_KEY, key)
+        savedStates[key] = viewControllerStack
     }
 
     override fun onBackPressed() {
@@ -139,8 +131,10 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe): AppC
 
     override fun onDestroy() {
         onDestroySubject.onNext(Unit)
-        release()
-        instanceOrNull = null
+
+        lifetimeDisposeBag.clear()
+
+        viewControllerStack.forEach { it.activity_ = null }
 
         super.onDestroy()
     }
@@ -152,8 +146,7 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe): AppC
                 contentView.removeView(it.view)
                 it.viewDidDisappear()
             }
-            viewController.retain()
-            viewController.loadViewIfNeeded()
+            viewController.activity_ = this
             viewControllerStack.push(viewController)
             viewController.viewWillAppear()
             contentView.addView(viewController.view)
@@ -199,7 +192,7 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe): AppC
                 viewControllerStack.peek().viewWillDisappear()
                 contentView.removeView(viewControllerStack.peek().view)
                 viewControllerStack.peek().viewDidDisappear()
-                viewControllerStack.pop().release()
+                viewControllerStack.pop().activity_ = null
                 viewControllerStack.peek().viewWillAppear()
                 contentView.addView(viewControllerStack.peek().view)
                 viewControllerStack.peek().viewDidAppear()
@@ -211,5 +204,12 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe): AppC
                 }
             }
         }
+    }
+
+    companion object {
+
+        private const val SAVED_STATE_KEY = "saved_state_key"
+
+        private val savedStates = HashMap<String, Stack<ViewController>>()
     }
 }

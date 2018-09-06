@@ -10,6 +10,9 @@ interface ComponentWithDelegate<STATE, ACTION> : Component<STATE, ACTION> {
 
     val componentDelegate: ComponentDelegate<STATE, ACTION>
 
+    val initialState: STATE
+        get() = componentDelegate.initialState
+
     val actions: List<Observable<out ACTION>>
 
     override val action: Observable<ACTION>
@@ -40,7 +43,5 @@ interface ComponentWithDelegate<STATE, ACTION> : Component<STATE, ACTION> {
 }
 
 fun <STATE, ACTION> ComponentWithDelegate<STATE, ACTION>.invalidate() {
-    if (componentDelegate.hasComponentState) {
-        componentDelegate.needsUpdate = true
-    }
+    componentDelegate.needsUpdate = true
 }

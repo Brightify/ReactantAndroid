@@ -1,9 +1,7 @@
 package org.brightify.reactant.controller
 
 import android.graphics.Color
-import android.support.v4.content.ContextCompat
 import android.support.v7.widget.Toolbar
-import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.ContextThemeWrapper
 import android.view.ViewGroup
@@ -13,16 +11,15 @@ import org.brightify.reactant.autolayout.AutoLayout
 import org.brightify.reactant.autolayout.util.children
 import org.brightify.reactant.autolayout.util.snp
 import org.brightify.reactant.controller.util.TransactionManager
-import org.brightify.reactant.core.ReactantActivity
 import org.brightify.reactant.core.util.onChange
 import java.util.Stack
 
 /**
  *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
  */
-open class NavigationController @JvmOverloads constructor(
-    private val initialController: ViewController? = null,
-    toolbarTheme: Int? = null): ViewController() {
+open class NavigationController(
+        private val initialController: ViewController? = null,
+        private val toolbarTheme: Int? = null): ViewController() {
 
     var isNavigationBarHidden: Boolean by onChange(false) { _, _, _ ->
         if (!transactionManager.isInTransaction) {
@@ -31,27 +28,36 @@ open class NavigationController @JvmOverloads constructor(
         }
     }
 
-    val toolbar: Toolbar = if(toolbarTheme != null) {
-            Toolbar(ContextThemeWrapper(ReactantActivity.context, toolbarTheme))
-        } else {
-            Toolbar(ReactantActivity.context, null, R.attr.navigationBarStyle)
-        }
-    private val layout = AutoLayout(ReactantActivity.context)
-    private val layoutContent = FrameLayout(ReactantActivity.context)
+    lateinit var toolbar: Toolbar
+        private set
+
+    private lateinit var layout: AutoLayout
+    private lateinit var layoutContent: FrameLayout
     private val viewControllerStack = Stack<ViewController>()
     private val toolbarHeight = 56 // FIXME get correct value
     private val transactionManager = TransactionManager()
 
-    override fun init() {
-        super.init()
+    override fun activityChanged() {
+        super.activityChanged()
 
-        loadViewIfNeeded()
+        viewControllerStack.forEach {
+            it.activity_ = activity_
+        }
     }
 
     override fun loadView() {
         super.loadView()
 
-        view = FrameLayout(ReactantActivity.context)
+        toolbar = if (toolbarTheme != null) {
+            Toolbar(ContextThemeWrapper(activity, toolbarTheme))
+        } else {
+            Toolbar(activity, null, R.attr.navigationBarStyle)
+        }
+
+        layout = AutoLayout(activity)
+        layoutContent = FrameLayout(activity)
+
+        view = FrameLayout(activity)
         view.setBackgroundColor(getWindowBackgroundColor())
 
         layout.children(toolbar, layoutContent)
@@ -66,9 +72,7 @@ open class NavigationController @JvmOverloads constructor(
             bottom.left.right.equalToSuperview()
         }
 
-        initialController?.let { addChildContainer(it) }
         initialController?.navigationController = this
-        initialController?.loadViewIfNeeded()
         initialController?.let { viewControllerStack.push(it) }
 
         transactionManager.enabled = true
@@ -101,16 +105,24 @@ open class NavigationController @JvmOverloads constructor(
         viewControllerStack.peek().viewDidDisappear()
     }
 
+    override fun deactivated() {
+        super.deactivated()
+
+        viewControllerStack.forEach {
+            it.activity_ = activity_
+        }
+    }
+
     override fun onBackPressed(): Boolean {
         if (viewControllerStack.peek().onBackPressed()) {
             return true
         }
 
-        if (viewControllerStack.size > 1) {
+        return if (viewControllerStack.size > 1) {
             pop()
-            return true
+            true
         } else {
-            return false
+            false
         }
     }
 
@@ -120,7 +132,6 @@ open class NavigationController @JvmOverloads constructor(
 
     fun push(viewController: ViewController, animated: Boolean = true) {
         transactionManager.transaction {
-            addChildContainer(viewController)
             clearLayout(!viewControllerStack.empty())
             viewControllerStack.push(viewController)
             showViewController()
@@ -138,34 +149,32 @@ open class NavigationController @JvmOverloads constructor(
             val viewController = viewControllerStack.pop()
             showViewController()
             viewControllerStack.peek().viewDidAppear()
-            removeChildContainer(viewController)
+            viewController.activity_ = null
             return@transaction viewController
         }
     }
 
     fun replace(viewController: ViewController, animated: Boolean = true): ViewController? {
         return transactionManager.transaction {
-            addChildContainer(viewController)
             clearLayout(!viewControllerStack.empty())
             val old = viewControllerStack.pop()
             viewControllerStack.push(viewController)
             showViewController()
             viewControllerStack.peek().viewDidAppear()
-            removeChildContainer(old)
+            old.activity_ = null
             return@transaction old
         }
     }
 
     fun replaceAll(viewController: ViewController, animated: Boolean = true): List<ViewController> {
         return transactionManager.transaction {
-            addChildContainer(viewController)
             clearLayout(!viewControllerStack.empty())
             val viewControllers = viewControllerStack.elements().toList()
             viewControllerStack.clear()
             viewControllerStack.push(viewController)
             showViewController()
             viewController.viewDidAppear()
-            viewControllers.forEach { removeChildContainer(it) }
+            viewControllers.forEach { it.activity_ = null }
             return@transaction viewControllers
         } ?: emptyList()
     }
@@ -190,15 +199,15 @@ open class NavigationController @JvmOverloads constructor(
 
     private fun showViewController() {
         resetViewControllerSpecificSettings()
+        viewControllerStack.peek().activity_ = activity_
         viewControllerStack.peek().navigationController = this
-        viewControllerStack.peek().loadViewIfNeeded()
         viewControllerStack.peek().viewWillAppear()
 
         val shouldHideBottomBar = viewControllerStack
-            .map { it.hidesBottomBarWhenPushed }
-            .reduce { accumulator, hidesBottomBarWhenPushed ->
-                accumulator || hidesBottomBarWhenPushed
-            }
+                .map { it.hidesBottomBarWhenPushed }
+                .reduce { accumulator, hidesBottomBarWhenPushed ->
+                    accumulator || hidesBottomBarWhenPushed
+                }
         tabBarController?.setTabBarHidden(shouldHideBottomBar)
         addViewToHierarchy()
     }
@@ -214,15 +223,15 @@ open class NavigationController @JvmOverloads constructor(
 
     private fun getWindowBackgroundColor(): Int {
         val a = TypedValue()
-        ReactantActivity.instance.theme.resolveAttribute(android.R.attr.windowBackground, a, true)
-        if (a.type >= TypedValue.TYPE_FIRST_COLOR_INT && a.type <= TypedValue.TYPE_LAST_COLOR_INT) {
+        activity.theme.resolveAttribute(android.R.attr.windowBackground, a, true)
+        return if (a.type >= TypedValue.TYPE_FIRST_COLOR_INT && a.type <= TypedValue.TYPE_LAST_COLOR_INT) {
             // windowBackground is a color
-            return a.data
+            a.data
         } else {
             // windowBackground is not a color, probably a drawable
             // FIXME solve window background drawables - not very often used in our apps
             ///val d = activity.getResources().getDrawable(a.resourceId)
-            return Color.WHITE
+            Color.WHITE
         }
     }
 

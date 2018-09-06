@@ -14,7 +14,7 @@ import org.brightify.reactant.core.ControllerWithResult
  *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
  */
 fun <C : ViewController> NavigationController.push(viewController: Observable<C>, animated: Boolean = true) {
-    viewController.subscribe { push(it, animated) }.addTo(lifetimeDisposeBag)
+    viewController.subscribe { push(it, animated) }.addTo(activeDisposeBag)
 }
 
 fun <C : ViewController> NavigationController.replace(viewController: Observable<C>,
@@ -27,7 +27,7 @@ fun <C : ViewController> NavigationController.replace(viewController: Observable
                     },
                     onComplete = { replacedController.onComplete() }
             )
-            .addTo(lifetimeDisposeBag)
+            .addTo(activeDisposeBag)
     return replacedController
 }
 
@@ -43,7 +43,7 @@ fun <C : ViewController> NavigationController.replaceAll(viewController: Observa
                     onNext = { oldControllers.onNext(replaceAll(viewController = it, animated = animated)) },
                     onComplete = { oldControllers.onComplete() }
             )
-            .addTo(lifetimeDisposeBag)
+            .addTo(activeDisposeBag)
 
     return oldControllers
 }
@@ -56,7 +56,7 @@ fun <C : ViewController, T> NavigationController.push(viewController: Observable
             .subscribeBy(
                     onNext = { push(viewController = it, animated = animated) }
             )
-            .addTo(lifetimeDisposeBag)
+            .addTo(activeDisposeBag)
 
     return sharedController.flatMap { it.result }
 }

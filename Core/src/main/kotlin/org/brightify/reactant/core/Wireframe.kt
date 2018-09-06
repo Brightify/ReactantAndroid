@@ -12,12 +12,13 @@ import java.lang.ref.WeakReference
  */
 abstract class Wireframe {
 
-    abstract fun entryPoint(): ViewController
+    abstract fun entrypoint(): ViewController
 }
 
 class FutureControllerProvider<T : ViewController> {
 
     internal var controllerRef: WeakReference<T>? = null
+
     val controller: T?
        get() = controllerRef?.get()
 
@@ -36,7 +37,7 @@ data class ControllerWithResult<T : ViewController, U>(val controller: T, val re
 
 fun <T : ViewController, U> Wireframe.create(factory: (FutureControllerProvider<T>, Observer<U>) -> T): ControllerWithResult<T, U> {
     val futureControllerProvider = FutureControllerProvider<T>()
-    val subject: PublishSubject<U> = PublishSubject.create()
+    val subject = PublishSubject.create<U>()
     val controller = factory(futureControllerProvider, subject)
     futureControllerProvider.controllerRef = WeakReference(controller)
     return ControllerWithResult(controller, subject)

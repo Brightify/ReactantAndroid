@@ -1,17 +1,16 @@
 package org.brightify.reactant.core
 
-import android.content.Context
+import android.annotation.SuppressLint
 import android.os.Build
 import android.view.View
 import android.widget.FrameLayout
-import io.reactivex.Observable
-import io.reactivex.Single
 import io.reactivex.subjects.PublishSubject
 
 /**
 *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
 */
-class ReactantActivityContentView(context: Context): FrameLayout(context) {
+@SuppressLint("ViewConstructor")
+class ReactantActivityContentView(private val activity: ReactantActivity): FrameLayout(activity) {
 
     val beforeKeyboardVisibilityChangeSubject: PublishSubject<Boolean> = PublishSubject.create<Boolean>()
 
@@ -19,7 +18,7 @@ class ReactantActivityContentView(context: Context): FrameLayout(context) {
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val measuredHeight = MeasureSpec.getSize(heightMeasureSpec)
-        val decorView = ReactantActivity.instance.window.decorView
+        val decorView = activity.window.decorView
         val windowHeight = decorView.height
         val statusBarHeight = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             val statusBar = decorView.findViewById<View>(android.R.id.statusBarBackground)

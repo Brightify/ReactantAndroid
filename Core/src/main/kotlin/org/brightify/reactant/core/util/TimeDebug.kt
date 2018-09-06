@@ -29,11 +29,10 @@ fun <T> measure(name: String, code: () -> T): T {
         if (timeData[it] == null) {
             timeData[it] = Measurement()
         }
-//        timeData[it]?.time = (timeData[it]?.time ?: 0) - time
+        timeData[it]?.time = (timeData[it]?.time ?: 0) - time
     }
 
     return returnValue
-//    return code()
 }
 
 fun printTimes() {

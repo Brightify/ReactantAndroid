@@ -10,12 +10,7 @@ import kotlin.properties.Delegates
 /**
  *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
  */
-class ComponentDelegate<STATE, ACTION> {
-
-    sealed class StateWrapper<STATE> {
-        class HasState<STATE>(val state: STATE) : StateWrapper<STATE>()
-        class NoState<STATE> : StateWrapper<STATE>()
-    }
+class ComponentDelegate<STATE, ACTION>(val initialState: STATE) {
 
     val stateDisposeBag = CompositeDisposable()
 
@@ -25,20 +20,10 @@ class ComponentDelegate<STATE, ACTION> {
     var previousComponentState: STATE? = null
         private set
 
-    var componentState: STATE
-        get() {
-            val state = stateStorage
-            if (state is StateWrapper.HasState<STATE>) {
-                return state.state
-            } else {
-                throw UnsupportedOperationException()
-            }
-        }
-        set(value) {
-            previousComponentState = (stateStorage as? StateWrapper.HasState)?.state
-            stateStorage = StateWrapper.HasState(value)
-            needsUpdate = true
-        }
+    var componentState: STATE by Delegates.observable(initialState) { _, oldValue, _ ->
+        previousComponentState = oldValue
+        needsUpdate = true
+    }
 
     val action: Observable<ACTION>
         get() = actionSubject
@@ -56,7 +41,7 @@ class ComponentDelegate<STATE, ACTION> {
     }
 
     var ownerComponent: Component<STATE, ACTION>? by Delegates.observable<Component<STATE, ACTION>?>(null) { _, _, _ ->
-        needsUpdate = hasComponentState
+        needsUpdate = true
     }
 
     var actions: List<Observable<out ACTION>> by Delegates.observable(emptyList()) { _, _, _ ->
@@ -64,13 +49,8 @@ class ComponentDelegate<STATE, ACTION> {
         Observable.merge(actions).subscribe(this::perform).addTo(actionsDisposeBag)
     }
 
-    val hasComponentState: Boolean
-        get() = stateStorage is StateWrapper.HasState
-
     private val observableStateSubject = ReplaySubject.create<STATE>(1)
     private val actionSubject = PublishSubject.create<ACTION>()
-
-    private var stateStorage: StateWrapper<STATE> = StateWrapper.NoState()
 
     private val actionsDisposeBag = CompositeDisposable()
 
@@ -79,13 +59,9 @@ class ComponentDelegate<STATE, ACTION> {
     }
 
     private fun update() {
-        // TODO Exceptions
-        if (!hasComponentState) {
-            throw UnsupportedOperationException()
-        }
-
         needsUpdate = false
 
+        // TODO Exceptions
         if (ownerComponent == null) {
             throw UnsupportedOperationException()
         }

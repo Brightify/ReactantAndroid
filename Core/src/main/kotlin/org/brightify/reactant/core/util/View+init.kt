@@ -1,3 +1,5 @@
+@file:Suppress("FunctionName")
+
 package org.brightify.reactant.core.util
 
 import android.support.design.widget.FloatingActionButton
@@ -16,79 +18,79 @@ import android.widget.ScrollView
 import android.widget.Switch
 import android.widget.TextView
 import org.brightify.reactant.autolayout.AutoLayout
-import org.brightify.reactant.core.ReactantActivity
+import org.brightify.reactant.core.ViewBase
 
 /**
  *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
  */
-fun View(): View {
-    return View(ReactantActivity.context)
+fun ViewBase<*, *>.View(): View {
+    return View(context)
 }
 
-fun ImageView(): ImageView {
-    return ImageView(ReactantActivity.context)
+fun ViewBase<*, *>.ImageView(): ImageView {
+    return ImageView(context)
 }
 
-fun ImageButton(): ImageButton {
-    return ImageButton(ReactantActivity.context)
+fun ViewBase<*, *>.ImageButton(): ImageButton {
+    return ImageButton(context)
 }
 
-fun TextView(): TextView {
-    return TextView(ReactantActivity.context)
+fun ViewBase<*, *>.TextView(): TextView {
+    return TextView(context)
 }
 
-fun TextView(text: String): TextView {
+fun ViewBase<*, *>.TextView(text: String): TextView {
     return TextView().apply { this.text = text }
 }
 
-fun Button(): Button {
-    return Button(ReactantActivity.context)
+fun ViewBase<*, *>.Button(): Button {
+    return Button(context)
 }
 
-fun Button(text: String): Button {
+fun ViewBase<*, *>.Button(text: String): Button {
     return Button().apply { this.text = text }
 }
 
-fun EditText(): EditText {
-    return EditText(ReactantActivity.context)
+fun ViewBase<*, *>.EditText(): EditText {
+    return EditText(context)
 }
 
-fun TextInputEditText(): TextInputEditText {
-    return TextInputEditText(ReactantActivity.context)
+fun ViewBase<*, *>.TextInputEditText(): TextInputEditText {
+    return TextInputEditText(context)
 }
 
-fun ProgressBar(): ProgressBar {
-    return ProgressBar(ReactantActivity.context)
+fun ViewBase<*, *>.ProgressBar(): ProgressBar {
+    return ProgressBar(context)
 }
 
-fun Switch(): Switch {
-    return Switch(ReactantActivity.context)
+fun ViewBase<*, *>.Switch(): Switch {
+    return Switch(context)
 }
 
-fun AutoLayout(): AutoLayout {
-    return AutoLayout(ReactantActivity.context)
+fun ViewBase<*, *>.AutoLayout(): AutoLayout {
+    return AutoLayout(context)
 }
 
-fun ScrollView(): ScrollView {
-    return ScrollView(ReactantActivity.context)
+fun ViewBase<*, *>.ScrollView(): ScrollView {
+    return ScrollView(context)
 }
 
-fun FrameLayout(): FrameLayout {
-    return FrameLayout(ReactantActivity.context)
+fun ViewBase<*, *>.FrameLayout(): FrameLayout {
+    return FrameLayout(context)
 }
 
-fun RecyclerView(): RecyclerView {
-    return RecyclerView(ReactantActivity.context)
+fun ViewBase<*, *>.RecyclerView(): RecyclerView {
+    return RecyclerView(context)
 }
 
-fun SwipeRefreshLayout(): SwipeRefreshLayout {
-    return SwipeRefreshLayout(ReactantActivity.context)
+fun ViewBase<*, *>.SwipeRefreshLayout(): SwipeRefreshLayout {
+    return SwipeRefreshLayout(context)
 }
 
-fun TextInputLayout(): TextInputLayout {
-    return TextInputLayout(ReactantActivity.context)
+fun ViewBase<*, *>.TextInputLayout(): TextInputLayout {
+    return TextInputLayout(context)
 }
 
-fun FloatingActionButton(): FloatingActionButton {
-    return FloatingActionButton(ReactantActivity.context)
+fun ViewBase<*, *>.FloatingActionButton(): FloatingActionButton {
+    return FloatingActionButton(context)
 }

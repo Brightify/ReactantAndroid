@@ -1,5 +1,6 @@
 package org.brightify.reactant.core
 
+import android.content.Context
 import android.view.View
 import io.reactivex.Observable
 import io.reactivex.rxkotlin.addTo
@@ -11,10 +12,10 @@ import org.brightify.reactant.core.component.ComponentWithDelegate
 /**
  *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
  */
-open class ControllerBase<STATE, ROOT, ROOT_ACTION>(rootView: ROOT)
+open class ControllerBase<STATE, ROOT, ROOT_ACTION>(initialState: STATE, private val rootViewFactory: (Context) -> ROOT)
     : ViewController(), ComponentWithDelegate<STATE, Unit> where ROOT : View, ROOT : Component<*, ROOT_ACTION> {
 
-    final override val componentDelegate = ComponentDelegate<STATE, Unit>()
+    final override val componentDelegate = ComponentDelegate<STATE, Unit>(initialState)
 
     final override val action: Observable<Unit> = Observable.empty()
 
@@ -27,23 +28,15 @@ open class ControllerBase<STATE, ROOT, ROOT_ACTION>(rootView: ROOT)
     private val castRootView: RootView?
         get() = rootView as? RootView
 
+    private var rootViewState: StateWrapper = StateWrapper.NoState
+
+    sealed class StateWrapper {
+        class HasState(val state: Any?) : StateWrapper()
+        object NoState : StateWrapper()
+    }
+
     init {
-        view = rootView
-    }
-
-    override fun init() {
-        super.init()
-
         componentDelegate.ownerComponent = this
-
-        onDispose.subscribe { stateDisposeBag.dispose() }.addTo(lifetimeDisposeBag)
-
-        addChildContainer(rootView)
-
-        afterInit()
-    }
-
-    override fun afterInit() {
     }
 
     override fun needsUpdate(): Boolean = true
@@ -54,7 +47,21 @@ open class ControllerBase<STATE, ROOT, ROOT_ACTION>(rootView: ROOT)
     override fun loadView() {
         super.loadView()
 
-        rootView.action.subscribe { act(it) }.addTo(lifetimeDisposeBag)
+        val newRootView = rootViewFactory(activity)
+
+        (newRootView as? ViewBase<*, *>)?.init()
+
+        (rootViewState as? StateWrapper.HasState)?.let { rootViewState ->
+            if (newRootView.componentState != rootViewState) {
+                @Suppress("UNCHECKED_CAST")
+                (newRootView as Component<Any?, *>).componentState = rootViewState.state
+            }
+        }
+
+        newRootView.observableState.subscribe { rootViewState = StateWrapper.HasState(it) }.addTo(viewLifecycleDisposeBag)
+        newRootView.action.subscribe { act(it) }.addTo(viewLifecycleDisposeBag)
+
+        view = newRootView
     }
 
     override fun viewWillAppear() {
@@ -83,6 +90,12 @@ open class ControllerBase<STATE, ROOT, ROOT_ACTION>(rootView: ROOT)
         super.viewDidDisappear()
 
         castRootView?.viewDidDisappear()
+    }
+
+    override fun viewDestroyed() {
+        super.viewDestroyed()
+
+        stateDisposeBag.clear()
     }
 
     open fun act(action: ROOT_ACTION) {

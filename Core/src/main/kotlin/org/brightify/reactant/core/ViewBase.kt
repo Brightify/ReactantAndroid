@@ -1,11 +1,10 @@
 package org.brightify.reactant.core
 
 import android.annotation.SuppressLint
-import android.view.View
-import android.view.ViewGroup
+import android.content.Context
 import io.reactivex.Observable
+import io.reactivex.disposables.CompositeDisposable
 import org.brightify.reactant.autolayout.AutoLayout
-import org.brightify.reactant.autolayout.util.children
 import org.brightify.reactant.core.component.ComponentDelegate
 import org.brightify.reactant.core.component.ComponentWithDelegate
 
@@ -14,17 +13,22 @@ import org.brightify.reactant.core.component.ComponentWithDelegate
  *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
  */
 @SuppressLint("ViewConstructor")
-open class ViewBase<STATE, ACTION> : AutoLayout(ReactantActivity.context), ComponentWithDelegate<STATE, ACTION>, LifetimeDisposeBagContainerWithDelegate, ViewGroup.OnHierarchyChangeListener {
+open class ViewBase<STATE, ACTION>(context: Context, initialState: STATE): AutoLayout(context), ComponentWithDelegate<STATE, ACTION> {
 
-    final override val componentDelegate = ComponentDelegate<STATE, ACTION>()
+    val lifetimeDisposeBag = CompositeDisposable()
+
+    final override val componentDelegate = ComponentDelegate<STATE, ACTION>(initialState)
 
     override val actions: List<Observable<out ACTION>> = emptyList()
 
-    override val lifetimeDisposeBagContainerDelegate = LifetimeDisposeBagContainerDelegate { init() }
+    private var isInitialized: Boolean = false
+
+    private var isDestroyed: Boolean = false
+
+    private val createdViews = ArrayList<ViewBase<*, *>>()
 
     fun init() {
-        setOnHierarchyChangeListener(HierarchyTreeChangeListener(this))
-
+        isInitialized = true
         componentDelegate.ownerComponent = this
 
         loadView()
@@ -36,7 +40,7 @@ open class ViewBase<STATE, ACTION> : AutoLayout(ReactantActivity.context), Compo
         componentDelegate.canUpdate = true
     }
 
-    override fun afterInit() {
+    open fun afterInit() {
     }
 
     override fun needsUpdate(): Boolean = true
@@ -50,40 +54,27 @@ open class ViewBase<STATE, ACTION> : AutoLayout(ReactantActivity.context), Compo
     open fun setupConstraints() {
     }
 
-    override fun onChildViewAdded(parent: View?, child: View?) {
-        if (child is LifetimeDisposeBagContainer) {
-            addChildContainer(child)
-        }
+    open fun destroyed() {
+        isDestroyed = true
+        createdViews.forEach(ViewBase<*, *>::destroyed)
+        lifetimeDisposeBag.dispose()
     }
 
-    override fun onChildViewRemoved(parent: View?, child: View?) {
-    }
-}
-
-/**
- * A [hierarchy change listener][ViewGroup.OnHierarchyChangeListener] which recursively
- * monitors an entire tree of views.
- */
-class HierarchyTreeChangeListener(private val delegate: ViewGroup.OnHierarchyChangeListener): ViewGroup.OnHierarchyChangeListener {
-    override fun onChildViewAdded(parent: View, child: View) {
-        delegate.onChildViewAdded(parent, child)
-
-        if (child is ViewGroup) {
-            child.setOnHierarchyChangeListener(this)
-            for (grandChild in child.children) {
-                onChildViewAdded(child, grandChild)
-            }
-        }
+    fun <V: ViewBase<*, *>> ViewBase<*, *>.create(factory: (Context) -> V): V {
+        val view = factory(context)
+        view.init()
+        createdViews.add(view)
+        return view
     }
 
-    override fun onChildViewRemoved(parent: View, child: View) {
-        if (child is ViewGroup) {
-            for (grandChild in child.children) {
-                onChildViewRemoved(child, grandChild)
-            }
-            child.setOnHierarchyChangeListener(null)
-        }
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
 
-        delegate.onChildViewRemoved(parent, child)
+        if (!isInitialized) {
+            throw IllegalStateException("View must be initialized before it is added to view hierarchy. " +
+                    "Probably caused by creating view via constructor instead of 'create' from view or by factory in controller.")
+        } else if (isDestroyed) {
+            throw IllegalStateException("View cannot be added to view hierarchy after it is destroyed.")
+        }
     }
 }

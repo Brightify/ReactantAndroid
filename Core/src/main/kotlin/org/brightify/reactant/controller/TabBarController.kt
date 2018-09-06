@@ -11,7 +11,6 @@ import org.brightify.reactant.autolayout.ConstraintPriority
 import org.brightify.reactant.autolayout.util.children
 import org.brightify.reactant.autolayout.util.snp
 import org.brightify.reactant.controller.util.TransactionManager
-import org.brightify.reactant.core.ReactantActivity
 import org.brightify.reactant.core.util.onChange
 
 /**
@@ -19,7 +18,8 @@ import org.brightify.reactant.core.util.onChange
  */
 open class TabBarController(private val viewControllers: List<ViewController>) : ViewController() {
 
-    val tabBar = BottomNavigationView(ReactantActivity.context)
+    lateinit var tabBar: BottomNavigationView
+        private set
 
     var isTabBarHidden: Boolean by onChange(false) { _, _, _ ->
         if (!transactionManager.isInTransaction) {
@@ -46,23 +46,28 @@ open class TabBarController(private val viewControllers: List<ViewController>) :
             tabBar.selectedItemId = value
         }
 
-    private val layoutContent = FrameLayout(ReactantActivity.context)
-    private val layout = AutoLayout(ReactantActivity.context)
+    private lateinit var layoutContent: FrameLayout
+    private lateinit var layout: AutoLayout
+
     private var displayedViewController: ViewController? = null
     private val transactionManager = TransactionManager()
 
-    init {
-        view = FrameLayout(ReactantActivity.context).children(layout)
-    }
+    override fun activityChanged() {
+        super.activityChanged()
 
-    override fun init() {
-        super.init()
-
-        loadViewIfNeeded()
+        viewControllers.forEach {
+            it.activity_ = activity_
+        }
     }
 
     override fun loadView() {
         super.loadView()
+
+        tabBar = BottomNavigationView(activity)
+
+        layoutContent = FrameLayout(activity)
+        layout = AutoLayout(activity)
+        view = FrameLayout(activity).children(layout)
 
         layout.children(layoutContent, tabBar)
         layoutContent.snp.makeConstraints {
@@ -76,10 +81,8 @@ open class TabBarController(private val viewControllers: List<ViewController>) :
         tabBar.snp.setVerticalIntrinsicSizePriority(ConstraintPriority.required)
 
         viewControllers.forEach {
-            addChildContainer(it)
             it.tabBarController = this
             updateTabBarItem(it)
-            it.loadViewIfNeeded()
         }
 
         transactionManager.enabled = true
@@ -90,7 +93,7 @@ open class TabBarController(private val viewControllers: List<ViewController>) :
 
         tabBar.snp.setVerticalIntrinsicSizePriority(ConstraintPriority.required)
         tabBar.visibility = View.VISIBLE
-        ReactantActivity.instance.beforeKeyboardVisibilityChanged.subscribe {
+        activity.beforeKeyboardVisibilityChanged.subscribe {
             if (it) {
                 tabBar.visibility = View.GONE
                 tabBar.snp.setVerticalIntrinsicSizePriority(ConstraintPriority.low)
@@ -124,13 +127,21 @@ open class TabBarController(private val viewControllers: List<ViewController>) :
         displayedViewController?.viewDidDisappear()
     }
 
+    override fun deactivated() {
+        super.deactivated()
+
+        viewControllers.forEach {
+            it.activity_ = activity_
+        }
+    }
+
     override fun onBackPressed(): Boolean = displayedViewController?.onBackPressed() == true
 
     fun updateTabBarItem(viewController: ViewController) {
         val index = viewControllers.indexOf(viewController)
         tabBar.menu.removeItem(index)
 
-        val text = viewController.tabBarItem?.titleRes?.let { resources.getString(it) } ?: "Undefined"
+        val text = viewController.tabBarItem?.titleRes?.let { activity.getString(it) } ?: "Undefined"
         val item = tabBar.menu.add(Menu.NONE, index, index, text)
         viewController.tabBarItem?.imageRes?.let { item.setIcon(it) }
 

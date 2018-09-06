@@ -1,24 +1,17 @@
 package org.brightify.reactant.core.component
 
 import io.reactivex.Observable
-import io.reactivex.disposables.CompositeDisposable
-import org.brightify.reactant.core.LifetimeDisposeBagContainerDelegate
-import org.brightify.reactant.core.LifetimeDisposeBagContainerWithDelegate
 
 /**
  *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
  */
-open class ComponentBase<STATE, ACTION> : ComponentWithDelegate<STATE, ACTION>, LifetimeDisposeBagContainerWithDelegate {
+open class ComponentBase<STATE, ACTION>(initialState: STATE) : ComponentWithDelegate<STATE, ACTION> {
 
-    override val lifetimeDisposeBag = CompositeDisposable()
-
-    override val componentDelegate = ComponentDelegate<STATE, ACTION>()
+    override val componentDelegate = ComponentDelegate<STATE, ACTION>(initialState)
 
     override val actions: List<Observable<ACTION>> = emptyList()
 
     open val initialCanUpdate: Boolean = true
-
-    override val lifetimeDisposeBagContainerDelegate = LifetimeDisposeBagContainerDelegate { init() }
 
     fun init() {
         componentDelegate.ownerComponent = this
@@ -30,7 +23,7 @@ open class ComponentBase<STATE, ACTION> : ComponentWithDelegate<STATE, ACTION>, 
         componentDelegate.canUpdate = initialCanUpdate
     }
 
-    override fun afterInit() {
+    open fun afterInit() {
     }
 
     override fun needsUpdate(): Boolean {

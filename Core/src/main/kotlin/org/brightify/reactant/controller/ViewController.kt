@@ -2,52 +2,55 @@ package org.brightify.reactant.controller
 
 import android.app.Activity
 import android.view.View
+import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
-import org.brightify.reactant.core.LifetimeDisposeBagContainerDelegate
-import org.brightify.reactant.core.LifetimeDisposeBagContainerWithDelegate
 import org.brightify.reactant.core.ReactantActivity
 import org.brightify.reactant.core.util.onChange
 import kotlin.properties.Delegates
+import kotlin.properties.ObservableProperty
+import kotlin.reflect.KProperty
 
 /**
  *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
  */
-open class ViewController(title: String = ""): LifetimeDisposeBagContainerWithDelegate {
+open class ViewController(title: String = "") {
+
     val visibleDisposeBag = CompositeDisposable()
 
-    override val lifetimeDisposeBagContainerDelegate = LifetimeDisposeBagContainerDelegate { init() }
+    val viewLifecycleDisposeBag = CompositeDisposable()
 
-    var view: View by onChange(View(ReactantActivity.context)) { _, _, _ ->
-        if (isVisible) {
-            if (navigationController != null) {
-                navigationController?.invalidateChild()
-            } else if (tabBarController != null) {
-                tabBarController?.invalidateChild()
-            } else {
-                ReactantActivity.instance.invalidateChildren()
-            }
+    val activeDisposeBag = CompositeDisposable()
+
+    var activity: ReactantActivity
+        get() = activity_ ?: throw IllegalStateException("activity cannot be accessed when controller is not activated.")
+        set(value) {
+            activity_ = value
         }
-        view.isClickable = true
-    }
+
+    var view: View
+        get() = view_ ?: throw IllegalStateException("view cannot be accessed before it is loaded.")
+        set(value) {
+            view_ = value
+        }
 
     var navigationController: NavigationController? by onChange<NavigationController?>(null) { _, _, _ ->
-            if (tabBarItem != null) {
-                navigationController?.tabBarItem = tabBarItem
-            }
+        if (tabBarItem != null) {
+            navigationController?.tabBarItem = tabBarItem
         }
+    }
         internal set
 
     var tabBarController: TabBarController? by onChange<TabBarController?>(null) { _, _, _ ->
-            if (tabBarItem != null) {
-                tabBarController?.updateTabBarItem(this)
-            }
+        if (tabBarItem != null) {
+            tabBarController?.updateTabBarItem(this)
         }
+    }
         internal set
 
     var title: String by Delegates.observable(title) { _, _, newValue ->
-        ReactantActivity.instance.title = newValue
+        activity.title = newValue
     }
 
     open var hidesBottomBarWhenPushed: Boolean = false
@@ -58,46 +61,114 @@ open class ViewController(title: String = ""): LifetimeDisposeBagContainerWithDe
     }
 
     var statusBarColor: Int
-        get() = ReactantActivity.instance.window.statusBarColor
+        get() = activity.window.statusBarColor
         set(value) {
             lastStatusBarColor = value
-            ReactantActivity.instance.window.statusBarColor = value
+            activity.window.statusBarColor = value
         }
 
     var screenOrientation: Int
-        get() = ReactantActivity.instance.screenOrientation
+        get() = activity.screenOrientation
         set(value) {
             lastScreenOrientation = value
-            ReactantActivity.instance.screenOrientation = value
-            ReactantActivity.instance.updateScreenOrientation()
+            activity.screenOrientation = value
+            activity.updateScreenOrientation()
         }
 
     var isVisible = false
         private set
 
-    private var loaded = false
+    val isViewLoaded: Boolean
+        get() = view_ != null
+
+    val isActivated: Boolean
+        get() = activity_ != null
+
+    private var initialized = false
+
     private var lastStatusBarColor: Int? = null
     private var lastScreenOrientation: Int? = null
 
-    init {
-        view.isClickable = true
+    internal var activity_: ReactantActivity? by object : ObservableProperty<ReactantActivity?>(null) {
+
+        override fun beforeChange(property: KProperty<*>, oldValue: ReactantActivity?, newValue: ReactantActivity?): Boolean {
+            if (oldValue == newValue) {
+                return false
+            }
+
+            view_ = null
+            if (isActivated && newValue == null) {
+                deactivated()
+            }
+            return true
+        }
+
+        override fun afterChange(property: KProperty<*>, oldValue: ReactantActivity?, newValue: ReactantActivity?) {
+            if (oldValue == null && newValue != null) {
+                activated()
+            }
+            activityChanged()
+        }
     }
 
-    internal open fun init() { }
+    internal var view_: View? by object : ObservableProperty<View?>(null) {
+
+        override fun beforeChange(property: KProperty<*>, oldValue: View?, newValue: View?): Boolean {
+            if (oldValue == newValue) {
+                return false
+            }
+
+            if (isViewLoaded && newValue == null) {
+                if (isVisible) {
+                    viewWillDisappear()
+                    (view.parent as? ViewGroup)?.removeView(view)
+                    viewDidDisappear()
+                }
+                viewDestroyed()
+            }
+            return true
+        }
+
+        override fun afterChange(property: KProperty<*>, oldValue: View?, newValue: View?) {
+            if (view_ != null) {
+                if (isVisible) {
+                    when {
+                        navigationController != null -> navigationController?.invalidateChild()
+                        tabBarController != null -> tabBarController?.invalidateChild()
+                        else -> activity.invalidateChildren()
+                    }
+                }
+                view_?.isClickable = true
+            }
+        }
+    }
+
+    open fun activated() {
+        activeDisposeBag.clear()
+    }
+
+    open fun activityChanged() {
+    }
 
     open fun loadView() {
+        viewLifecycleDisposeBag.clear()
     }
 
     open fun viewDidLoad() {
     }
 
     open fun viewWillAppear() {
+        if (view_ == null) {
+            loadView()
+            viewDidLoad()
+        }
+
         visibleDisposeBag.clear()
         title = title
 
         if (this !is NavigationController && this !is TabBarController) {
             invalidateGlobalSettings()
-            ReactantActivity.instance.updateScreenOrientation()
+            activity.updateScreenOrientation()
         }
     }
 
@@ -106,7 +177,7 @@ open class ViewController(title: String = ""): LifetimeDisposeBagContainerWithDe
     }
 
     open fun viewWillDisappear() {
-        ReactantActivity.instance.let {
+        activity.let {
             val inputManager = it.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
             inputManager.hideSoftInputFromWindow(view.windowToken, 0)
         }
@@ -117,6 +188,14 @@ open class ViewController(title: String = ""): LifetimeDisposeBagContainerWithDe
         visibleDisposeBag.clear()
     }
 
+    open fun viewDestroyed() {
+        viewLifecycleDisposeBag.clear()
+    }
+
+    open fun deactivated() {
+        activeDisposeBag.clear()
+    }
+
     /**
      * Returns true if event is handled.
      */
@@ -124,24 +203,16 @@ open class ViewController(title: String = ""): LifetimeDisposeBagContainerWithDe
         return false
     }
 
-    fun loadViewIfNeeded() {
-        if (!loaded) {
-            loadView()
-            viewDidLoad()
-            loaded = true
-        }
-    }
-
     fun present(controller: ViewController, animated: Boolean = true): Observable<Unit> {
-        return ReactantActivity.instance.present(controller, animated)
+        return activity.present(controller, animated)
     }
 
     fun dismiss(animated: Boolean = true): Observable<Unit> {
-        return ReactantActivity.instance.dismiss(animated)
+        return activity.dismiss(animated)
     }
 
-    fun <C : ViewController> present(controller: Observable<C>, animated: Boolean = true): Observable<C> {
-        return ReactantActivity.instance.present(controller, animated)
+    fun <C: ViewController> present(controller: Observable<C>, animated: Boolean = true): Observable<C> {
+        return activity.present(controller, animated)
     }
 
     fun resetRememberedStatusBarColor() {
@@ -152,6 +223,6 @@ open class ViewController(title: String = ""): LifetimeDisposeBagContainerWithDe
         navigationController?.invalidateGlobalSettings()
         tabBarController?.invalidateGlobalSettings()
         lastStatusBarColor?.let { statusBarColor = it }
-        lastScreenOrientation?.let { ReactantActivity.instance.screenOrientation = it }
+        lastScreenOrientation?.let { activity.screenOrientation = it }
     }
 }
