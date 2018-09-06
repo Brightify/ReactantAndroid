@@ -54,9 +54,9 @@ open class ViewBase<STATE, ACTION>(context: Context, initialState: STATE): AutoL
     open fun setupConstraints() {
     }
 
-    open fun destroyed() {
+    open fun destroy() {
         isDestroyed = true
-        createdViews.forEach(ViewBase<*, *>::destroyed)
+        createdViews.forEach(ViewBase<*, *>::destroy)
         lifetimeDisposeBag.dispose()
     }
 

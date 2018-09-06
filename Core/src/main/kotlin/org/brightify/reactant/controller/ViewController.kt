@@ -203,6 +203,10 @@ open class ViewController(title: String = "") {
         return false
     }
 
+    open fun destroyViewHierarchy() {
+        view_ = null
+    }
+
     fun present(controller: ViewController, animated: Boolean = true): Observable<Unit> {
         return activity.present(controller, animated)
     }

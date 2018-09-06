@@ -137,7 +137,15 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe): AppC
 
         lifetimeDisposeBag.clear()
 
-        viewControllerStack.forEach { it.activity_ = null }
+        if (isFinishing) {
+            viewControllerStack.forEach {
+                it.activity_ = null
+            }
+        } else {
+            viewControllerStack.forEach {
+                it.destroyViewHierarchy()
+            }
+        }
 
         super.onDestroy()
     }

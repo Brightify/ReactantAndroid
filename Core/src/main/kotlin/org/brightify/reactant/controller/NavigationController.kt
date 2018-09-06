@@ -126,6 +126,14 @@ open class NavigationController(
         }
     }
 
+    override fun destroyViewHierarchy() {
+        super.destroyViewHierarchy()
+
+        viewControllerStack.forEach {
+            it.destroyViewHierarchy()
+        }
+    }
+
     fun setNavigationBarHidden(hidden: Boolean, animated: Boolean = true) {
         isNavigationBarHidden = hidden
     }

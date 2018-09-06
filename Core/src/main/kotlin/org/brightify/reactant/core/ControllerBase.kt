@@ -96,6 +96,7 @@ open class ControllerBase<STATE, ROOT, ROOT_ACTION>(initialState: STATE, private
         super.viewDestroyed()
 
         stateDisposeBag.clear()
+        (rootView as? ViewBase<*, *>)?.destroy()
     }
 
     open fun act(action: ROOT_ACTION) {

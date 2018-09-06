@@ -137,6 +137,14 @@ open class TabBarController(private val viewControllers: List<ViewController>) :
 
     override fun onBackPressed(): Boolean = displayedViewController?.onBackPressed() == true
 
+    override fun destroyViewHierarchy() {
+        super.destroyViewHierarchy()
+
+        viewControllers.forEach {
+            it.destroyViewHierarchy()
+        }
+    }
+
     fun updateTabBarItem(viewController: ViewController) {
         val index = viewControllers.indexOf(viewController)
         tabBar.menu.removeItem(index)
