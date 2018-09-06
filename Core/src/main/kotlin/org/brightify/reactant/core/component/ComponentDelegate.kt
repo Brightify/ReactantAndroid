@@ -69,6 +69,7 @@ class ComponentDelegate<STATE, ACTION>(val initialState: STATE) {
         if (ownerComponent?.needsUpdate() == true) {
             stateDisposeBag.clear()
             ownerComponent?.update()
+            observableStateSubject.onNext(componentState)
         }
     }
 }

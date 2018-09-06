@@ -49,16 +49,16 @@ open class ControllerBase<STATE, ROOT, ROOT_ACTION>(initialState: STATE, private
 
         val newRootView = rootViewFactory(activity)
 
-        (newRootView as? ViewBase<*, *>)?.init()
-
         (rootViewState as? StateWrapper.HasState)?.let { rootViewState ->
-            if (newRootView.componentState != rootViewState) {
+            if (newRootView.componentState != rootViewState.state) {
                 @Suppress("UNCHECKED_CAST")
                 (newRootView as Component<Any?, *>).componentState = rootViewState.state
             }
         }
 
-        newRootView.observableState.subscribe { rootViewState = StateWrapper.HasState(it) }.addTo(viewLifecycleDisposeBag)
+        (newRootView as? ViewBase<*, *>)?.init()
+
+        newRootView.observableState.subscribe { rootViewState = StateWrapper.HasState(it) }
         newRootView.action.subscribe { act(it) }.addTo(viewLifecycleDisposeBag)
 
         view = newRootView
