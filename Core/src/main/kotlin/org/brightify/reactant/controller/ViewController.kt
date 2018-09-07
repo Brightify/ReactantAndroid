@@ -39,12 +39,28 @@ open class ViewController(title: String = "") {
         if (tabBarItem != null) {
             navigationController?.tabBarItem = tabBarItem
         }
+        if (hamburgerMenuItem != null) {
+            navigationController?.hamburgerMenuItem = hamburgerMenuItem
+        }
     }
         internal set
 
     var tabBarController: TabBarController? by onChange<TabBarController?>(null) { _, _, _ ->
         if (tabBarItem != null) {
             tabBarController?.updateTabBarItem(this)
+        }
+        if (hamburgerMenuItem != null) {
+            tabBarController?.hamburgerMenuItem = hamburgerMenuItem
+        }
+    }
+        internal set
+
+    var hamburgerMenuController: HamburgerMenuController? by onChange<HamburgerMenuController?>(null) { _, _, _ ->
+        if (tabBarItem != null) {
+            hamburgerMenuController?.tabBarItem = tabBarItem
+        }
+        if (hamburgerMenuItem != null) {
+            hamburgerMenuController?.updateMenuItem(this)
         }
     }
         internal set
@@ -58,6 +74,13 @@ open class ViewController(title: String = "") {
     var tabBarItem: MenuItem? by onChange<MenuItem?>(null) { _, _, _ ->
         navigationController?.tabBarItem = tabBarItem
         tabBarController?.updateTabBarItem(this)
+        hamburgerMenuController?.tabBarItem = tabBarItem
+    }
+
+    var hamburgerMenuItem: MenuItem? by onChange<MenuItem?>(null) { _, _, _ ->
+        navigationController?.hamburgerMenuItem = hamburgerMenuItem
+        tabBarController?.hamburgerMenuItem = hamburgerMenuItem
+        hamburgerMenuController?.updateMenuItem(this)
     }
 
     var statusBarColor: Int
@@ -135,6 +158,7 @@ open class ViewController(title: String = "") {
                     when {
                         navigationController != null -> navigationController?.invalidateChild()
                         tabBarController != null -> tabBarController?.invalidateChild()
+                        hamburgerMenuController != null -> hamburgerMenuController?.invalidateChild()
                         else -> activity.invalidateChildren()
                     }
                 }
@@ -166,7 +190,7 @@ open class ViewController(title: String = "") {
         visibleDisposeBag.clear()
         title = title
 
-        if (this !is NavigationController && this !is TabBarController) {
+        if (this !is NavigationController && this !is TabBarController && this !is HamburgerMenuController) {
             invalidateGlobalSettings()
             activity.updateScreenOrientation()
         }
@@ -226,6 +250,7 @@ open class ViewController(title: String = "") {
     internal fun invalidateGlobalSettings() {
         navigationController?.invalidateGlobalSettings()
         tabBarController?.invalidateGlobalSettings()
+        hamburgerMenuController?.invalidateGlobalSettings()
         lastStatusBarColor?.let { statusBarColor = it }
         lastScreenOrientation?.let { activity.screenOrientation = it }
     }
