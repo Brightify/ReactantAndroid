@@ -16,10 +16,10 @@ import org.brightify.reactant.core.util.onChange
 /**
  *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
  */
-open class TabBarController(private val viewControllers: List<ViewController>) : ViewController() {
+open class TabBarController(private val viewControllers: List<ViewController>): ViewController() {
 
-    lateinit var tabBar: BottomNavigationView
-        private set
+    val tabBar: BottomNavigationView
+        get() = tabBar_ ?: viewNotLoadedError()
 
     var isTabBarHidden: Boolean by onChange(false) { _, _, _ ->
         if (!transactionManager.isInTransaction) {
@@ -28,28 +28,29 @@ open class TabBarController(private val viewControllers: List<ViewController>) :
         }
     }
 
-    var selectedViewController: ViewController?
+    var selectedViewController: ViewController
         get() = displayedViewController
         set(value) {
             if (selectedViewController != value) {
                 transactionManager.transaction {
                     clearLayout(true)
-                    value?.let { showViewController(value) }
-                    displayedViewController?.viewDidAppear()
+                    showViewController(value)
+                    displayedViewController.viewDidAppear()
                 }
             }
         }
 
     var selectedViewControllerIndex: Int
-        get() = tabBar.selectedItemId
+        get() = viewControllers.indexOf(selectedViewController)
         set(value) {
-            tabBar.selectedItemId = value
+            selectedViewController = viewControllers[value]
         }
 
-    private lateinit var layoutContent: FrameLayout
-    private lateinit var layout: AutoLayout
+    private var tabBar_: BottomNavigationView? = null
+    private var layoutContent: FrameLayout? = null
+    private var layout: AutoLayout? = null
 
-    private var displayedViewController: ViewController? = null
+    private var displayedViewController: ViewController = viewControllers[0]
     private val transactionManager = TransactionManager()
 
     override fun activityChanged() {
@@ -63,14 +64,14 @@ open class TabBarController(private val viewControllers: List<ViewController>) :
     override fun loadView() {
         super.loadView()
 
-        tabBar = BottomNavigationView(activity)
+        tabBar_ = BottomNavigationView(activity)
 
         layoutContent = FrameLayout(activity)
         layout = AutoLayout(activity)
         view = FrameLayout(activity).children(layout)
 
-        layout.children(layoutContent, tabBar)
-        layoutContent.snp.makeConstraints {
+        layout?.children(layoutContent, tabBar)
+        layoutContent?.snp?.makeConstraints {
             left.right.top.equalToSuperview()
             bottom.equalTo(tabBar.snp.top)
         }
@@ -105,37 +106,46 @@ open class TabBarController(private val viewControllers: List<ViewController>) :
 
         transactionManager.transaction {
             clearLayout(false)
-            showViewController(viewControllers[tabBar.selectedItemId])
+            showViewController(selectedViewController)
         }
     }
 
     override fun viewDidAppear() {
         super.viewDidAppear()
 
-        displayedViewController?.viewDidAppear()
+        displayedViewController.viewDidAppear()
     }
 
     override fun viewWillDisappear() {
         super.viewWillDisappear()
 
-        displayedViewController?.viewWillDisappear()
+        displayedViewController.viewWillDisappear()
     }
 
     override fun viewDidDisappear() {
         super.viewDidDisappear()
 
-        displayedViewController?.viewDidDisappear()
+        displayedViewController.viewDidDisappear()
+    }
+
+    override fun viewDestroyed() {
+        super.viewDestroyed()
+
+        transactionManager.enabled = false
+        tabBar_ = null
+        layoutContent = null
+        layout = null
     }
 
     override fun deactivated() {
         super.deactivated()
 
         viewControllers.forEach {
-            it.activity_ = activity_
+            it.activity_ = null
         }
     }
 
-    override fun onBackPressed(): Boolean = displayedViewController?.onBackPressed() == true
+    override fun onBackPressed(): Boolean = displayedViewController.onBackPressed()
 
     override fun destroyViewHierarchy() {
         super.destroyViewHierarchy()
@@ -172,28 +182,28 @@ open class TabBarController(private val viewControllers: List<ViewController>) :
 
     private fun clearLayout(callCallbacks: Boolean) {
         if (callCallbacks) {
-            displayedViewController?.viewWillDisappear()
+            displayedViewController.viewWillDisappear()
         }
-        layoutContent.removeAllViews()
+        layoutContent?.removeAllViews()
         (view as ViewGroup).removeAllViews()
         if (callCallbacks) {
-            displayedViewController?.viewDidDisappear()
+            displayedViewController.viewDidDisappear()
         }
     }
 
     private fun showViewController(viewController: ViewController) {
         displayedViewController = viewController
         tabBar.selectedItemId = viewControllers.indexOf(viewController)
-        displayedViewController?.tabBarController = this
-        displayedViewController?.viewWillAppear()
+        displayedViewController.tabBarController = this
+        displayedViewController.viewWillAppear()
         addViewToHierarchy()
     }
 
     private fun addViewToHierarchy() {
         if (isTabBarHidden) {
-            (view as ViewGroup).addView(displayedViewController?.view)
+            (view as ViewGroup).addView(displayedViewController.view)
         } else {
-            layoutContent.addView(displayedViewController?.view)
+            layoutContent?.addView(displayedViewController.view)
             (view as ViewGroup).addView(layout)
         }
     }

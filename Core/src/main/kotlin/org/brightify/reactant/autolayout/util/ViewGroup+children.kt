@@ -15,7 +15,7 @@ inline fun ViewGroup.forEachChild(action: (View) -> Unit) {
     }
 }
 
-fun <T : ViewGroup> T.children(vararg children: View): T {
-    children.forEach(this::addView)
+fun <T : ViewGroup> T.children(vararg children: View?): T {
+    children.filterNotNull().forEach(this::addView)
     return this
 }

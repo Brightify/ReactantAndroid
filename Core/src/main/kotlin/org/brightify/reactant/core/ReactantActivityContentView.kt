@@ -5,10 +5,11 @@ import android.os.Build
 import android.view.View
 import android.widget.FrameLayout
 import io.reactivex.subjects.PublishSubject
+import org.brightify.reactant.R
 
 /**
-*  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
-*/
+ *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
+ */
 @SuppressLint("ViewConstructor")
 class ReactantActivityContentView(private val activity: ReactantActivity): FrameLayout(activity) {
 
@@ -40,9 +41,12 @@ class ReactantActivityContentView(private val activity: ReactantActivity): Frame
         } else {
             0
         }
+        val actionBarHeight = decorView.findViewById<View>(R.id.action_bar)?.let {
+            if (it.visibility == View.VISIBLE) it.height else 0
+        } ?: 0
 
         if (windowHeight != 0) {
-            val newState = windowHeight - statusBarHeight - navigationBarHeight > measuredHeight
+            val newState = windowHeight - statusBarHeight - navigationBarHeight - actionBarHeight > measuredHeight
             if (keyboardState != newState) {
                 beforeKeyboardVisibilityChangeSubject.onNext(newState)
                 keyboardState = newState

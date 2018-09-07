@@ -133,6 +133,8 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe): AppC
     }
 
     override fun onDestroy() {
+        transactionManager.enabled = false
+
         onDestroySubject.onNext(Unit)
 
         lifetimeDisposeBag.clear()

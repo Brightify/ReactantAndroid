@@ -30,7 +30,7 @@ open class ViewController(title: String = "") {
         }
 
     var view: View
-        get() = view_ ?: throw IllegalStateException("view cannot be accessed before it is loaded.")
+        get() = view_ ?: viewNotLoadedError()
         set(value) {
             view_ = value
         }
@@ -55,7 +55,7 @@ open class ViewController(title: String = "") {
 
     open var hidesBottomBarWhenPushed: Boolean = false
 
-    var tabBarItem: TabBarItem? by onChange<TabBarItem?>(null) { _, _, _ ->
+    var tabBarItem: MenuItem? by onChange<MenuItem?>(null) { _, _, _ ->
         navigationController?.tabBarItem = tabBarItem
         tabBarController?.updateTabBarItem(this)
     }
@@ -89,7 +89,7 @@ open class ViewController(title: String = "") {
     private var lastStatusBarColor: Int? = null
     private var lastScreenOrientation: Int? = null
 
-    internal var activity_: ReactantActivity? by object : ObservableProperty<ReactantActivity?>(null) {
+    internal var activity_: ReactantActivity? by object: ObservableProperty<ReactantActivity?>(null) {
 
         override fun beforeChange(property: KProperty<*>, oldValue: ReactantActivity?, newValue: ReactantActivity?): Boolean {
             if (oldValue == newValue) {
@@ -111,7 +111,7 @@ open class ViewController(title: String = "") {
         }
     }
 
-    internal var view_: View? by object : ObservableProperty<View?>(null) {
+    internal var view_: View? by object: ObservableProperty<View?>(null) {
 
         override fun beforeChange(property: KProperty<*>, oldValue: View?, newValue: View?): Boolean {
             if (oldValue == newValue) {
@@ -228,5 +228,9 @@ open class ViewController(title: String = "") {
         tabBarController?.invalidateGlobalSettings()
         lastStatusBarColor?.let { statusBarColor = it }
         lastScreenOrientation?.let { activity.screenOrientation = it }
+    }
+
+    protected fun viewNotLoadedError(): Nothing {
+        throw IllegalStateException("view cannot be accessed before it is loaded.")
     }
 }

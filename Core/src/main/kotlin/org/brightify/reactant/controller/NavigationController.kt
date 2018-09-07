@@ -28,11 +28,11 @@ open class NavigationController(
         }
     }
 
-    lateinit var toolbar: Toolbar
+    var toolbar: Toolbar? = null
         private set
 
-    private lateinit var layout: AutoLayout
-    private lateinit var layoutContent: FrameLayout
+    private var layout: AutoLayout? = null
+    private var layoutContent: FrameLayout? = null
     private val viewControllerStack = Stack<ViewController>()
     private val toolbarHeight = 56 // FIXME get correct value
     private val transactionManager = TransactionManager()
@@ -51,7 +51,7 @@ open class NavigationController(
         toolbar = if (toolbarTheme != null) {
             Toolbar(ContextThemeWrapper(activity, toolbarTheme))
         } else {
-            Toolbar(activity, null, R.attr.navigationBarStyle)
+            null
         }
 
         layout = AutoLayout(activity)
@@ -60,15 +60,19 @@ open class NavigationController(
         view = FrameLayout(activity)
         view.setBackgroundColor(getWindowBackgroundColor())
 
-        layout.children(toolbar, layoutContent)
+        layout?.children(toolbar, layoutContent)
 
-        toolbar.snp.makeConstraints {
+        toolbar?.snp?.makeConstraints {
             top.left.right.equalToSuperview()
             height.equalTo(toolbarHeight)
         }
 
-        layoutContent.snp.makeConstraints {
-            top.equalTo(toolbar.snp.bottom)
+        layoutContent?.snp?.makeConstraints {
+            if (toolbar != null) {
+                toolbar?.let { top.equalTo(it.snp.bottom) }
+            } else {
+                top.equalToSuperview()
+            }
             bottom.left.right.equalToSuperview()
         }
 
@@ -105,11 +109,20 @@ open class NavigationController(
         viewControllerStack.peek().viewDidDisappear()
     }
 
+    override fun viewDestroyed() {
+        super.viewDestroyed()
+
+        transactionManager.enabled = false
+        toolbar = null
+        layout = null
+        layoutContent = null
+    }
+
     override fun deactivated() {
         super.deactivated()
 
         viewControllerStack.forEach {
-            it.activity_ = activity_
+            it.activity_ = null
         }
     }
 
@@ -198,7 +211,7 @@ open class NavigationController(
         if (callCallbacks) {
             viewControllerStack.peek().viewWillDisappear()
         }
-        layoutContent.removeAllViews()
+        layoutContent?.removeAllViews()
         (view as ViewGroup).removeAllViews()
         if (callCallbacks) {
             viewControllerStack.peek().viewDidDisappear()
@@ -224,7 +237,7 @@ open class NavigationController(
         if (isNavigationBarHidden) {
             (view as ViewGroup).addView(viewControllerStack.peek().view)
         } else {
-            layoutContent.addView(viewControllerStack.peek().view)
+            layoutContent?.addView(viewControllerStack.peek().view)
             (view as ViewGroup).addView(layout)
         }
     }
@@ -244,16 +257,16 @@ open class NavigationController(
     }
 
     private fun resetViewControllerSpecificSettings() {
-        toolbar.navigationIcon = if (viewControllerStack.size > 1) {
-            toolbar.context.getDrawable(R.drawable.abc_ic_ab_back_material)
+        toolbar?.navigationIcon = if (viewControllerStack.size > 1) {
+            toolbar?.context?.getDrawable(R.drawable.abc_ic_ab_back_material)
         } else {
             null
         }
-        toolbar.setNavigationOnClickListener {
+        toolbar?.setNavigationOnClickListener {
             // TODO We should propagate information about "back type" (navigation | device button)
             onBackPressed()
         }
-        toolbar.menu.clear()
+        toolbar?.menu?.clear()
         isNavigationBarHidden = false
     }
 }
