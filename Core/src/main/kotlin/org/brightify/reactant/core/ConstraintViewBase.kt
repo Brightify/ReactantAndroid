@@ -2,21 +2,20 @@ package org.brightify.reactant.core
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.support.constraint.ConstraintLayout
 import android.view.LayoutInflater
 import android.view.View
 import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
-import org.brightify.reactant.autolayout.AutoLayout
 import org.brightify.reactant.core.component.ComponentDelegate
 import org.brightify.reactant.core.component.ComponentWithDelegate
 
-
 /**
- *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
+ * @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
  */
 @SuppressLint("ViewConstructor")
-open class ViewBase<STATE, ACTION>(context: Context, initialState: STATE, layout: Int? = null):
-        AutoLayout(context), ComponentWithDelegate<STATE, ACTION>, ComponentView {
+open class ConstraintViewBase<STATE, ACTION>(context: Context, initialState: STATE, layout: Int? = null):
+        ConstraintLayout(context), ComponentWithDelegate<STATE, ACTION>, ComponentView {
 
     val lifetimeDisposeBag = CompositeDisposable()
 

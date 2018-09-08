@@ -18,79 +18,78 @@ import android.widget.ScrollView
 import android.widget.Switch
 import android.widget.TextView
 import org.brightify.reactant.autolayout.AutoLayout
-import org.brightify.reactant.core.ViewBase
 
 /**
  *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
  */
-fun ViewBase<*, *>.View(): View {
+fun View.View(): View {
     return View(context)
 }
 
-fun ViewBase<*, *>.ImageView(): ImageView {
+fun View.ImageView(): ImageView {
     return ImageView(context)
 }
 
-fun ViewBase<*, *>.ImageButton(): ImageButton {
+fun View.ImageButton(): ImageButton {
     return ImageButton(context)
 }
 
-fun ViewBase<*, *>.TextView(): TextView {
+fun View.TextView(): TextView {
     return TextView(context)
 }
 
-fun ViewBase<*, *>.TextView(text: String): TextView {
+fun View.TextView(text: String): TextView {
     return TextView().apply { this.text = text }
 }
 
-fun ViewBase<*, *>.Button(): Button {
+fun View.Button(): Button {
     return Button(context)
 }
 
-fun ViewBase<*, *>.Button(text: String): Button {
+fun View.Button(text: String): Button {
     return Button().apply { this.text = text }
 }
 
-fun ViewBase<*, *>.EditText(): EditText {
+fun View.EditText(): EditText {
     return EditText(context)
 }
 
-fun ViewBase<*, *>.TextInputEditText(): TextInputEditText {
+fun View.TextInputEditText(): TextInputEditText {
     return TextInputEditText(context)
 }
 
-fun ViewBase<*, *>.ProgressBar(): ProgressBar {
+fun View.ProgressBar(): ProgressBar {
     return ProgressBar(context)
 }
 
-fun ViewBase<*, *>.Switch(): Switch {
+fun View.Switch(): Switch {
     return Switch(context)
 }
 
-fun ViewBase<*, *>.AutoLayout(): AutoLayout {
+fun View.AutoLayout(): AutoLayout {
     return AutoLayout(context)
 }
 
-fun ViewBase<*, *>.ScrollView(): ScrollView {
+fun View.ScrollView(): ScrollView {
     return ScrollView(context)
 }
 
-fun ViewBase<*, *>.FrameLayout(): FrameLayout {
+fun View.FrameLayout(): FrameLayout {
     return FrameLayout(context)
 }
 
-fun ViewBase<*, *>.RecyclerView(): RecyclerView {
+fun View.RecyclerView(): RecyclerView {
     return RecyclerView(context)
 }
 
-fun ViewBase<*, *>.SwipeRefreshLayout(): SwipeRefreshLayout {
+fun View.SwipeRefreshLayout(): SwipeRefreshLayout {
     return SwipeRefreshLayout(context)
 }
 
-fun ViewBase<*, *>.TextInputLayout(): TextInputLayout {
+fun View.TextInputLayout(): TextInputLayout {
     return TextInputLayout(context)
 }
 
-fun ViewBase<*, *>.FloatingActionButton(): FloatingActionButton {
+fun View.FloatingActionButton(): FloatingActionButton {
     return FloatingActionButton(context)
 }

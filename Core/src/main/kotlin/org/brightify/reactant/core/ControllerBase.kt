@@ -56,7 +56,7 @@ open class ControllerBase<STATE, ROOT, ROOT_ACTION>(initialState: STATE, private
             }
         }
 
-        (newRootView as? ViewBase<*, *>)?.init()
+        (newRootView as? ComponentView)?.init()
 
         newRootView.observableState.subscribe { rootViewState = StateWrapper.HasState(it) }
         newRootView.action.subscribe { act(it) }.addTo(viewLifetimeDisposeBag)
@@ -96,7 +96,7 @@ open class ControllerBase<STATE, ROOT, ROOT_ACTION>(initialState: STATE, private
         super.viewDestroyed()
 
         stateDisposeBag.clear()
-        (rootView as? ViewBase<*, *>)?.destroy()
+        (rootView as? ComponentView)?.destroy()
     }
 
     open fun act(action: ROOT_ACTION) {
