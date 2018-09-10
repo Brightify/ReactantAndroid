@@ -33,7 +33,7 @@ open class ViewBase<STATE, ACTION>(context: Context, initialState: STATE, layout
     init {
         if (layout != null) {
             @Suppress("LeakingThis")
-            LayoutInflater.from(context).inflate(layout, this, true)
+            inflate(context, layout, this)
         }
     }
 
@@ -89,7 +89,7 @@ open class ViewBase<STATE, ACTION>(context: Context, initialState: STATE, layout
     }
 
     @Suppress("UNCHECKED_CAST")
-    protected fun <V: View> create(id: Int): V = LayoutInflater.from(context).inflate(id, this, true) as V
+    protected fun <V: View> create(id: Int): V = LayoutInflater.from(context).inflate(id, this, false) as V
 
     protected fun <V: View> find(id: Int): V = findViewById(id)
 }
