@@ -62,6 +62,8 @@ open class ControllerBase<STATE, ROOT, ROOT_ACTION>(initialState: STATE, private
         newRootView.action.subscribe { act(it) }.addTo(viewLifetimeDisposeBag)
 
         view = newRootView
+
+        componentDelegate.needsUpdate = true
     }
 
     override fun viewWillAppear() {
