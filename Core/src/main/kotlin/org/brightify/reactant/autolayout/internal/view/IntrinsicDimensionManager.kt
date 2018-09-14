@@ -20,7 +20,7 @@ internal class IntrinsicDimensionManager(dimensionVariable: ConstraintVariable) 
         updateEquations()
     }
 
-    var contentCompressionResistancePriority: ConstraintPriority by onChange(ConstraintPriority.low) { _, _, _ ->
+    var contentCompressionResistancePriority: ConstraintPriority by onChange(ConstraintPriority.high) { _, _, _ ->
         updateEquations()
     }
 

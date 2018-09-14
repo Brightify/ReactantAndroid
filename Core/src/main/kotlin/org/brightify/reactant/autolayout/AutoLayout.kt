@@ -31,24 +31,16 @@ open class AutoLayout: ViewGroup {
     private val density: Double
         get() = resources.displayMetrics.density.toDouble()
 
-    constructor(context: Context?): super(context) {
-        init()
-    }
+    constructor(context: Context?): super(context)
 
-    constructor(context: Context?, attrs: AttributeSet?): super(context, attrs) {
-        init()
-    }
+    constructor(context: Context?, attrs: AttributeSet?): super(context, attrs)
 
-    constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int): super(context, attrs, defStyleAttr) {
-        init()
-    }
+    constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int): super(context, attrs, defStyleAttr)
 
     constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int): super(context, attrs, defStyleAttr,
-            defStyleRes) {
-        init()
-    }
+            defStyleRes)
 
-    private fun init() {
+    init {
         assignId()
 
         constraintManager.addManagedView(this)
