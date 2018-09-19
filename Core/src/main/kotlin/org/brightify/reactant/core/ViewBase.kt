@@ -92,4 +92,6 @@ open class ViewBase<STATE, ACTION>(context: Context, initialState: STATE, layout
     protected fun <V: View> create(id: Int): V = LayoutInflater.from(context).inflate(id, this, false) as V
 
     protected fun <V: View> find(id: Int): V = findViewById(id)
+
+    protected fun Int.toPx() = this * resources.displayMetrics.density.toInt()
 }

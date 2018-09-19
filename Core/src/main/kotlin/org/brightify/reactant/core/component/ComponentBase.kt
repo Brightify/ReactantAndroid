@@ -26,9 +26,7 @@ open class ComponentBase<STATE, ACTION>(initialState: STATE) : ComponentWithDele
     open fun afterInit() {
     }
 
-    override fun needsUpdate(): Boolean {
-        return true
-    }
+    override fun needsUpdate(): Boolean = true
 
     override fun update(previousComponentState: STATE?) {
     }

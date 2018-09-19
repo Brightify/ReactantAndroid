@@ -61,9 +61,6 @@ open class HamburgerMenuController(private val viewControllers: List<ViewControl
 
         view_ = DrawerLayout(activity).children(layout, navigationView)
 
-        view.fitsSystemWindows = true
-
-        navigationView.fitsSystemWindows = true
         view.layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
         layout?.layoutParams = DrawerLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
         navigationView.layoutParams =

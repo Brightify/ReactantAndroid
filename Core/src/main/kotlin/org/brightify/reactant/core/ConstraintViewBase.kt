@@ -91,4 +91,6 @@ open class ConstraintViewBase<STATE, ACTION>(context: Context, initialState: STA
     protected fun <V: View> create(id: Int): V = LayoutInflater.from(context).inflate(id, this, true) as V
 
     protected fun <V: View> find(id: Int): V = findViewById(id)
+
+    protected fun Int.toPx() = this * resources.displayMetrics.density.toInt()
 }
