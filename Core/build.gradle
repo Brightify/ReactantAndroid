@@ -32,6 +32,7 @@ android {
 
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
+        test.java.srcDirs += 'src/test/kotlin'
     }
 }
 
@@ -45,4 +46,11 @@ dependencies {
     api 'com.jakewharton.rxbinding2:rxbinding-appcompat-v7-kotlin:2.0.0'
     api "com.gojuno.koptional:koptional:1.6.0"
     api "com.gojuno.koptional:koptional-rxjava2-extensions:1.6.0"
+
+    testImplementation "org.junit.jupiter:junit-jupiter-api:5.2.0"
+    testImplementation "org.junit.jupiter:junit-jupiter-params:5.2.0"
+    testImplementation "org.assertj:assertj-core:3.10.0"
+    testImplementation "io.mockk:mockk:1.8.5"
+    testImplementation "org.junit.jupiter:junit-jupiter-engine:5.2.0"
+    testImplementation "org.junit.vintage:junit-vintage-engine:5.2.0"
 }

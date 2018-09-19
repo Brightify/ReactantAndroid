@@ -1,7 +1,6 @@
 package org.brightify.reactant.autolayout.internal.solver
 
 import android.util.Log
-import org.brightify.reactant.autolayout.Constraint
 import org.brightify.reactant.autolayout.ConstraintOperator
 import org.brightify.reactant.autolayout.ConstraintPriority
 import org.brightify.reactant.autolayout.ConstraintVariable
@@ -12,7 +11,7 @@ import java.util.HashSet
 /**
  *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
  */
-internal class Solver {
+internal class SimplexSolver {
 
     private val errorSymbols = LinkedHashMap<Equation, HashSet<Symbol>>()
     private val objective = Symbol(Symbol.Type.objective)
@@ -23,34 +22,19 @@ internal class Solver {
     private val symbolForEquation = LinkedHashMap<Equation, Symbol>()
     private val symbolForVariable = HashMap<ConstraintVariable, Symbol>()
 
-    private val equationsToAdd = LinkedHashMap<Equation, ConstraintItem>()
-    private val equationsToRemove = HashSet<Equation>()
-
-    fun addConstraint(constraint: Constraint) {
-        constraint.constraintItems.forEach { equationsToAdd[it.equation] = it }
+    fun addEquation(equation: Equation, constraintItem: ConstraintItem) {
+        try {
+            addEquationImmediately(equation)
+        } catch (_: InternalSolverError) {
+            Log.e("AutoLayout", "Constraint ($constraintItem) cannot be satisfied and will be ignored.")
+        }
     }
 
-    fun removeConstraint(constraint: Constraint) {
-        constraint.constraintItems.forEach {
-            if (equationsToAdd.containsKey(it.equation)) {
-                equationsToAdd.remove(it.equation)
-            } else {
-                equationsToRemove.add(it.equation)
-            }
-        }
+    fun removeEquation(equation: Equation) {
+        removeEquationImmediately(equation)
     }
 
     fun solve() {
-        equationsToRemove.forEach { removeEquationImmediately(it) }
-        equationsToAdd.forEach {
-            try {
-                addEquationImmediately(it.key)
-            } catch(_: InternalSolverError) {
-                Log.e("AutoLayout", "Constraint (${it.value}) cannot be satisfied and will be ignored.")
-            }
-        }
-        equationsToAdd.clear()
-        equationsToRemove.clear()
         optimize(objective)
     }
 
@@ -64,7 +48,7 @@ internal class Solver {
             if (!tryAddingDirectly(expression)) {
                 addWithArtificialVariable(expression)
             }
-        } catch(e: InternalSolverError) {
+        } catch (e: InternalSolverError) {
             removeEquationImmediately(equation)
             throw e
         }
@@ -103,14 +87,14 @@ internal class Solver {
             if (equation.priority == ConstraintPriority.required) {
                 val symbol = Symbol(Symbol.Type.dummy)
                 row.addVariable(symbol, 1.0)
-                symbolForEquation.put(equation, symbol)
+                symbolForEquation[equation] = symbol
             } else {
                 val slackPlus = Symbol(Symbol.Type.slack)
                 val slackMinus = Symbol(Symbol.Type.slack)
 
                 row.addVariable(slackPlus, -1.0)
                 row.addVariable(slackMinus, 1.0)
-                symbolForEquation.put(equation, slackPlus)
+                symbolForEquation[equation] = slackPlus
                 rows[objective]?.let {
                     it.addVariable(slackPlus, equation.priority.value.toDouble())
                     onSymbolAdded(slackPlus, objective)
@@ -126,7 +110,7 @@ internal class Solver {
             }
             val slack = Symbol(Symbol.Type.slack)
             row.addVariable(slack, -1.0)
-            symbolForEquation.put(equation, slack)
+            symbolForEquation[equation] = slack
             if (equation.priority != ConstraintPriority.required) {
                 val slackMinus = Symbol(Symbol.Type.slack)
                 row.addVariable(slackMinus, 1.0)
@@ -314,8 +298,8 @@ internal class Solver {
     private fun insertErrorSymbol(equation: Equation, symbol: Symbol) {
         var symbols = errorSymbols[equation]
         if (symbols == null) {
-            symbols = HashSet<Symbol>()
-            errorSymbols.put(equation, symbols)
+            symbols = HashSet()
+            errorSymbols[equation] = symbols
         }
         symbols.add(symbol)
     }
@@ -331,14 +315,14 @@ internal class Solver {
     private fun insertColumnVariable(columnVariable: Symbol, rowVariable: Symbol) {
         var rows = columns[columnVariable]
         if (rows == null) {
-            rows = HashSet<Symbol>()
-            columns.put(columnVariable, rows)
+            rows = HashSet()
+            columns[columnVariable] = rows
         }
         rows.add(rowVariable)
     }
 
     private fun addRow(symbol: Symbol, row: Row) {
-        rows.put(symbol, row)
+        rows[symbol] = row
 
         row.symbols.keys.forEach { insertColumnVariable(it, symbol) }
     }

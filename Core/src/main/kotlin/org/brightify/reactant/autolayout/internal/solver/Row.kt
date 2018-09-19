@@ -7,10 +7,10 @@ import org.brightify.reactant.autolayout.internal.util.isAlmostZero
  */
 internal class Row(var constant: Double = 0.0) {
 
-    var symbols = LinkedHashMap<Symbol, Double>()
+    val symbols = LinkedHashMap<Symbol, Double>()
 
     constructor(other: Row) : this(other.constant) {
-        symbols = LinkedHashMap(other.symbols)
+        symbols.putAll(other.symbols)
     }
 
     fun multiplyBy(coefficient: Double) {
@@ -19,13 +19,13 @@ internal class Row(var constant: Double = 0.0) {
         symbols.forEach { symbols[it.key] = it.value * coefficient }
     }
 
-    fun addExpression(row: Row, coefficient: Double, subject: Symbol? = null, solver: Solver? = null) {
+    fun addExpression(row: Row, coefficient: Double, subject: Symbol? = null, solver: SimplexSolver? = null) {
         constant += coefficient * row.constant
 
         row.symbols.forEach { addVariable(it.key, it.value * coefficient, subject, solver) }
     }
 
-    fun addVariable(symbol: Symbol, coefficient: Double, subject: Symbol? = null, solver: Solver? = null) {
+    fun addVariable(symbol: Symbol, coefficient: Double, subject: Symbol? = null, solver: SimplexSolver? = null) {
         val oldCoefficient = symbols[symbol]
         if (oldCoefficient != null) {
             val newCoefficient = oldCoefficient + coefficient
@@ -41,7 +41,7 @@ internal class Row(var constant: Double = 0.0) {
         }
     }
 
-    fun substituteOut(symbol: Symbol, row: Row, subject: Symbol, solver: Solver) {
+    fun substituteOut(symbol: Symbol, row: Row, subject: Symbol, solver: SimplexSolver) {
         symbols.remove(symbol)?.let { addExpression(row, it, subject, solver) }
     }
 

@@ -6,7 +6,8 @@ import org.brightify.reactant.autolayout.Constraint
 import org.brightify.reactant.autolayout.ConstraintVariable
 import org.brightify.reactant.autolayout.exception.AutoLayoutNotFoundException
 import org.brightify.reactant.autolayout.exception.ViewNotManagedByCommonAutoLayoutException
-import org.brightify.reactant.autolayout.internal.solver.Solver
+import org.brightify.reactant.autolayout.internal.solver.BackgroundSolver
+import org.brightify.reactant.autolayout.internal.solver.SimplexSolver
 import org.brightify.reactant.autolayout.internal.solver.Term
 import org.brightify.reactant.autolayout.internal.view.IntrinsicSizeManager
 import org.brightify.reactant.autolayout.internal.view.IntrinsicSizeNecessityDecider
@@ -20,7 +21,7 @@ import org.brightify.reactant.autolayout.util.description
  */
 internal class ConstraintManager {
 
-    private val solver = Solver()
+    private val solver = BackgroundSolver(SimplexSolver())
     private val constraints = HashMap<View, HashSet<Constraint>>()
     private val viewConstraints = HashMap<View, ViewConstraints>()
     private val intrinsicSizeNecessityDecider = IntrinsicSizeNecessityDecider()
@@ -57,10 +58,6 @@ internal class ConstraintManager {
         solver.removeConstraint(constraint)
         constraint.isManaged = false
         intrinsicSizeNecessityDecider.removeConstraint(constraint)
-    }
-
-    fun solve() {
-        solver.solve()
     }
 
     fun addManagedView(view: View) {
@@ -119,7 +116,6 @@ internal class ConstraintManager {
         val leavingConstraints = constraints.filterKeys { leavingViews.contains(it) }
         newConstraintManager.constraints.putAll(leavingConstraints)
         newConstraintManager.normalizeConstraints()
-        newConstraintManager.solve()
         newConstraintManager.constraints.forEach {
             it.value.forEach {
                 newConstraintManager.solver.addConstraint(it)

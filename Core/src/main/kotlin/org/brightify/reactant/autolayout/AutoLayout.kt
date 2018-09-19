@@ -12,21 +12,26 @@ import org.brightify.reactant.autolayout.util.description
 import org.brightify.reactant.autolayout.util.forEachChild
 import org.brightify.reactant.autolayout.util.snp
 import org.brightify.reactant.core.util.assignId
-import kotlin.properties.Delegates
+import org.brightify.reactant.core.util.onChange
 
 /**
  *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
  */
 open class AutoLayout: ViewGroup {
 
-    var measureTime: Boolean by Delegates.observable(false) { _, _, _ ->
+    var measureTime: Boolean by onChange(false) { _, _, _ ->
         (parent as? AutoLayout)?.measureTime = measureTime
+        forEachChild {
+            if (it is AutoLayout) {
+                it.measureTime = measureTime
+            }
+        }
     }
 
     internal var constraintManager = ConstraintManager()
         private set
 
-    private lateinit var autoLayoutConstraints: AutoLayoutConstraints
+    private val autoLayoutConstraints: AutoLayoutConstraints
 
     private val density: Double
         get() = resources.displayMetrics.density.toDouble()
@@ -76,13 +81,10 @@ open class AutoLayout: ViewGroup {
             requestLayoutRecursive(this)
             measureIntrinsicSizes()
             setMeasuredSize(widthMeasureSpec, heightMeasureSpec)
-            constraintManager.solve()
             measureIntrinsicHeights()
             if (MeasureSpec.getMode(widthMeasureSpec) != MeasureSpec.EXACTLY || MeasureSpec.getMode(
-                    heightMeasureSpec) != MeasureSpec.EXACTLY) {
+                            heightMeasureSpec) != MeasureSpec.EXACTLY) {
                 setMeasuredSize(widthMeasureSpec, heightMeasureSpec)
-            } else {
-                constraintManager.solve()
             }
             measureRealSizes()
 
@@ -95,7 +97,8 @@ open class AutoLayout: ViewGroup {
                 val hSize = MeasureSpec.getSize(heightMeasureSpec)
 
                 Log.d("AutoLayout.onMeasure",
-                        "($description) Took $time s totally where width: $wMode / $wSize and height: $hMode / $hSize.\n\n")
+                        "($description) Took $time s totally where width: $wMode / $wSize and height: $hMode / $hSize " +
+                                "constraint count: ${constraintManager.allConstraints.count()}.\n\n")
             }
         }
     }
@@ -113,6 +116,7 @@ open class AutoLayout: ViewGroup {
                 setConstraintManagerRecursive(child, constraintManager)
                 child.autoLayoutConstraints.setActive(false)
                 measureTime = measureTime or child.measureTime
+                child.measureTime = measureTime
             } else {
                 constraintManager.addManagedView(child)
             }
@@ -208,10 +212,6 @@ open class AutoLayout: ViewGroup {
                 MeasureSpec.UNSPECIFIED -> constraintManager.getValueForVariable(currentSize).toPx()
                 else -> Math.min(MeasureSpec.getSize(measureSpec), constraintManager.getValueForVariable(currentSize).toPx())
             }
-        }
-
-        if (MeasureSpec.getMode(widthMeasureSpec) != MeasureSpec.EXACTLY || MeasureSpec.getMode(heightMeasureSpec) != MeasureSpec.EXACTLY) {
-            constraintManager.solve()
         }
 
         setMeasuredDimension(getMeasuredSize(widthMeasureSpec, snp.width), getMeasuredSize(heightMeasureSpec, snp.height))
