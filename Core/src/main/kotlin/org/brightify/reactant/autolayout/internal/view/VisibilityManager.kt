@@ -4,6 +4,7 @@ import android.view.View
 import org.brightify.reactant.autolayout.CollapseAxis
 import org.brightify.reactant.autolayout.Constraint
 import org.brightify.reactant.autolayout.ConstraintOperator
+import org.brightify.reactant.autolayout.ConstraintPriority
 import org.brightify.reactant.autolayout.ConstraintVariable
 import org.brightify.reactant.autolayout.internal.ConstraintItem
 import org.brightify.reactant.autolayout.internal.ConstraintType
@@ -34,9 +35,11 @@ internal class VisibilityManager(view: View) {
 
     private val widthConstraint = Constraint(view,
             listOf(ConstraintItem(ConstraintVariable(view, ConstraintType.width), ConstraintOperator.equal)))
+            .priority(ConstraintPriority.visibility)
 
     private val heightConstraint = Constraint(view,
             listOf(ConstraintItem(ConstraintVariable(view, ConstraintType.height), ConstraintOperator.equal)))
+            .priority(ConstraintPriority.visibility)
 
     val usedConstraints = setOf(widthConstraint, heightConstraint)
 

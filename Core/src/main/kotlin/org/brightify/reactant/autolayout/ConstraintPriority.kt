@@ -9,6 +9,7 @@ class ConstraintPriority(value: Int, val description: String = value.toString())
 
     companion object {
         val required = ConstraintPriority(1000, "required")
+        val visibility = ConstraintPriority(900, "visibility")
         val high = ConstraintPriority(750, "high")
         val medium = ConstraintPriority(500, "medium")
         val low = ConstraintPriority(250, "low")
