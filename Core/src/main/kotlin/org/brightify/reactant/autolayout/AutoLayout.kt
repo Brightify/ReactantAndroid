@@ -233,7 +233,7 @@ open class AutoLayout: ViewGroup {
         }
     }
 
-    private fun Double.toPx(): Int = Math.ceil(this * density).toInt()
+    private fun Double.toPx(): Int = Math.round(this * density).toInt()
 
     private fun Int.toDp(): Double = this / density
 }

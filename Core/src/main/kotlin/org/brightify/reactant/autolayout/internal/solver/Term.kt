@@ -15,15 +15,17 @@ internal class Term(val coefficient: Double, val variable: ConstraintVariable) {
                         Term(-coefficient, ConstraintVariable(variable.view, ConstraintType.left)))
                 ConstraintType.height -> listOf(Term(coefficient, ConstraintVariable(variable.view, ConstraintType.bottom)),
                         Term(-coefficient, ConstraintVariable(variable.view, ConstraintType.top)))
-                ConstraintType.centerX -> listOf(Term(0.5 * coefficient, ConstraintVariable(variable.view, ConstraintType.left)),
+                ConstraintType.centerX -> listOf(Term(Math.signum(coefficient) * (1.0 + (-0.5 * Math.abs(coefficient))),
+                        ConstraintVariable(variable.view, ConstraintType.left)),
                         Term(0.5 * coefficient, ConstraintVariable(variable.view, ConstraintType.right)))
-                ConstraintType.centerY -> listOf(Term(0.5 * coefficient, ConstraintVariable(variable.view, ConstraintType.top)),
+                ConstraintType.centerY -> listOf(Term(Math.signum(coefficient) * (1.0 + (-0.5 * Math.abs(coefficient))),
+                        ConstraintVariable(variable.view, ConstraintType.top)),
                         Term(0.5 * coefficient, ConstraintVariable(variable.view, ConstraintType.bottom)))
                 else -> listOf(Term(coefficient, variable))
             }
         }
 
-    constructor(variable: ConstraintVariable) : this(1.0, variable)
+    constructor(variable: ConstraintVariable): this(1.0, variable)
 
     override fun toString(): String {
         val sign = if (coefficient >= 0) "" else "- "
