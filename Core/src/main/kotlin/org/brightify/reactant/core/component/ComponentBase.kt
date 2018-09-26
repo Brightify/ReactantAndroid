@@ -5,7 +5,7 @@ import io.reactivex.Observable
 /**
  *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
  */
-open class ComponentBase<STATE, ACTION>(initialState: STATE) : ComponentWithDelegate<STATE, ACTION> {
+open class ComponentBase<STATE, ACTION>(initialState: STATE): ComponentWithDelegate<STATE, ACTION> {
 
     override val componentDelegate = ComponentDelegate<STATE, ACTION>(initialState)
 

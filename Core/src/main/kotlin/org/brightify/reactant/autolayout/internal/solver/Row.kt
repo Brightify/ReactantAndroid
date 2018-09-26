@@ -9,7 +9,7 @@ internal class Row(var constant: Double = 0.0) {
 
     val symbols = LinkedHashMap<Symbol, Double>()
 
-    constructor(other: Row) : this(other.constant) {
+    constructor(other: Row): this(other.constant) {
         symbols.putAll(other.symbols)
     }
 

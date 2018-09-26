@@ -13,12 +13,12 @@ import org.brightify.reactant.core.ControllerWithResult
 /**
  *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
  */
-fun <C : ViewController> NavigationController.push(viewController: Observable<C>, animated: Boolean = true) {
+fun <C: ViewController> NavigationController.push(viewController: Observable<C>, animated: Boolean = true) {
     viewController.subscribe { push(it, animated) }.addTo(activeDisposeBag)
 }
 
-fun <C : ViewController> NavigationController.replace(viewController: Observable<C>,
-                                                      animated: Boolean = true): Observable<Optional<ViewController>> {
+fun <C: ViewController> NavigationController.replace(viewController: Observable<C>,
+                                                     animated: Boolean = true): Observable<Optional<ViewController>> {
     val replacedController = ReplaySubject.create<Optional<ViewController>>(1)
     viewController
             .subscribeBy(
@@ -31,12 +31,12 @@ fun <C : ViewController> NavigationController.replace(viewController: Observable
     return replacedController
 }
 
-fun <C : ViewController> NavigationController.popAllAndReplace(viewController: Observable<C>): Observable<List<ViewController>> {
+fun <C: ViewController> NavigationController.popAllAndReplace(viewController: Observable<C>): Observable<List<ViewController>> {
     return replaceAll(viewController, false)
 }
 
-fun <C : ViewController> NavigationController.replaceAll(viewController: Observable<C>,
-                                                         animated: Boolean = true): Observable<List<ViewController>> {
+fun <C: ViewController> NavigationController.replaceAll(viewController: Observable<C>,
+                                                        animated: Boolean = true): Observable<List<ViewController>> {
     val oldControllers = ReplaySubject.create<List<ViewController>>(1)
     viewController
             .subscribeBy(
@@ -48,8 +48,8 @@ fun <C : ViewController> NavigationController.replaceAll(viewController: Observa
     return oldControllers
 }
 
-fun <C : ViewController, T> NavigationController.push(viewController: Observable<ControllerWithResult<C, T>>,
-                                                      animated: Boolean = true): Observable<T> {
+fun <C: ViewController, T> NavigationController.push(viewController: Observable<ControllerWithResult<C, T>>,
+                                                     animated: Boolean = true): Observable<T> {
     val sharedController = viewController.replay(1).refCount()
 
     sharedController.map { it.controller }

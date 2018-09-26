@@ -32,7 +32,7 @@ fun <STATE, ACTION, COMPONENT: Component<STATE, ACTION>> COMPONENT.withState(sta
     return this
 }
 
-fun <STATE: MutableComponentState<STATE>>Component<STATE, *>.mutateState(mutation: STATE.() -> Unit) {
+fun <STATE: MutableComponentState<STATE>> Component<STATE, *>.mutateState(mutation: STATE.() -> Unit) {
     val copy = componentState.clone()
     mutation(copy)
     setComponentState(copy)

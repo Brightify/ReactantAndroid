@@ -10,8 +10,9 @@ import org.brightify.reactant.core.component.Component
 /**
  *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
  */
-open class ScrollControllerBase<STATE, ROOT, ROOT_ACTION>(initialState: STATE, rootViewFactory: (Context) -> ROOT) : ControllerBase<STATE, ROOT, ROOT_ACTION>(
-        initialState, rootViewFactory) where ROOT : View, ROOT : Component<*, ROOT_ACTION> {
+open class ScrollControllerBase<STATE, ROOT, ROOT_ACTION>(initialState: STATE,
+                                                          rootViewFactory: (Context) -> ROOT): ControllerBase<STATE, ROOT, ROOT_ACTION>(
+        initialState, rootViewFactory) where ROOT: View, ROOT: Component<*, ROOT_ACTION> {
 
     @Suppress("UNCHECKED_CAST")
     override val rootView: ROOT

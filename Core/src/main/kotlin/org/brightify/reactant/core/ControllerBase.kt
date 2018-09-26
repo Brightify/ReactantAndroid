@@ -13,7 +13,7 @@ import org.brightify.reactant.core.component.ComponentWithDelegate
  *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
  */
 open class ControllerBase<STATE, ROOT, ROOT_ACTION>(initialState: STATE, private val rootViewFactory: (Context) -> ROOT)
-    : ViewController(), ComponentWithDelegate<STATE, Unit> where ROOT : View, ROOT : Component<*, ROOT_ACTION> {
+    : ViewController(), ComponentWithDelegate<STATE, Unit> where ROOT: View, ROOT: Component<*, ROOT_ACTION> {
 
     final override val componentDelegate = ComponentDelegate<STATE, Unit>(initialState)
 
@@ -31,8 +31,8 @@ open class ControllerBase<STATE, ROOT, ROOT_ACTION>(initialState: STATE, private
     private var rootViewState: StateWrapper = StateWrapper.NoState
 
     sealed class StateWrapper {
-        class HasState(val state: Any?) : StateWrapper()
-        object NoState : StateWrapper()
+        class HasState(val state: Any?): StateWrapper()
+        object NoState: StateWrapper()
     }
 
     init {
