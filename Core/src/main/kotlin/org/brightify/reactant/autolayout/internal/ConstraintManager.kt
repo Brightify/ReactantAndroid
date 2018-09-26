@@ -23,7 +23,7 @@ internal class ConstraintManager {
 
     private val solver = BackgroundSolver(SimplexSolver())
     private val constraints = HashMap<View, HashSet<Constraint>>()
-    private val viewConstraints = HashMap<View, ViewConstraints>()
+    internal val viewConstraints = HashMap<View, ViewConstraints>()
     private val intrinsicSizeNecessityDecider = IntrinsicSizeNecessityDecider()
 
     private val managedViews: Set<View>
@@ -68,9 +68,7 @@ internal class ConstraintManager {
         constraints[view] = HashSet()
         val constraints = ViewConstraints(view)
         viewConstraints[view] = constraints
-        if (view !is AutoLayout) {
-            constraints.intrinsicSizeManager = IntrinsicSizeManager(view)
-        }
+        constraints.initialize()
     }
 
     fun removeManagedView(view: View) {
@@ -144,8 +142,8 @@ internal class ConstraintManager {
         return result
     }
 
-    fun getVisibilityManager(view: View): VisibilityManager
-            = viewConstraints[view]?.visibilityManager ?: throw AutoLayoutNotFoundException(view)
+    fun getVisibilityManager(view: View): VisibilityManager = viewConstraints[view]?.visibilityManager ?: throw AutoLayoutNotFoundException(
+            view)
 
     fun getIntrinsicSizeManager(view: View): IntrinsicSizeManager? = viewConstraints[view]?.intrinsicSizeManager
 

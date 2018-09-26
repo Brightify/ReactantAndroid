@@ -109,10 +109,7 @@ class ConstraintDsl internal constructor(private val view: View) {
         val createdConstraints = ArrayList<Constraint>()
         closure(ConstraintMakerProvider(view, createdConstraints))
         createdConstraints.forEach {
-            it.initialized = true
-            if (it.isActive) {
-                it.activate()
-            }
+            it.initialize()
         }
     }
 

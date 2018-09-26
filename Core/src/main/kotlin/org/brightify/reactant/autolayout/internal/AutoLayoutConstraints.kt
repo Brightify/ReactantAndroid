@@ -3,6 +3,7 @@ package org.brightify.reactant.autolayout.internal
 import org.brightify.reactant.autolayout.AutoLayout
 import org.brightify.reactant.autolayout.Constraint
 import org.brightify.reactant.autolayout.ConstraintOperator
+import org.brightify.reactant.autolayout.ConstraintPriority
 import org.brightify.reactant.autolayout.ConstraintVariable
 import org.brightify.reactant.core.util.onChange
 
@@ -40,14 +41,24 @@ internal class AutoLayoutConstraints(autoLayout: AutoLayout) {
                     ConstraintItem(ConstraintVariable(autoLayout, ConstraintType.top), ConstraintOperator.equal),
                     ConstraintItem(ConstraintVariable(autoLayout, ConstraintType.left), ConstraintOperator.equal)
             ))
+    private val smallestSolutionConstraint = Constraint(autoLayout,
+            listOf(
+                    ConstraintItem(ConstraintVariable(autoLayout, ConstraintType.width), ConstraintOperator.equal),
+                    ConstraintItem(ConstraintVariable(autoLayout, ConstraintType.height), ConstraintOperator.equal)
+            )).priority(ConstraintPriority.autoLayoutIntrinsicSize)
+
+    val usedConstraints: Set<Constraint>
+        get() = setOf(
+                widthConstraint,
+                heightConstraint,
+                cornerConstraint,
+                smallestSolutionConstraint
+        )
 
     init {
         widthConstraint.deactivate()
         heightConstraint.deactivate()
         cornerConstraint.deactivate()
-        widthConstraint.initialized = true
-        heightConstraint.initialized = true
-        cornerConstraint.initialized = true
     }
 
     fun setActive(isActive: Boolean) {
@@ -55,5 +66,14 @@ internal class AutoLayoutConstraints(autoLayout: AutoLayout) {
         heightConstraint.isActive = isActive && height >= 0
         cornerConstraint.isActive = isActive
         this.isActive = isActive
+    }
+
+    fun initialize() {
+        setActive(true)
+
+        widthConstraint.initialize()
+        heightConstraint.initialize()
+        cornerConstraint.initialize()
+        smallestSolutionConstraint.initialize()
     }
 }

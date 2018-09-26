@@ -42,9 +42,9 @@ internal class IntrinsicDimensionManager(dimensionVariable: ConstraintVariable) 
     init {
         deactivateConstraints()
 
-        equalConstraint.initialized = true
-        contentHuggingConstraint.initialized = true
-        contentCompressionResistanceConstraint.initialized = true
+        equalConstraint.initialize()
+        contentHuggingConstraint.initialize()
+        contentCompressionResistanceConstraint.initialize()
     }
 
     private fun updateEquations() {

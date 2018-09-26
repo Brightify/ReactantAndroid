@@ -68,7 +68,7 @@ class Constraint internal constructor(internal val view: View, internal val cons
 
     internal var isManaged = true
 
-    internal var initialized = false
+    private var initialized = false
 
     fun multipliedBy(value: Number): Constraint {
         this.multiplier = value
@@ -122,6 +122,13 @@ class Constraint internal constructor(internal val view: View, internal val cons
 
     override fun toString(): String {
         return constraintItems.map { it.toString() }.joinToString("\n")
+    }
+
+    internal fun initialize() {
+        if (!initialized) {
+            initialized = true
+            isActive = isActive
+        }
     }
 
     private inline fun updateConstraint(closure: () -> Unit) {

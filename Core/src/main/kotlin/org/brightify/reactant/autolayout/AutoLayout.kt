@@ -32,6 +32,8 @@ open class AutoLayout: ViewGroup {
         private set
 
     private val autoLayoutConstraints: AutoLayoutConstraints
+        get() = constraintManager.viewConstraints[this]?.autoLayoutConstraints ?: throw IllegalStateException(
+                "Missing AutoLayoutConstraints.")
 
     private val density: Double
         get() = resources.displayMetrics.density.toDouble()
@@ -49,8 +51,6 @@ open class AutoLayout: ViewGroup {
         assignId()
 
         constraintManager.addManagedView(this)
-        autoLayoutConstraints = AutoLayoutConstraints(this)
-        autoLayoutConstraints.setActive(true)
     }
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
@@ -69,12 +69,11 @@ open class AutoLayout: ViewGroup {
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         if (parent is AutoLayout) {
-            setMeasuredDimension(widthMeasureSpec, heightMeasureSpec)
+            setMeasuredSize(widthMeasureSpec, heightMeasureSpec)
             measureRealSizes()
         } else {
             val begin = System.nanoTime()
 
-            autoLayoutConstraints.setActive(true)
             initializeAutoLayoutConstraints(widthMeasureSpec, heightMeasureSpec)
             constraintManager.updateIntrinsicSizeNecessityDecider()
             updateVisibility()

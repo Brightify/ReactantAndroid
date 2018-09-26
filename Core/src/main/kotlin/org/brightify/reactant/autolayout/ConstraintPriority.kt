@@ -13,6 +13,7 @@ class ConstraintPriority(value: Int, val description: String = value.toString())
         val high = ConstraintPriority(750, "high")
         val medium = ConstraintPriority(500, "medium")
         val low = ConstraintPriority(250, "low")
+        val autoLayoutIntrinsicSize = ConstraintPriority(100, "autolayout")
     }
 
     override fun toString(): String {
