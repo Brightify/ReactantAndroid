@@ -77,7 +77,11 @@ open class NavigationController(
         }
 
         initialController?.navigationController = this
-        initialController?.let { viewControllerStack.push(it) }
+        if (viewControllerStack.isEmpty()) {
+            initialController?.let {
+                viewControllerStack.push(it)
+            }
+        }
 
         transactionManager.enabled = true
     }
