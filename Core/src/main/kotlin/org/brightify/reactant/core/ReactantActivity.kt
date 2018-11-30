@@ -1,5 +1,6 @@
 package org.brightify.reactant.core
 
+import android.content.Context
 import android.content.pm.ActivityInfo
 import android.os.Build
 import android.os.Bundle
@@ -19,7 +20,7 @@ import java.util.UUID
 /**
  *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
  */
-open class ReactantActivity(private val wireframeFactory: () -> Wireframe): AppCompatActivity() {
+open class ReactantActivity(private val wireframeFactory: (Context) -> Wireframe): AppCompatActivity() {
 
     val resumed: Observable<Unit>
         get() = isResumed.filter { it }.map { }
@@ -67,7 +68,7 @@ open class ReactantActivity(private val wireframeFactory: () -> Wireframe): AppC
             }
 
             if (viewControllerStack.empty()) {
-                viewControllerStack.push(wireframeFactory().entrypoint())
+                viewControllerStack.push(wireframeFactory(applicationContext).entrypoint())
             }
 
             viewControllerStack.forEach { it.activity_ = this }
