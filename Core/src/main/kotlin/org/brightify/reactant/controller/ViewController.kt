@@ -107,6 +107,14 @@ open class ViewController(title: String = "") {
     val isActivated: Boolean
         get() = activity_ != null
 
+    private var childViewControllers_ = ArrayList<ViewController>()
+    val childViewControllers: List<ViewController>
+        get() = childViewControllers_
+
+    private var parentViewController_: ViewController? = null
+    val parentViewController: ViewController?
+        get() = parentViewController_
+
     private var initialized = false
 
     private var lastStatusBarColor: Int? = null
@@ -119,10 +127,15 @@ open class ViewController(title: String = "") {
                 return false
             }
 
+            childViewControllers_.forEach {
+                it.activity_ = newValue
+            }
+
             view_ = null
             if (isActivated && newValue == null) {
                 deactivated()
             }
+
             return true
         }
 
@@ -131,6 +144,10 @@ open class ViewController(title: String = "") {
                 activated()
             }
             activityChanged()
+
+            childViewControllers_.forEach {
+                it.activity_ = newValue
+            }
         }
     }
 
@@ -179,9 +196,12 @@ open class ViewController(title: String = "") {
     }
 
     open fun viewDidLoad() {
+        childViewControllers.forEach(ViewController::viewDidLoad)
     }
 
     open fun viewWillAppear() {
+        childViewControllers.forEach(ViewController::viewWillAppear)
+
         if (view_ == null) {
             loadView()
             viewDidLoad()
@@ -190,7 +210,7 @@ open class ViewController(title: String = "") {
         visibleDisposeBag.clear()
         title = title
 
-        if (this !is NavigationController && this !is TabBarController && this !is HamburgerMenuController) {
+        if (this !is NavigationController && this !is TabBarController && this !is HamburgerMenuController && parentViewController == null) {
             invalidateGlobalSettings()
             activity.updateScreenOrientation()
         }
@@ -198,9 +218,13 @@ open class ViewController(title: String = "") {
 
     open fun viewDidAppear() {
         isVisible = true
+
+        childViewControllers.forEach(ViewController::viewDidAppear)
     }
 
     open fun viewWillDisappear() {
+//        childViewControllers.forEach(ViewController::viewWillDisappear)
+
         activity.let {
             val inputManager = it.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
             inputManager.hideSoftInputFromWindow(view.windowToken, 0)
@@ -210,6 +234,8 @@ open class ViewController(title: String = "") {
     open fun viewDidDisappear() {
         isVisible = false
         visibleDisposeBag.clear()
+
+//        childViewControllers.forEach(ViewController::viewDidDisappear)
     }
 
     open fun viewDestroyed() {
@@ -229,6 +255,44 @@ open class ViewController(title: String = "") {
 
     open fun destroyViewHierarchy() {
         view_ = null
+
+        childViewControllers.forEach(ViewController::destroyViewHierarchy)
+    }
+
+    fun addChildViewController(child: ViewController) {
+        if (child.parentViewController != null) {
+            child.removeFromParentViewController()
+        }
+
+        child.parentViewController_ = this
+
+        if (isVisible) {
+            child.viewWillAppear()
+        }
+
+        childViewControllers_.add(child)
+
+        if (isVisible) {
+            child.viewDidAppear()
+        }
+    }
+
+    fun removeFromParentViewController() {
+        parentViewController?.removeChildViewController(this)
+        parentViewController_ = null
+    }
+
+    internal fun removeChildViewController(child: ViewController) {
+        val childVisible = child.isVisible
+        if (childVisible) {
+            child.viewWillDisappear()
+        }
+
+        childViewControllers_.remove(this)
+
+        if (childVisible) {
+            child.viewDidDisappear()
+        }
     }
 
     fun present(controller: ViewController, animated: Boolean = true): Observable<Unit> {
