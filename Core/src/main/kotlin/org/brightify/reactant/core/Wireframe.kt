@@ -23,7 +23,11 @@ class FutureControllerProvider<T: ViewController> {
         get() = controllerRef?.get()
 
     val navigation: NavigationController?
-        get() = controller?.navigationController
+        get() = controller?.navigationController ?:
+            controller?.parentViewController?.navigationController ?:
+                controller?.tabBarController?.navigationController ?:
+                controller?.hamburgerMenuController?.navigationController
+
 }
 
 fun <T: ViewController> Wireframe.create(factory: (FutureControllerProvider<T>) -> T): T {
