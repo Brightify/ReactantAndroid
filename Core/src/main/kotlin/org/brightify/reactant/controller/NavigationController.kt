@@ -1,9 +1,7 @@
 package org.brightify.reactant.controller
 
 import android.graphics.Color
-import android.support.v4.content.ContextCompat
 import android.support.v7.widget.Toolbar
-import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.ContextThemeWrapper
 import android.view.ViewGroup
@@ -15,7 +13,7 @@ import org.brightify.reactant.autolayout.util.snp
 import org.brightify.reactant.controller.util.TransactionManager
 import org.brightify.reactant.core.ReactantActivity
 import org.brightify.reactant.core.util.onChange
-import java.util.Stack
+import java.util.*
 
 /**
  *  @author <a href="mailto:filip.dolnik.96@gmail.com">Filip Dolnik</a>

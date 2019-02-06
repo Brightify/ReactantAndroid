@@ -21,7 +21,9 @@ fun <C : ViewController> NavigationController.replace(viewController: Observable
     viewController
             .subscribeBy(
                     onNext = { controller ->
-                        replacedController.onNext(replace(viewController = controller, animated = animated))
+                        OptionalSubjectWorkaround.onNextWorkaround(
+                            replacedController,
+                            replace(viewController = controller, animated = animated))
                     },
                     onComplete = { replacedController.onComplete() }
             )

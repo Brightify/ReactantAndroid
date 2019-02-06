@@ -4,8 +4,6 @@ import android.content.Context
 import android.os.Build
 import android.view.View
 import android.widget.FrameLayout
-import io.reactivex.Observable
-import io.reactivex.Single
 import io.reactivex.subjects.PublishSubject
 
 /**
