@@ -2,15 +2,19 @@ package org.brightify.reactant.core
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.res.TypedArray
+import android.support.annotation.StyleableRes
+import android.support.v4.content.res.TypedArrayUtils
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
 import org.brightify.reactant.autolayout.AutoLayout
+import org.brightify.reactant.autolayout.util.children
 import org.brightify.reactant.core.component.ComponentDelegate
 import org.brightify.reactant.core.component.ComponentWithDelegate
-
 
 /**
  *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
@@ -52,6 +56,15 @@ open class ViewBase<STATE, ACTION> @JvmOverloads constructor(
         componentDelegate.canUpdate = true
     }
 
+    fun AttributeSet.read(@StyleableRes attrId: IntArray, closure: (TypedArray) -> Unit) {
+        val attributes = context.obtainStyledAttributes(this, attrId)
+        try {
+            closure(attributes)
+        } finally {
+            attributes.recycle()
+        }
+    }
+
     open fun afterInit() {
     }
 
@@ -64,6 +77,30 @@ open class ViewBase<STATE, ACTION> @JvmOverloads constructor(
     }
 
     open fun setupConstraints() {
+    }
+
+    override fun onViewAdded(child: View?) {
+        super.onViewAdded(child)
+
+        forEachComponentView(child) {
+            createdViews.add(it)
+        }
+    }
+
+    override fun onViewRemoved(child: View?) {
+        super.onViewRemoved(child)
+
+        forEachComponentView(child) {
+            createdViews.remove(it)
+        }
+    }
+
+    private fun forEachComponentView(view: View?, closure: (ComponentView) -> Unit) {
+        when (view) {
+            null -> return
+            is ComponentView -> closure(view)
+            is ViewGroup -> view.children.forEach { forEachComponentView(it, closure) }
+        }
     }
 
     override fun destroy() {
@@ -86,7 +123,7 @@ open class ViewBase<STATE, ACTION> @JvmOverloads constructor(
     protected fun <V: ComponentView> create(factory: (Context) -> V): V {
         val view = factory(context)
         view.init()
-        createdViews.add(view)
+//        createdViews.add(view)
         return view
     }
 
