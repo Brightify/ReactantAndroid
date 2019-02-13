@@ -8,6 +8,7 @@ import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
 import org.brightify.reactant.core.ReactantActivity
 import org.brightify.reactant.core.util.onChange
+import kotlin.math.exp
 import kotlin.properties.Delegates
 import kotlin.properties.ObservableProperty
 import kotlin.reflect.KProperty
@@ -127,6 +128,8 @@ open class ViewController(title: String = "") {
                 return false
             }
 
+            activityWillChange(newValue)
+
             childViewControllers_.forEach {
                 it.activity_ = newValue
             }
@@ -144,6 +147,7 @@ open class ViewController(title: String = "") {
                 activated()
             }
             activityChanged()
+            activityDidChange(oldValue)
 
             childViewControllers_.forEach {
                 it.activity_ = newValue
@@ -188,8 +192,12 @@ open class ViewController(title: String = "") {
         activeDisposeBag.clear()
     }
 
-    open fun activityChanged() {
-    }
+    @Deprecated(message = "Use activityDidChange instead", replaceWith = ReplaceWith(expression = "activityDidChange()"))
+    open fun activityChanged() { }
+
+    open fun activityWillChange(newActivity: Activity?) { }
+
+    open fun activityDidChange(oldActivity: Activity?) { }
 
     open fun loadView() {
         viewLifetimeDisposeBag.clear()
