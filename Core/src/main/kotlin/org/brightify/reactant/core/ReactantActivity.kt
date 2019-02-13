@@ -1,10 +1,13 @@
 package org.brightify.reactant.core
 
 import android.app.Application
+import android.content.Context
 import android.content.pm.ActivityInfo
 import android.os.Build
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import android.util.AttributeSet
+import android.view.View
 import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.addTo
@@ -152,6 +155,27 @@ open class ReactantActivity(private val wireframeFactory: (Application) -> Wiref
         }
 
         super.onDestroy()
+    }
+
+    override fun onCreateView(parent: View?, name: String?, context: Context?, attrs: AttributeSet?): View? {
+        if (name == null) { return super.onCreateView(parent, name, context, attrs) }
+        return try {
+            val cls = Class.forName(name)
+
+            val componentView = try {
+                val constructor = cls.getConstructor(Context::class.java, AttributeSet::class.java)
+                constructor.newInstance(context, attrs) as? ViewBase<*, *>
+            } catch (e: NoSuchMethodException) {
+                val constructor = cls.getConstructor(Context::class.java)
+                constructor.newInstance(context) as? ViewBase<*, *>
+            }
+
+            componentView?.apply {
+                init()
+            }
+        } catch (e: Exception) {
+            super.onCreateView(parent, name, context, attrs)
+        }
     }
 
     fun present(viewController: ViewController, animated: Boolean = true): Observable<Unit> {

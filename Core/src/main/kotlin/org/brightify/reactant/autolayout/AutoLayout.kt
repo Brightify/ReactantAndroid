@@ -19,7 +19,7 @@ import kotlin.math.roundToInt
 /**
  *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
  */
-open class AutoLayout: ViewGroup {
+open class AutoLayout @JvmOverloads constructor(context: Context?, attrs: AttributeSet? = null, defStyleAttr: Int = 0, defStyleRes: Int = 0) : ViewGroup(context, attrs, defStyleAttr, defStyleRes) {
 
     var measureTime: Boolean by onChange(false) { _, _, _ ->
         (parent as? AutoLayout)?.measureTime = measureTime
@@ -39,15 +39,6 @@ open class AutoLayout: ViewGroup {
 
     private val density: Double
         get() = resources.displayMetrics.density.toDouble()
-
-    constructor(context: Context?): super(context)
-
-    constructor(context: Context?, attrs: AttributeSet?): super(context, attrs)
-
-    constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int): super(context, attrs, defStyleAttr)
-
-    constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int): super(context, attrs, defStyleAttr,
-            defStyleRes)
 
     init {
         assignId()
