@@ -4,6 +4,7 @@ import android.app.Activity
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
+import android.widget.FrameLayout
 import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
 import org.brightify.reactant.core.ReactantActivity
@@ -199,6 +200,7 @@ open class ViewController(title: String = "") {
     open fun activityDidChange(oldActivity: Activity?) { }
 
     open fun loadView() {
+        view_ = FrameLayout(activity)
         viewLifetimeDisposeBag.clear()
     }
 
