@@ -101,19 +101,19 @@ open class NavigationController(
     override fun viewDidAppear() {
         super.viewDidAppear()
 
-        viewControllerStack.peek().viewDidAppear()
+        topViewController?.viewDidAppear()
     }
 
     override fun viewWillDisappear() {
         super.viewWillDisappear()
 
-        viewControllerStack.peek().viewWillDisappear()
+        topViewController?.viewWillDisappear()
     }
 
     override fun viewDidDisappear() {
         super.viewDidDisappear()
 
-        viewControllerStack.peek().viewDidDisappear()
+        topViewController?.viewDidDisappear()
     }
 
     override fun viewDestroyed() {
@@ -134,7 +134,7 @@ open class NavigationController(
     }
 
     override fun onBackPressed(): Boolean {
-        if (viewControllerStack.peek().onBackPressed()) {
+        if (topViewController?.onBackPressed() == true) {
             return true
         }
 
@@ -160,7 +160,7 @@ open class NavigationController(
 
     fun push(viewController: ViewController, animated: Boolean = true) {
         transactionManager.transaction {
-            clearLayout(!viewControllerStack.empty())
+            clearLayout(true)
             viewControllerStack.push(viewController)
             showViewController()
             viewController.viewDidAppear()
@@ -176,7 +176,7 @@ open class NavigationController(
             clearLayout(true)
             val viewController = viewControllerStack.pop()
             showViewController()
-            viewControllerStack.peek().viewDidAppear()
+            topViewController?.viewDidAppear()
             viewController.activity_ = null
             return@transaction viewController
         }
@@ -184,19 +184,19 @@ open class NavigationController(
 
     fun replace(viewController: ViewController, animated: Boolean = true): ViewController? {
         return transactionManager.transaction {
-            clearLayout(!viewControllerStack.empty())
-            val old = viewControllerStack.pop()
+            clearLayout(true)
+            val old = if (viewControllerStack.isEmpty()) null else viewControllerStack.pop()
             viewControllerStack.push(viewController)
             showViewController()
-            viewControllerStack.peek().viewDidAppear()
-            old.activity_ = null
+            topViewController?.viewDidAppear()
+            old?.activity_ = null
             return@transaction old
         }
     }
 
     fun replaceAll(viewController: ViewController, animated: Boolean = true): List<ViewController> {
         return transactionManager.transaction {
-            clearLayout(!viewControllerStack.empty())
+            clearLayout(true)
             val viewControllers = viewControllerStack.elements().toList()
             viewControllerStack.clear()
             viewControllerStack.push(viewController)
@@ -216,24 +216,24 @@ open class NavigationController(
 
     private fun clearLayout(callCallbacks: Boolean) {
         if (callCallbacks) {
-            viewControllerStack.peek().viewWillDisappear()
+            topViewController?.viewWillDisappear()
         }
         layoutContent?.removeAllViews()
         (view as ViewGroup).removeAllViews()
         if (callCallbacks) {
-            viewControllerStack.peek().viewDidDisappear()
+            topViewController?.viewDidDisappear()
         }
     }
 
     private fun showViewController() {
         resetViewControllerSpecificSettings()
-        viewControllerStack.peek().activity_ = activity_
-        viewControllerStack.peek().navigationController = this
-        viewControllerStack.peek().viewWillAppear()
+        topViewController?.activity_ = activity_
+        topViewController?.navigationController = this
+        topViewController?.viewWillAppear()
 
         val shouldHideBottomBar = viewControllerStack
                 .map { it.hidesBottomBarWhenPushed }
-                .reduce { accumulator, hidesBottomBarWhenPushed ->
+                .fold(false) { accumulator, hidesBottomBarWhenPushed ->
                     accumulator || hidesBottomBarWhenPushed
                 }
         tabBarController?.setTabBarHidden(shouldHideBottomBar)
@@ -242,9 +242,9 @@ open class NavigationController(
 
     private fun addViewToHierarchy() {
         if (isNavigationBarHidden) {
-            (view as ViewGroup).addView(viewControllerStack.peek().view)
+            topViewController?.view?.let { (view as ViewGroup).addView(it) }
         } else {
-            layoutContent?.addView(viewControllerStack.peek().view)
+            topViewController?.view?.let { layoutContent?.addView(it) }
             (view as ViewGroup).addView(layout)
         }
     }
