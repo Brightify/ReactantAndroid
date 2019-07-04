@@ -31,6 +31,9 @@ open class NavigationController(
     var toolbar: Toolbar? = null
         private set
 
+    val topViewController: ViewController?
+        get() = if (viewControllerStack.isEmpty()) null else viewControllerStack.peek()
+
     private var layout: AutoLayout? = null
     private var layoutContent: FrameLayout? = null
     private val viewControllerStack = Stack<ViewController>()
