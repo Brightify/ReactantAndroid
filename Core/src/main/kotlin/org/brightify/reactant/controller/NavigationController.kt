@@ -1,11 +1,12 @@
 package org.brightify.reactant.controller
 
+import android.app.Activity
 import android.graphics.Color
-import android.support.v7.widget.Toolbar
 import android.util.TypedValue
 import android.view.ContextThemeWrapper
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import androidx.appcompat.widget.Toolbar
 import org.brightify.reactant.R
 import org.brightify.reactant.autolayout.AutoLayout
 import org.brightify.reactant.autolayout.util.children
@@ -40,8 +41,8 @@ open class NavigationController(
     private val toolbarHeight = 56 // FIXME get correct value
     private val transactionManager = TransactionManager()
 
-    override fun activityChanged() {
-        super.activityChanged()
+    override fun activityDidChange(oldActivity: Activity?) {
+        super.activityDidChange(oldActivity)
 
         viewControllerStack.forEach {
             it.activity_ = activity_

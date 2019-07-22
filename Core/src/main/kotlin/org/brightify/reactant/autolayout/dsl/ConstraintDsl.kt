@@ -17,6 +17,7 @@ import org.brightify.reactant.autolayout.internal.view.VisibilityManager
 import org.brightify.reactant.autolayout.util.children
 import org.brightify.reactant.autolayout.util.description
 import org.brightify.reactant.autolayout.util.snp
+import kotlin.math.abs
 
 /**
  *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
@@ -129,12 +130,10 @@ class ConstraintDsl internal constructor(private val view: View) {
     }
 
     fun debugValues() {
-        val values = listOf(top, left, bottom, right, width, height, centerX, centerY)
-                .map {
-                    val value = constraintManager.getValueForVariable(it)
-                    "${it.type} = ${if (value == 0.0) Math.abs(value) else value}"
-                }
-                .joinToString("\n")
+        val values = listOf(top, left, bottom, right, width, height, centerX, centerY).joinToString("\n") {
+            val value = constraintManager.getValueForVariable(it)
+            "${it.type} = ${if (value == 0.0) abs(value) else value}"
+        }
         val intrinsicWidth = if (constraintManager.needsIntrinsicWidth(view))
             "\nintrinsicWidth = $intrinsicWidth\n" +
                     "horizontalContentHuggingPriority = $horizontalContentHuggingPriority\n" +
@@ -155,10 +154,10 @@ class ConstraintDsl internal constructor(private val view: View) {
 
     fun debugConstraints() {
         constraintManager.allConstraints
-                .flatMap { it.constraintItems }
-                .filter { it.leftVariable.view == view || it.rightVariable?.view == view }
-                .map { it.toString() }
-                .joinToString("\n").let { Log.d("debugConstraints(view=${view.description})", it) }
+            .flatMap { it.constraintItems }
+            .filter { it.leftVariable.view == view || it.rightVariable?.view == view }
+            .joinToString("\n") { it.toString() }
+            .let { Log.d("debugConstraints(view=${view.description})", it) }
     }
 
     fun debugConstraintsRecursive() {
@@ -176,5 +175,6 @@ class ConstraintDsl internal constructor(private val view: View) {
         constraintManager.removeConstraint(constraint)
     }
 
+    @Suppress("FunctionName")
     private fun ConstraintVariable(type: ConstraintType): ConstraintVariable = ConstraintVariable(view, type)
 }

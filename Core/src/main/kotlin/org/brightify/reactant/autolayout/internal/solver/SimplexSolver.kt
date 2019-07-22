@@ -239,8 +239,8 @@ internal class SimplexSolver {
             throw InternalSolverError()
         }
 
-        rows[artificialVariable]?.let {
-            val entering = it.symbols.keys.first { it.type == Symbol.Type.slack }
+        rows[artificialVariable]?.let { artificialRow ->
+            val entering = artificialRow.symbols.keys.first { it.type == Symbol.Type.slack }
             pivot(entering, artificialVariable)
         }
         removeColumn(artificialVariable)

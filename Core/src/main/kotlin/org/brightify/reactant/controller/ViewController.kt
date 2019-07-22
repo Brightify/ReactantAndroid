@@ -8,7 +8,6 @@ import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
 import org.brightify.reactant.core.ReactantActivity
 import org.brightify.reactant.core.util.onChange
-import kotlin.math.exp
 import kotlin.properties.Delegates
 import kotlin.properties.ObservableProperty
 import kotlin.reflect.KProperty
@@ -36,7 +35,7 @@ open class ViewController(title: String = "") {
             view_ = value
         }
 
-    var navigationController: NavigationController? by onChange<NavigationController?>(null) { _, _, _ ->
+    var navigationController: NavigationController? by onChange(null) { _, _, _ ->
         if (tabBarItem != null) {
             navigationController?.tabBarItem = tabBarItem
         }
@@ -46,7 +45,7 @@ open class ViewController(title: String = "") {
     }
         internal set
 
-    var tabBarController: TabBarController? by onChange<TabBarController?>(null) { _, _, _ ->
+    var tabBarController: TabBarController? by onChange(null) { _, _, _ ->
         if (tabBarItem != null) {
             tabBarController?.updateTabBarItem(this)
         }
@@ -56,7 +55,7 @@ open class ViewController(title: String = "") {
     }
         internal set
 
-    var hamburgerMenuController: HamburgerMenuController? by onChange<HamburgerMenuController?>(null) { _, _, _ ->
+    var hamburgerMenuController: HamburgerMenuController? by onChange(null) { _, _, _ ->
         if (tabBarItem != null) {
             hamburgerMenuController?.tabBarItem = tabBarItem
         }
@@ -72,13 +71,13 @@ open class ViewController(title: String = "") {
 
     open var hidesBottomBarWhenPushed: Boolean = false
 
-    var tabBarItem: MenuItem? by onChange<MenuItem?>(null) { _, _, _ ->
+    var tabBarItem: MenuItem? by onChange(null) { _, _, _ ->
         navigationController?.tabBarItem = tabBarItem
         tabBarController?.updateTabBarItem(this)
         hamburgerMenuController?.tabBarItem = tabBarItem
     }
 
-    var hamburgerMenuItem: MenuItem? by onChange<MenuItem?>(null) { _, _, _ ->
+    var hamburgerMenuItem: MenuItem? by onChange(null) { _, _, _ ->
         navigationController?.hamburgerMenuItem = hamburgerMenuItem
         tabBarController?.hamburgerMenuItem = hamburgerMenuItem
         hamburgerMenuController?.updateMenuItem(this)

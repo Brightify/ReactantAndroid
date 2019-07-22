@@ -13,7 +13,7 @@ import org.brightify.reactant.R
 @SuppressLint("ViewConstructor")
 class ReactantActivityContentView(private val activity: ReactantActivity): FrameLayout(activity) {
 
-    val beforeKeyboardVisibilityChangeSubject: PublishSubject<Boolean> = PublishSubject.create<Boolean>()
+    val beforeKeyboardVisibilityChangeSubject: PublishSubject<Boolean> = PublishSubject.create()
 
     private var keyboardState = false
 

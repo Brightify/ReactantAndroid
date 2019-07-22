@@ -30,6 +30,7 @@ class FutureControllerProvider<T: ViewController> {
 
 }
 
+@Suppress("unused")
 fun <T: ViewController> Wireframe.create(factory: (FutureControllerProvider<T>) -> T): T {
     val futureControllerProvider = FutureControllerProvider<T>()
     val controller = factory(futureControllerProvider)
@@ -39,6 +40,7 @@ fun <T: ViewController> Wireframe.create(factory: (FutureControllerProvider<T>) 
 
 data class ControllerWithResult<T: ViewController, U>(val controller: T, val result: Observable<U>)
 
+@Suppress("unused")
 fun <T: ViewController, U> Wireframe.create(factory: (FutureControllerProvider<T>, Observer<U>) -> T): ControllerWithResult<T, U> {
     val futureControllerProvider = FutureControllerProvider<T>()
     val subject = PublishSubject.create<U>()

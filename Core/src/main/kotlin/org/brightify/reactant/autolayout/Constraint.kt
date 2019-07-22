@@ -121,7 +121,7 @@ class Constraint internal constructor(internal val view: View, internal val cons
     }
 
     override fun toString(): String {
-        return constraintItems.map { it.toString() }.joinToString("\n")
+        return constraintItems.joinToString("\n") { it.toString() }
     }
 
     internal fun initialize() {

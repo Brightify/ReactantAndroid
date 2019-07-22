@@ -78,7 +78,7 @@ internal class IntrinsicSizeNecessityDecider {
     }
 
     private fun invalidate() {
-        if (!constraintsToAdd.isEmpty() || !constraintsToRemove.isEmpty()) {
+        if (constraintsToAdd.isNotEmpty() || constraintsToRemove.isNotEmpty()) {
             fixedVariables.clear()
             activeConstraints.removeAll(constraintsToRemove)
             activeConstraints.addAll(constraintsToAdd)
@@ -96,13 +96,13 @@ internal class IntrinsicSizeNecessityDecider {
             lastItemsSize = constraintItems.size
             val newConstraintItems = HashSet(constraintItems)
 
-            constraintItems.forEach {
-                if (it.leftVariable.isFixed) {
-                    it.rightVariable?.let { addFixedVariable(it) }
-                    newConstraintItems.remove(it)
-                } else if (it.rightVariable?.isFixed != false) {
-                    addFixedVariable(it.leftVariable)
-                    newConstraintItems.remove(it)
+            constraintItems.forEach { constraintItem ->
+                if (constraintItem.leftVariable.isFixed) {
+                    constraintItem.rightVariable?.let { addFixedVariable(it) }
+                    newConstraintItems.remove(constraintItem)
+                } else if (constraintItem.rightVariable?.isFixed != false) {
+                    addFixedVariable(constraintItem.leftVariable)
+                    newConstraintItems.remove(constraintItem)
                 }
             }
             constraintItems = newConstraintItems

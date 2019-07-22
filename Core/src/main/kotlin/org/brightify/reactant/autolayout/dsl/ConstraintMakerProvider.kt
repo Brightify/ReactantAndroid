@@ -50,6 +50,7 @@ open class ConstraintMakerProvider internal constructor(protected val view: View
     val center: ConstraintMaker
         get() = centerX.centerY
 
+    @Suppress("FunctionName")
     internal open fun ConstraintMaker(type: ConstraintType): ConstraintMaker {
         return ConstraintMaker(view, createdConstraints, listOf(type))
     }

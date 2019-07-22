@@ -13,6 +13,8 @@ import org.brightify.reactant.autolayout.util.forEachChild
 import org.brightify.reactant.autolayout.util.snp
 import org.brightify.reactant.core.util.assignId
 import org.brightify.reactant.core.util.onChange
+import kotlin.math.min
+import kotlin.math.roundToInt
 
 /**
  *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
@@ -209,7 +211,7 @@ open class AutoLayout: ViewGroup {
             return when (MeasureSpec.getMode(measureSpec)) {
                 MeasureSpec.EXACTLY -> MeasureSpec.getSize(measureSpec)
                 MeasureSpec.UNSPECIFIED -> constraintManager.getValueForVariable(currentSize).toPx()
-                else -> Math.min(MeasureSpec.getSize(measureSpec), constraintManager.getValueForVariable(currentSize).toPx())
+                else -> min(MeasureSpec.getSize(measureSpec), constraintManager.getValueForVariable(currentSize).toPx())
             }
         }
 
@@ -232,7 +234,7 @@ open class AutoLayout: ViewGroup {
         }
     }
 
-    private fun Double.toPx(): Int = Math.round(this * density).toInt()
+    private fun Double.toPx(): Int = (this * density).roundToInt()
 
     private fun Int.toDp(): Double = this / density
 }

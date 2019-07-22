@@ -10,7 +10,7 @@ internal class TransactionManager {
     private val transactions = ArrayList<() -> Unit>()
 
     val isInTransaction: Boolean
-        get() = !transactions.isEmpty()
+        get() = transactions.isNotEmpty()
 
     var enabled: Boolean by onChange(false) { _, _, _ ->
         if (enabled) {

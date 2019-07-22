@@ -70,20 +70,24 @@ class ConstraintMaker internal constructor(view: View, createdConstraints: Mutab
         return ConstraintMaker(view, createdConstraints, types + type)
     }
 
+    @Suppress("FunctionName")
     private fun Constraint(variable: ConstraintVariable, operator: ConstraintOperator): Constraint {
         return Constraint(types.distinct().map { ConstraintItem(ConstraintVariable(view, it), operator, variable) })
     }
 
+    @Suppress("FunctionName")
     private fun Constraint(view: View, operator: ConstraintOperator): Constraint {
         return Constraint(types.distinct().map {
             ConstraintItem(ConstraintVariable(this.view, it), operator, ConstraintVariable(view, it))
         })
     }
 
+    @Suppress("FunctionName")
     private fun Constraint(value: Number, operator: ConstraintOperator): Constraint {
         return Constraint(types.distinct().map { ConstraintItem(value, operator, it) })
     }
 
+    @Suppress("FunctionName")
     private fun ConstraintItem(value: Number, operator: ConstraintOperator, type: ConstraintType): ConstraintItem {
         val variableType = when (type) {
             ConstraintType.width, ConstraintType.height -> null
@@ -95,6 +99,7 @@ class ConstraintMaker internal constructor(view: View, createdConstraints: Mutab
                 variableType?.let { ConstraintVariable(parentViewOrError, type) }, value)
     }
 
+    @Suppress("FunctionName")
     private fun Constraint(constraintItems: List<ConstraintItem>): Constraint {
         val constraint = Constraint(view, constraintItems)
         createdConstraints.add(constraint)

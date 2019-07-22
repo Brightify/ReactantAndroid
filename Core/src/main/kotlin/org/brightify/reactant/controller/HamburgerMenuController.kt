@@ -1,11 +1,12 @@
 package org.brightify.reactant.controller
 
-import android.support.design.widget.NavigationView
-import android.support.v4.widget.DrawerLayout
+import android.app.Activity
 import android.view.Gravity
 import android.view.Menu
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import androidx.drawerlayout.widget.DrawerLayout
+import com.google.android.material.navigation.NavigationView
 import org.brightify.reactant.autolayout.util.children
 import org.brightify.reactant.controller.util.TransactionManager
 
@@ -45,8 +46,8 @@ open class HamburgerMenuController(private val viewControllers: List<ViewControl
     private var displayedViewController: ViewController = viewControllers[0]
     private val transactionManager = TransactionManager()
 
-    override fun activityChanged() {
-        super.activityChanged()
+    override fun activityDidChange(oldActivity: Activity?) {
+        super.activityDidChange(oldActivity)
 
         viewControllers.forEach {
             it.activity_ = activity_

@@ -1,10 +1,11 @@
 package org.brightify.reactant.controller
 
-import android.support.design.widget.BottomNavigationView
+import android.app.Activity
 import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import io.reactivex.rxkotlin.addTo
 import org.brightify.reactant.autolayout.AutoLayout
 import org.brightify.reactant.autolayout.ConstraintPriority
@@ -53,8 +54,8 @@ open class TabBarController(private val viewControllers: List<ViewController>): 
     private var displayedViewController: ViewController = viewControllers[0]
     private val transactionManager = TransactionManager()
 
-    override fun activityChanged() {
-        super.activityChanged()
+    override fun activityDidChange(oldActivity: Activity?) {
+        super.activityDidChange(oldActivity)
 
         viewControllers.forEach {
             it.activity_ = activity_

@@ -9,5 +9,4 @@ import org.brightify.reactant.autolayout.ConstraintPriority
 internal class Equation(val terms: List<Term> = emptyList(),
                         val operator: ConstraintOperator = ConstraintOperator.equal,
                         val constant: Double = 0.0,
-                        val priority: ConstraintPriority = ConstraintPriority.required) {
-}
+                        val priority: ConstraintPriority = ConstraintPriority.required)

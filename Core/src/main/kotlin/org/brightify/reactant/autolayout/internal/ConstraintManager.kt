@@ -115,14 +115,14 @@ internal class ConstraintManager {
         newConstraintManager.constraints.putAll(leavingConstraints)
         newConstraintManager.normalizeConstraints()
         newConstraintManager.constraints.forEach {
-            it.value.forEach {
-                newConstraintManager.solver.addConstraint(it)
+            it.value.forEach { constraint ->
+                newConstraintManager.solver.addConstraint(constraint)
             }
         }
 
         leavingViews.forEach {
-            constraints.remove(it)?.forEach {
-                solver.removeConstraint(it)
+            constraints.remove(it)?.forEach { constraint ->
+                solver.removeConstraint(constraint)
             }
         }
         normalizeConstraints()
@@ -158,16 +158,16 @@ internal class ConstraintManager {
     }
 
     private fun verifyViewsUsedByConstraint(constraint: Constraint): Boolean {
-        return constraint.constraintItems.all {
-            managedViews.contains(it.leftVariable.view) && it.rightVariable?.let { managedViews.contains(it.view) } != false
+        return constraint.constraintItems.all { constraintItem ->
+            managedViews.contains(constraintItem.leftVariable.view) && constraintItem.rightVariable?.let { managedViews.contains(it.view) } != false
         }
     }
 
     private fun normalizeConstraints() {
         HashMap(constraints).forEach {
-            HashSet(it.value).forEach {
-                if (!verifyViewsUsedByConstraint(it)) {
-                    removeConstraint(it)
+            HashSet(it.value).forEach { constraint ->
+                if (!verifyViewsUsedByConstraint(constraint)) {
+                    removeConstraint(constraint)
                 }
             }
         }

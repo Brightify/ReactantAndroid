@@ -6,6 +6,7 @@ import org.brightify.reactant.autolayout.ConstraintVariable
 import org.brightify.reactant.autolayout.internal.solver.Equation
 import org.brightify.reactant.autolayout.internal.solver.Term
 import org.brightify.reactant.core.util.onChange
+import kotlin.math.abs
 
 /**
  *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
@@ -38,16 +39,16 @@ internal class ConstraintItem(val leftVariable: ConstraintVariable, operator: Co
     override fun toString(): String {
         val rightVariable = rightVariable?.let { Term(multiplier.toDouble(), rightVariable).toString() + " " } ?: ""
         val offset = offset.toDouble()
-        val absOffset = Math.abs(offset)
+        val absOffset = abs(offset)
         val offsetString: String
-        if (offset == 0.0 && !rightVariable.isEmpty()) {
-            offsetString = ""
+        offsetString = if (offset == 0.0 && rightVariable.isNotEmpty()) {
+            ""
         } else if (offset < 0) {
-            offsetString = "- $absOffset "
+            "- $absOffset "
         } else if (rightVariable.isEmpty()) {
-            offsetString = "$absOffset "
+            "$absOffset "
         } else {
-            offsetString = "+ $absOffset "
+            "+ $absOffset "
         }
 
         return "{$leftVariable} $operator $rightVariable$offsetString($priority)"

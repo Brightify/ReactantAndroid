@@ -1,8 +1,8 @@
 package org.brightify.reactant.core.util
 
 import android.util.Log
-import java.lang.Math.pow
 import java.util.Stack
+import kotlin.math.pow
 
 /**
  *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
@@ -37,7 +37,7 @@ fun <T> measure(name: String, code: () -> T): T {
 
 fun printTimes() {
     timeData.entries.sortedByDescending { it.value.time }.forEach {
-        Log.d("Time measure - ${it.key}", "Called ${it.value.called} times, took: " + String.format("%.4f", it.value.time / pow(10.0, 9.0)))
+        Log.d("Time measure - ${it.key}", "Called ${it.value.called} times, took: " + String.format("%.4f", it.value.time / 10.0.pow(9)))
     }
     timeData.clear()
 }
