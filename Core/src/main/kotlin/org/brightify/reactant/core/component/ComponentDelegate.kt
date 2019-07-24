@@ -40,7 +40,7 @@ class ComponentDelegate<STATE, ACTION>(val initialState: STATE) {
         }
     }
 
-    var ownerComponent: Component<STATE, ACTION>? by Delegates.observable(null) { _, _, _ ->
+    var ownerComponent: Component<STATE, ACTION>? by Delegates.observable<Component<STATE, ACTION>?>(null) { _, _, _ ->
         needsUpdate = true
     }
 

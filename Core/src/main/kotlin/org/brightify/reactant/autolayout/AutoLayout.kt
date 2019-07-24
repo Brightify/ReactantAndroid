@@ -99,7 +99,7 @@ open class AutoLayout: ViewGroup {
 
                 Log.d("AutoLayout.onMeasure",
                         "($description) Took $time s totally where width: $wMode / $wSize and height: $hMode / $hSize " +
-                                "constraint count: ${constraintManager.allConstraints.count()}.\n\n")
+                                "constraint count: ${constraintManager.allConstraints.size}.\n\n")
             }
         }
     }

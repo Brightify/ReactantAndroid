@@ -1,6 +1,6 @@
 package org.brightify.reactant.core
 
-import android.content.Context
+import android.app.Application
 import android.content.pm.ActivityInfo
 import android.os.Build
 import android.os.Bundle
@@ -20,7 +20,7 @@ import java.util.UUID
 /**
  *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
  */
-open class ReactantActivity(private val wireframeFactory: (Context) -> Wireframe): AppCompatActivity() {
+open class ReactantActivity(private val wireframeFactory: (Application) -> Wireframe): AppCompatActivity() {
 
     val resumed: Observable<Unit>
         get() = isResumed.filter { it }.map { }
@@ -62,13 +62,14 @@ open class ReactantActivity(private val wireframeFactory: (Context) -> Wireframe
 
         transactionManager.transaction {
             if (savedInstanceState != null) {
-                val key = savedInstanceState.getString(SAVED_STATE_KEY)
-                viewControllerStack.addAll(savedStates[key] ?: emptyList())
-                savedStates.remove(key)
+                savedInstanceState.getString(SAVED_STATE_KEY)?.let { key ->
+                    viewControllerStack.addAll(savedStates[key] ?: emptyList())
+                    savedStates.remove(key)
+                }
             }
 
             if (viewControllerStack.empty()) {
-                viewControllerStack.push(wireframeFactory(applicationContext).entrypoint())
+                viewControllerStack.push(wireframeFactory(application).entrypoint())
             }
 
             viewControllerStack.forEach { it.activity_ = this }
