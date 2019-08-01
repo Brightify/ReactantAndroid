@@ -23,9 +23,11 @@ open class ConstraintViewBase<STATE, ACTION>(context: Context, initialState: STA
 
     override val actions: List<Observable<out ACTION>> = emptyList()
 
-    private var isInitialized: Boolean = false
+    final override var isInitialized: Boolean = false
+        private set
 
-    private var isDestroyed: Boolean = false
+    final override var isDestroyed: Boolean = false
+        private set
 
     private val createdViews = ArrayList<ComponentView>()
 

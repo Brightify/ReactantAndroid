@@ -3,18 +3,18 @@ package org.brightify.reactant.core
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.TypedArray
-import android.support.annotation.StyleableRes
-import android.support.v4.content.res.TypedArrayUtils
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.annotation.StyleableRes
 import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
 import org.brightify.reactant.autolayout.AutoLayout
 import org.brightify.reactant.autolayout.util.children
 import org.brightify.reactant.core.component.ComponentDelegate
 import org.brightify.reactant.core.component.ComponentWithDelegate
+import org.brightify.reactant.core.util.assertLog
 
 /**
  *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
@@ -30,11 +30,13 @@ open class ViewBase<STATE, ACTION> @JvmOverloads constructor(
 
     override val actions: List<Observable<out ACTION>> = emptyList()
 
-    private var isInitialized: Boolean = false
+    final override var isInitialized: Boolean = false
+        private set
 
-    private var isDestroyed: Boolean = false
+    final override var isDestroyed: Boolean = false
+        private set
 
-    private val createdViews = ArrayList<ComponentView>()
+    private val createdViews = HashSet<ComponentView>()
 
     init {
         if (layout != null) {
@@ -83,6 +85,8 @@ open class ViewBase<STATE, ACTION> @JvmOverloads constructor(
         super.onViewAdded(child)
 
         forEachComponentView(child) {
+            it.assertUsable()
+
             createdViews.add(it)
         }
     }
@@ -91,7 +95,10 @@ open class ViewBase<STATE, ACTION> @JvmOverloads constructor(
         super.onViewRemoved(child)
 
         forEachComponentView(child) {
+            it.assertUsable()
+
             createdViews.remove(it)
+            it.destroy()
         }
     }
 
@@ -112,18 +119,13 @@ open class ViewBase<STATE, ACTION> @JvmOverloads constructor(
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
 
-        if (!isInitialized) {
-            throw IllegalStateException("View must be initialized before it is added to view hierarchy. " +
-                    "Probably caused by creating view via constructor instead of 'create' from view or by factory in controller.")
-        } else if (isDestroyed) {
-            throw IllegalStateException("View cannot be added to view hierarchy after it is destroyed.")
-        }
+        assertUsable()
     }
 
     protected fun <V: ComponentView> create(factory: (Context) -> V): V {
         val view = factory(context)
         view.init()
-//        createdViews.add(view)
+        createdViews.add(view)
         return view
     }
 
@@ -135,4 +137,10 @@ open class ViewBase<STATE, ACTION> @JvmOverloads constructor(
     protected fun Int.toPx() = this * resources.displayMetrics.density
 
     protected fun Int.fromPx() = this / resources.displayMetrics.density
+
+    private fun ComponentView.assertUsable() {
+        assertLog(isInitialized, "View must be initialized before it is added to view hierarchy. " +
+            "Probably caused by creating view via constructor instead of 'create' from view or by factory in controller.")
+        assertLog(!isDestroyed, "View cannot be added to view hierarchy after it is destroyed.")
+    }
 }

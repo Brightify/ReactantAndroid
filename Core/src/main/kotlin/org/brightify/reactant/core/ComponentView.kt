@@ -5,6 +5,10 @@ package org.brightify.reactant.core
  */
 interface ComponentView {
 
+    val isInitialized: Boolean
+
+    val isDestroyed: Boolean
+
     fun init()
 
     fun destroy()
