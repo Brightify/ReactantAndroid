@@ -7,5 +7,7 @@ import android.util.Log
  */
 fun assertLog(assertion: Boolean, message: String) {
     assert(assertion) { message }
-    Log.e("Assertion failed", message)
+    if (!assertion) {
+        Log.e("Assertion failed", message)
+    }
 }

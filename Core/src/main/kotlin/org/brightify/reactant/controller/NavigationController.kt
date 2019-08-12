@@ -18,9 +18,7 @@ import java.util.Stack
 /**
  *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
  */
-open class NavigationController(
-        private val initialController: ViewController? = null,
-        private val toolbarTheme: Int? = null): ViewController() {
+open class NavigationController(initialController: ViewController? = null, private val toolbarTheme: Int? = null): ViewController() {
 
     var isNavigationBarHidden: Boolean by onChange(false) { _, _, _ ->
         if (!transactionManager.isInTransaction) {
@@ -40,6 +38,13 @@ open class NavigationController(
     private val viewControllerStack = Stack<ViewController>()
     private val toolbarHeight = 56 // FIXME get correct value
     private val transactionManager = TransactionManager()
+
+    init {
+        initialController?.let {
+            viewControllerStack.push(it)
+            it.navigationController = this
+        }
+    }
 
     override fun activityDidChange(oldActivity: Activity?) {
         super.activityDidChange(oldActivity)
@@ -78,13 +83,6 @@ open class NavigationController(
                 top.equalToSuperview()
             }
             bottom.left.right.equalToSuperview()
-        }
-
-        initialController?.navigationController = this
-        if (viewControllerStack.isEmpty()) {
-            initialController?.let {
-                viewControllerStack.push(it)
-            }
         }
 
         transactionManager.enabled = true

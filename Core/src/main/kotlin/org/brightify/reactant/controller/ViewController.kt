@@ -14,6 +14,8 @@ import kotlin.properties.ObservableProperty
 import kotlin.reflect.KProperty
 
 /**
+ * TODO Fix childViewControllers
+ * TODO Fix that ViewController hierarchy (NavigationController, TabBarController, etc.) is not correctly setup before call to activated().
  *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
  */
 open class ViewController(title: String = "") {
@@ -209,8 +211,6 @@ open class ViewController(title: String = "") {
     }
 
     open fun viewWillAppear() {
-        childViewControllers.forEach(ViewController::viewWillAppear)
-
         if (view_ == null) {
             loadView()
             viewDidLoad()
@@ -223,6 +223,8 @@ open class ViewController(title: String = "") {
             invalidateGlobalSettings()
             activity.updateScreenOrientation()
         }
+
+        childViewControllers.forEach(ViewController::viewWillAppear)
     }
 
     open fun viewDidAppear() {
@@ -232,19 +234,19 @@ open class ViewController(title: String = "") {
     }
 
     open fun viewWillDisappear() {
-//        childViewControllers.forEach(ViewController::viewWillDisappear)
-
         activity.let {
             val inputManager = it.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
             inputManager.hideSoftInputFromWindow(view.windowToken, 0)
         }
+
+        childViewControllers.forEach(ViewController::viewWillDisappear)
     }
 
     open fun viewDidDisappear() {
         isVisible = false
         visibleDisposeBag.clear()
 
-//        childViewControllers.forEach(ViewController::viewDidDisappear)
+        childViewControllers.forEach(ViewController::viewDidDisappear)
     }
 
     open fun viewDestroyed() {
@@ -302,6 +304,8 @@ open class ViewController(title: String = "") {
         if (childVisible) {
             child.viewDidDisappear()
         }
+
+        child.activity_ = null
     }
 
     fun present(controller: ViewController, animated: Boolean = true): Observable<Unit> {

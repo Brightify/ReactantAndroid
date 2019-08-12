@@ -46,6 +46,12 @@ open class HamburgerMenuController(private val viewControllers: List<ViewControl
     private var displayedViewController: ViewController = viewControllers[0]
     private val transactionManager = TransactionManager()
 
+    init {
+        viewControllers.forEach {
+            it.hamburgerMenuController = this
+        }
+    }
+
     override fun activityDidChange(oldActivity: Activity?) {
         super.activityDidChange(oldActivity)
 
@@ -70,7 +76,6 @@ open class HamburgerMenuController(private val viewControllers: List<ViewControl
                 }
 
         viewControllers.forEach {
-            it.hamburgerMenuController = this
             updateMenuItem(it)
         }
 
@@ -134,6 +139,10 @@ open class HamburgerMenuController(private val viewControllers: List<ViewControl
     }
 
     fun updateMenuItem(viewController: ViewController) {
+        if (navigationView_ == null) {
+            return
+        }
+
         val index = viewControllers.indexOf(viewController)
         navigationView.menu.removeItem(index)
 

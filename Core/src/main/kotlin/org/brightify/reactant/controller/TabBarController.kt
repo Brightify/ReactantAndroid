@@ -54,6 +54,12 @@ open class TabBarController(private val viewControllers: List<ViewController>): 
     private var displayedViewController: ViewController = viewControllers[0]
     private val transactionManager = TransactionManager()
 
+    init {
+        viewControllers.forEach {
+            it.tabBarController = this
+        }
+    }
+
     override fun activityDidChange(oldActivity: Activity?) {
         super.activityDidChange(oldActivity)
 
@@ -83,7 +89,6 @@ open class TabBarController(private val viewControllers: List<ViewController>): 
         tabBar.snp.setVerticalIntrinsicSizePriority(ConstraintPriority.required)
 
         viewControllers.forEach {
-            it.tabBarController = this
             updateTabBarItem(it)
         }
 
@@ -157,6 +162,10 @@ open class TabBarController(private val viewControllers: List<ViewController>): 
     }
 
     fun updateTabBarItem(viewController: ViewController) {
+        if (tabBar_ == null) {
+            return
+        }
+
         val index = viewControllers.indexOf(viewController)
         tabBar.menu.removeItem(index)
 
