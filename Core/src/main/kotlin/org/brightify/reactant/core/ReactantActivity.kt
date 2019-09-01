@@ -5,9 +5,9 @@ import android.content.Context
 import android.content.pm.ActivityInfo
 import android.os.Build
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
 import android.util.AttributeSet
 import android.view.View
+import androidx.appcompat.app.AppCompatActivity
 import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.addTo
@@ -17,13 +17,14 @@ import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.ReplaySubject
 import org.brightify.reactant.controller.ViewController
 import org.brightify.reactant.controller.util.TransactionManager
-import java.util.Stack
-import java.util.UUID
+import java.util.*
+import kotlin.collections.HashMap
+import kotlin.collections.set
 
 /**
  *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
  */
-open class ReactantActivity(private val wireframeFactory: (Application) -> Wireframe): AppCompatActivity() {
+open class ReactantActivity(private val wireframeFactory: (Application, ReactantActivity) -> Wireframe): AppCompatActivity() {
 
     val resumed: Observable<Unit>
         get() = isResumed.filter { it }.map { }
@@ -72,7 +73,7 @@ open class ReactantActivity(private val wireframeFactory: (Application) -> Wiref
             }
 
             if (viewControllerStack.empty()) {
-                viewControllerStack.push(wireframeFactory(application).entrypoint())
+                viewControllerStack.push(wireframeFactory(application, this).entrypoint())
             }
 
             viewControllerStack.forEach { it.activity_ = this }
