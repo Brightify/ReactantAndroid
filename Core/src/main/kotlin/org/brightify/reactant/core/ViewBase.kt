@@ -15,6 +15,7 @@ import org.brightify.reactant.autolayout.util.children
 import org.brightify.reactant.core.component.ComponentDelegate
 import org.brightify.reactant.core.component.ComponentWithDelegate
 import org.brightify.reactant.core.util.assertLog
+import java.util.*
 
 /**
  *  @author <a href="mailto:filip@brightify.org">Filip Dolnik</a>
@@ -36,7 +37,7 @@ open class ViewBase<STATE, ACTION> @JvmOverloads constructor(
     final override var isDestroyed: Boolean = false
         private set
 
-    private val createdViews = HashSet<ComponentView>()
+    private val createdViews = Collections.newSetFromMap(WeakHashMap<ComponentView, Boolean>())
 
     init {
         if (layout != null) {
@@ -98,7 +99,10 @@ open class ViewBase<STATE, ACTION> @JvmOverloads constructor(
             it.assertUsable()
 
             createdViews.remove(it)
-            it.destroy()
+
+            if (!it.isDestroyed) {
+                it.destroy()
+            }
         }
     }
 
@@ -112,7 +116,7 @@ open class ViewBase<STATE, ACTION> @JvmOverloads constructor(
 
     override fun destroy() {
         isDestroyed = true
-        createdViews.forEach(ComponentView::destroy)
+        createdViews.filter { !it.isDestroyed }.forEach(ComponentView::destroy)
         lifetimeDisposeBag.dispose()
     }
 
