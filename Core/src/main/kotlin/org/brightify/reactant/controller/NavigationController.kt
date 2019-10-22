@@ -1,8 +1,8 @@
 package org.brightify.reactant.controller
 
 import android.graphics.Color
-import android.support.v4.content.ContextCompat
-import android.support.v7.widget.Toolbar
+import androidx.core.content.ContextCompat
+import androidx.appcompat.widget.Toolbar
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.ContextThemeWrapper

@@ -1,10 +1,5 @@
 package org.brightify.reactant.core.util
 
-import android.support.design.widget.FloatingActionButton
-import android.support.design.widget.TextInputEditText
-import android.support.design.widget.TextInputLayout
-import android.support.v4.widget.SwipeRefreshLayout
-import android.support.v7.widget.RecyclerView
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
@@ -15,6 +10,11 @@ import android.widget.ProgressBar
 import android.widget.ScrollView
 import android.widget.Switch
 import android.widget.TextView
+import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import org.brightify.reactant.autolayout.AutoLayout
 import org.brightify.reactant.core.ReactantActivity
 

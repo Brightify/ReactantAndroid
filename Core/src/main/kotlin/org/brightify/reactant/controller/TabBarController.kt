@@ -1,6 +1,6 @@
 package org.brightify.reactant.controller
 
-import android.support.design.widget.BottomNavigationView
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
