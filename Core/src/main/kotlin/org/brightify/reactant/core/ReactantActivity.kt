@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.pm.ActivityInfo
 import android.os.Build
 import android.os.Bundle
+import android.os.PersistableBundle
 import androidx.appcompat.app.AppCompatActivity
 import android.util.AttributeSet
 import android.view.View
@@ -85,11 +86,11 @@ open class ReactantActivity(private val wireframeFactory: (Application) -> Wiref
         transactionManager.enabled = true
     }
 
-    override fun onSaveInstanceState(outState: Bundle?) {
-        super.onSaveInstanceState(outState)
+    override fun onSaveInstanceState(outState: Bundle, outPersistentState: PersistableBundle) {
+        super.onSaveInstanceState(outState, outPersistentState)
 
         val key = UUID.randomUUID().toString()
-        outState?.putString(SAVED_STATE_KEY, key)
+        outState.putString(SAVED_STATE_KEY, key)
         savedStates[key] = viewControllerStack
     }
 
@@ -157,8 +158,7 @@ open class ReactantActivity(private val wireframeFactory: (Application) -> Wiref
         super.onDestroy()
     }
 
-    override fun onCreateView(parent: View?, name: String?, context: Context?, attrs: AttributeSet?): View? {
-        if (name == null) { return super.onCreateView(parent, name, context, attrs) }
+    override fun onCreateView(parent: View?, name: String, context: Context, attrs: AttributeSet): View? {
         return try {
             val cls = Class.forName(name)
 
