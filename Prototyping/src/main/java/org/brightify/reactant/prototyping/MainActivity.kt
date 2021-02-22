@@ -2,7 +2,7 @@ package org.brightify.reactant.prototyping
 
 import android.graphics.Color
 import android.view.View
-import com.jakewharton.rxbinding2.view.clicks
+import com.jakewharton.rxbinding3.view.clicks
 import io.reactivex.Observable
 import org.brightify.reactant.autolayout.util.children
 import org.brightify.reactant.autolayout.util.snp

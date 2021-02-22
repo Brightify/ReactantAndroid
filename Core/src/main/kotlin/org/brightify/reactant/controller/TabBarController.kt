@@ -1,10 +1,10 @@
 package org.brightify.reactant.controller
 
-import android.support.design.widget.BottomNavigationView
 import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import io.reactivex.rxkotlin.addTo
 import org.brightify.reactant.autolayout.AutoLayout
 import org.brightify.reactant.autolayout.ConstraintPriority
