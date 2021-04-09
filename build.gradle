@@ -4,7 +4,7 @@ version '0.1'
 apply plugin: 'kotlin'
 
 buildscript {
-    ext.kotlin_version = '1.4.30'
+    ext.kotlin_version = '1.4.32'
 
     repositories {
         maven {
@@ -16,7 +16,7 @@ buildscript {
     }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath 'com.android.tools.build:gradle:4.1.2'
+        classpath 'com.android.tools.build:gradle:4.1.3'
     }
 }
 
